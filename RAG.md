@@ -15,6 +15,9 @@
 - [[RAG#GraphRAG 是什么，它为什么不是普通 Vector RAG 的简单升级版？|GraphRAG 是什么，它为什么不是普通 Vector RAG 的简单升级版？]]
 - [[RAG#一个完整的工程化 RAG Pipeline 是什么样的？|一个完整的工程化 RAG Pipeline 是什么样的？]]
 - [[RAG#Hybrid Retrieve → Rerank RAG 为什么可以作为稳健的工程 Baseline？|Hybrid Retrieve → Rerank RAG 为什么可以作为稳健的工程 Baseline？]]
+- [[RAG#Bi-Encoder 为什么适合做 Dense Retrieval？|Bi-Encoder 为什么适合做 Dense Retrieval？]]
+- [[RAG#RRF 如何融合多个 Retriever 的结果？|RRF 如何融合多个 Retriever 的结果？]]
+- [[RAG#Reranker 为什么需要 Cross-Encoder，LLM Reranker 与 Late Interaction 又有什么取舍？|Reranker 为什么需要 Cross-Encoder，LLM Reranker 与 Late Interaction 又有什么取舍？]]
 - [[RAG#Hierarchical / Parent-Child RAG 在解决什么问题？|Hierarchical / Parent-Child RAG 在解决什么问题？]]
 - [[RAG#Agentic RAG 与固定 RAG Pipeline 有什么区别？|Agentic RAG 与固定 RAG Pipeline 有什么区别？]]
 
@@ -379,6 +382,219 @@ Cross-Encoder 比分别 Embedding Query / Document 更慢，但因为 Candidate 
 > **先用便宜检索尽量不漏，再用昂贵模型精排，这就是 Retrieve → Rerank 的核心工程取舍。**
 
 Hybrid 并不是任何场景都必须使用，但对于同时存在自然语言、专有名词、代码、编号等混合语料的企业知识库，它通常比纯 Dense 更稳健。RAGFlow 当前也直接把 Hybrid（Full-text + Embedding）作为推荐 Index Search 方法；LlamaIndex 则提供 BM25、Ensemble、Fusion 等组合能力。
+
+具体模型和排序机制见 [[RAG#Bi-Encoder 为什么适合做 Dense Retrieval？|Bi-Encoder]]、[[RAG#RRF 如何融合多个 Retriever 的结果？|RRF]] 与 [[RAG#Reranker 为什么需要 Cross-Encoder，LLM Reranker 与 Late Interaction 又有什么取舍？|Reranker]]。
+
+---
+
+## Bi-Encoder 为什么适合做 Dense Retrieval？
+
+RAG 中通常所说的 Dense Embedding Retriever，本质上大多采用 **Bi-Encoder（双编码器，也常称 Dual Encoder / Two-Tower）** 思路：Query 和 Document 分别编码为固定长度向量，再用 cosine similarity、dot product 等向量相似度进行检索。
+
+```text
+Query ─────→ Encoder ─────→ Query Vector
+                                │
+                                │ similarity / ANN
+                                ↓
+Document ─→ Encoder ─────→ Document Vector
+```
+
+这里“Bi”强调的是 **Query 与 Document 独立编码**；两侧是否共享完全相同的参数取决于具体模型设计。由于 Document 的表示不依赖当前 Query，所有文档向量都可以离线预计算并建立 ANN（Approximate Nearest Neighbor）索引。线上只需编码一次 Query，再在大规模向量索引中寻找 Top-K，因此非常适合百万级乃至更大语料的第一阶段召回。
+
+参考：[Sentence Transformers：Retrieve & Re-Rank](https://www.sbert.net/examples/sentence_transformer/applications/retrieve_rerank/README.html)
+
+### 为什么它适合做 Retriever？
+
+- **Document 可以预计算**：线上不需要重新跑每一篇文档的 Transformer。
+- **适合 ANN Index**：Query 与 Document 都是单个固定向量，可以交给向量数据库高效检索。
+- **吞吐量高**：一次 Query 可以快速和大规模 Corpus 做近邻搜索。
+- **语义召回能力强**：相较纯关键词匹配，更容易找到同义表达、改写和语义相近内容。
+
+### 它为速度牺牲了什么？
+
+Bi-Encoder 的 Query 与 Document 在编码阶段并没有直接进行 Token-level interaction。一个较长 Chunk 最终要被压缩成一个向量，模型必须在这个固定表示中保留对各种潜在 Query 都有用的信息。因此它存在明显的 **single-vector information bottleneck**：
+
+```text
+Document 中很多 Token / 事实
+          ↓
+      一个向量
+          ↓
+再和 Query Vector 比较
+```
+
+这使 Dense Retriever 很适合回答“哪些文档可能相关”，但不一定擅长精确判断“哪个 Chunk 真正能回答这个 Query”。因此工程 RAG 经常让 Bi-Encoder 承担高 Recall 的第一阶段召回，再把几十到几百个候选交给更贵的 Reranker。
+
+> **Bi-Encoder 的核心工程价值不是做到最精确的相关性判断，而是把大规模语义搜索变成可以提前索引、在线快速计算的向量检索问题。**
+
+---
+
+## RRF 如何融合多个 Retriever 的结果？
+
+Hybrid Retrieval 同时使用 BM25、Dense Retriever 等不同检索器时，会遇到一个直接问题：不同 Retriever 的原始 Score 通常不在同一个尺度上。
+
+例如：
+
+```text
+BM25：      Doc A = 12.7
+Dense：     Doc A = 0.81
+```
+
+`12.7` 与 `0.81` 没有自然可比性。可以先对 Score 做归一化再加权，但这会引入 Score Calibration 和权重调参问题。**Reciprocal Rank Fusion（RRF）** 的思路则是不比较原始分数，只比较各文档在每个 Retriever 中的排名。
+
+RRF 的典型公式为：
+
+\[
+\operatorname{RRF}(d)=\sum_{r\in R}\frac{1}{k+\operatorname{rank}_r(d)}
+\]
+
+其中 `rank_r(d)` 表示文档 `d` 在 Retriever `r` 中的名次，`k` 是平滑常数。Elastic 当前 RRF 实现默认 `rank_constant=60`，但这个默认值属于具体实现，不应当成 RRF 理论的固定常数。
+
+参考：[Elasticsearch：Reciprocal Rank Fusion](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/reciprocal-rank-fusion)
+
+例如：
+
+```text
+BM25：   A(1)  B(2)  C(3)
+Dense：  C(1)  A(2)  D(3)
+```
+
+A 与 C 都在两个 Retriever 中得到较好排名，因此累积的 RRF Score 会较高；只在某一个 Retriever 中偶然排名靠前的结果，相对不容易支配最终排序。
+
+### RRF 为什么适合 Hybrid Retrieval？
+
+- **不要求 Score 可比**：BM25、cosine、稀疏神经检索等完全不同的打分尺度可以直接融合。
+- **几乎不需要 Score Calibration**：相比线性加权，工程上更容易快速建立稳定 Baseline。
+- **利用多检索器共识**：多个 Retriever 都认可的候选通常会被推到更靠前的位置。
+
+### RRF 的局限
+
+RRF 只看到 **Rank**，看不到原始 Score 的差距。例如下面两种情况在 RRF 眼里都只是“第一名、第二名”：
+
+```text
+Doc A = 0.99, Doc B = 0.50
+Doc A = 0.51, Doc B = 0.50
+```
+
+因此它会丢失 Score Magnitude 信息。在拥有稳定业务数据、相关性标签和良好 Score Calibration 时，Weighted Fusion 或 Learning-to-Rank 有可能取得更好效果。
+
+另外，RRF 本身并没有阅读 Query 与 Document 的内容，所以它虽然会重新排列候选，却不属于真正的语义 Reranker。它更准确的定位是：
+
+> **Fusion：把多个 Retriever 的 Ranking 合并成一个统一 Candidate Ranking。**
+
+因此经典结构通常是：
+
+```text
+BM25 ────┐
+         ├→ RRF → Candidate Pool → Semantic Reranker → Top-K
+Dense ───┘
+```
+
+Candidate Window 同样重要：如果某个 Retriever 只提供很小的 Top-K，正确文档在 Fusion 前就已经被截断，RRF 也无法恢复它。
+
+---
+
+## Reranker 为什么需要 Cross-Encoder，LLM Reranker 与 Late Interaction 又有什么取舍？
+
+Retriever 的目标是从大规模 Corpus 中快速取得一个高 Recall 的 Candidate Pool；Reranker 则在候选规模已经缩小后，用更昂贵的相关性模型提高 **Precision**。
+
+```text
+百万级 Corpus
+    ↓ Retriever
+Top-50 / Top-100 / Top-200
+    ↓ Reranker
+Top-5 / Top-10
+    ↓
+Context Engineering
+```
+
+关键边界是：**Reranker 只能重新排序已经召回的 Candidate，无法挽救 Retriever 根本没有召回的文档。** 因此 Candidate Pool 的大小和第一阶段 Recall 是 Reranker 能否发挥价值的前提。
+
+### Cross-Encoder：把 Query 与 Document 放进同一个 Transformer
+
+Cross-Encoder 不像 Bi-Encoder 那样先分别产生可复用 Embedding，而是直接把一个 `(Query, Document)` Pair 同时输入 Transformer：
+
+```text
+[Query, Document]
+       ↓
+   Transformer
+       ↓
+ relevance score
+```
+
+这样 Self-Attention 可以直接建立 Query Token 与 Document Token 之间的交互，因此通常能比单向量相似度做更精细的相关性判断。Sentence Transformers 也把 Cross-Encoder 作为典型的第二阶段 Reranker：先用 Bi-Encoder / Lexical Search 召回候选，再对每个 `(query, candidate)` Pair 打分。
+
+参考：[Sentence Transformers：Cross-Encoder](https://www.sbert.net/docs/cross_encoder/usage/usage.html) · [Retrieve & Re-Rank](https://www.sbert.net/examples/sentence_transformer/applications/retrieve_rerank/README.html)
+
+这里也要纠正一个容易混淆的术语：**Cross-Encoder 不是“Cross Embedding”模型。** 它通常输出的是 Query-Document 的 relevance score / logit，而不是一个可以单独保存并用于 ANN 的 Document Embedding。
+
+Cross-Encoder 的主要优点是：
+
+- Query 与 Document 可以做细粒度 Token-level interaction，Precision 通常高于单向量 Bi-Encoder。
+- 很适合针对特定领域用 `(query, relevant document)` 数据做 Fine-tuning。
+- 作为第二阶段只处理几十到几百个 Candidate，能够把高成本计算集中在最有希望的文档上。
+
+主要缺点是：
+
+- Document 表示不能像普通 Dense Embedding 一样脱离 Query 完全预计算。
+- 每个 Query 都要重新计算每个 `(Query, Document)` Pair，因此无法经济地直接扫描百万级 Corpus。
+- Candidate 数量、Document 长度和模型大小会直接影响在线延迟。
+
+### LLM Reranker：把“相关性判断”交给通用 LLM
+
+LLM Reranker 不一定依赖专门训练的 Cross-Encoder，而是把 Query、候选文档以及任务要求交给通用 LLM，让模型判断相关性或直接给出新的排序。LlamaIndex 等框架提供过 `LLMRerank` 和 RankGPT 一类实现，用较大的初始 Top-K 保持 Recall，再由 LLM 选择真正相关的 Node。
+
+参考：[LlamaIndex：LLM Reranker](https://docs.llamaindex.ai/en/v0.10.20/module_guides/querying/node_postprocessors/node_postprocessors.html) · [RankGPT Reranker](https://docs.llamaindex.ai/en/v0.9.48/examples/node_postprocessor/rankGPT.html)
+
+常见的 LLM Ranking 形式可以分成：
+
+- **Pointwise**：对每个 `(Query, Document)` 独立打分。容易并行，但不同调用之间的分数校准和一致性可能较差。
+- **Pairwise**：让模型比较 `Doc A` 与 `Doc B` 哪个更相关。相对判断直观，但 Candidate 较多时比较次数迅速增加。
+- **Listwise**：一次给模型多个 Candidate，让它直接输出一个排列或 Top-N。能够利用候选之间的相对关系，但受 Context Window、输入顺序和候选数量限制；Candidate 很多时常需要分批或 sliding window。
+
+LLM Reranker 的优势是能理解更复杂的任务语义，例如“这段证据是否真正回答问题”“是否满足某种业务条件”，并且可以通过 Prompt 快速加入领域规则而不一定需要重新训练专门的 Ranker。代价则是 **Token 成本、延迟、稳定性和可复现性**：候选越长、越多，成本越高；不同模型和 Prompt 也可能产生明显不同的 Ranking。
+
+因此它更适合候选已经较少、单次答案价值高，或者相关性定义难以被普通 Cross-Encoder 覆盖的复杂场景，而不是所有在线 RAG 的默认精排器。
+
+### Late Interaction：在单向量 Bi-Encoder 与 Cross-Encoder 之间折中
+
+ColBERT 代表的 **Late Interaction** 路线不把整个 Query / Document 各自压成一个向量，而是保留 Token-level 的多向量表示。Query 和 Document 仍然可以独立编码，Document 表示可以离线预计算；直到打分阶段，才让两侧 Token 表示做细粒度交互。
+
+ColBERT 经典的 MaxSim 思路可以概括为：对每个 Query Token，找到最相似的 Document Token，再把这些最大相似度累加：
+
+\[
+S(q,d)=\sum_i\max_j\operatorname{sim}(q_i,d_j)
+\]
+
+```text
+Query → q1 q2 q3 ...
+                 ↘
+                   MaxSim / Late Interaction → score
+                 ↗
+Doc   → d1 d2 d3 ...
+```
+
+参考：[ColBERT](https://arxiv.org/abs/2004.12832) · [ColBERTv2](https://arxiv.org/abs/2112.01488)
+
+它的核心折中是：
+
+- 比单向量 Bi-Encoder 保留更多 Token-level 相关性信息，通常能进行更精细的匹配。
+- 又不像 Cross-Encoder 那样必须对每个 Query-Document Pair 重新执行完整联合 Transformer，因此 Document 表示仍然可以提前计算和索引。
+
+代价是一个 Document 不再只有一个向量，而会拥有一组 Token-level Vector，索引体积、存储成本和检索实现复杂度都会明显上升。ColBERTv2 等后续工作通过压缩等方式降低了这一空间成本。
+
+**Late Interaction 并不只能做 Reranker。** ColBERT 既可以对已有 Candidate 做精细排序，也可以借助专门索引直接承担第一阶段 Retrieval。因此更准确的理解是：它是一种介于传统 single-vector Dense Retrieval 和 full Cross-Encoder interaction 之间的 Neural IR 架构。
+
+### 三类精细相关性模型如何选择？
+
+| 方法 | 表示 / 交互方式 | 文档能否预计算 | 典型成本 | 主要优势 | 主要局限 |
+| --- | --- | --- | --- | --- | --- |
+| **Cross-Encoder** | Query + Document 联合编码 | 不能完整预计算 Pair Score | 中高 | 精度高、成熟、易 Fine-tune | 每个 Pair 都要推理，难以全库扫描 |
+| **LLM Reranker** | LLM 按指令 Pointwise / Pairwise / Listwise 判断 | 不能预计算任务相关 Ranking | 很高 | 能理解复杂意图和业务规则，Zero-shot 灵活 | Token / 延迟昂贵，稳定性与排序一致性较难治理 |
+| **Late Interaction / ColBERT** | Query / Doc 独立编码为多向量，后续 Token-level 交互 | 可以 | 中等，但索引更重 | 比单向量更细粒度，同时保留较强检索效率 | 多向量索引占空间，基础设施更复杂 |
+
+工程上没有必要把 Reranker 当成“越强越好”。应根据 **Candidate Pool 大小、延迟预算、领域数据、索引规模和最终 Precision 收益** 选择：
+
+> **高吞吐在线问答通常优先使用专门 Cross-Encoder / Rerank Model；复杂且高价值的少量查询可以考虑 LLM Reranker；需要更细粒度召回但又不希望承担 Full Cross-Encoder 成本时，可以考虑 Late Interaction。**
 
 ---
 
