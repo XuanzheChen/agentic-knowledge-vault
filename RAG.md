@@ -443,9 +443,9 @@ Dense：     Doc A = 0.81
 
 RRF 的典型公式为：
 
-\[
+$$
 \operatorname{RRF}(d)=\sum_{r\in R}\frac{1}{k+\operatorname{rank}_r(d)}
-\]
+$$
 
 其中 `rank_r(d)` 表示文档 `d` 在 Retriever `r` 中的名次，`k` 是平滑常数。Elastic 当前 RRF 实现默认 `rank_constant=60`，但这个默认值属于具体实现，不应当成 RRF 理论的固定常数。
 
@@ -561,9 +561,9 @@ ColBERT 代表的 **Late Interaction** 路线不把整个 Query / Document 各�
 
 ColBERT 经典的 MaxSim 思路可以概括为：对每个 Query Token，找到最相似的 Document Token，再把这些最大相似度累加：
 
-\[
+$$
 S(q,d)=\sum_i\max_j\operatorname{sim}(q_i,d_j)
-\]
+$$
 
 ```text
 Query → q1 q2 q3 ...
