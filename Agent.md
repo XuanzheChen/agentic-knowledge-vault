@@ -10,6 +10,8 @@
 - [[Agent#从单轮问答到持续对话，需要哪些机制？|从单轮问答到持续对话，需要哪些机制？]]
 - [[Agent#长期记忆应写入什么，如何避免信息污染？|长期记忆应写入什么，如何避免信息污染？]]
 - [[Agent#对话中的意图、约束和状态冲突如何处理？|对话中的意图、约束和状态冲突如何处理？]]
+- [[Agent#ReAct、Plan-and-Solve 与 Reflection 在 Agent 中分别是什么意思？|ReAct、Plan-and-Solve 与 Reflection 在 Agent 中分别是什么意思？]]
+- [[Agent#AutoGen、AgentScope、CAMEL 与 LangGraph 的核心差异是什么？|AutoGen、AgentScope、CAMEL 与 LangGraph 的核心差异是什么？]]
 - [[Agent#ReAct 执行循环为什么需要运行时约束？|ReAct 执行循环为什么需要运行时约束？]]
 
 ---
@@ -121,6 +123,95 @@
 - **真正相悖**：进一步判断冲突层级。
 
 如果与安全等高级规则冲突，应优先遵守高级规则：不可放行的直接拒绝；可降级或需要确认的，可要求二次确认、部分执行或降级执行。若只与短期会话或任务状态冲突，则应以用户最新意图为准；在上下文治理中将旧意图标记为过时，以新意图作为唯一可信状态，同时留存变更证据。
+
+---
+
+## ReAct、Plan-and-Solve 与 Reflection 在 Agent 中分别是什么意思？
+
+这三者首先不是具体开发框架，而是组织 Agent **“如何决定、行动和修正”** 的三种经典执行范式。它们最核心的区别在于：**什么时候做规划，以及什么时候根据结果改变后续决策。** [Hello-Agents 第四章](https://hello-agents.datawhale.cc/#/./chapter4/%E7%AC%AC%E5%9B%9B%E7%AB%A0%20%E6%99%BA%E8%83%BD%E4%BD%93%E7%BB%8F%E5%85%B8%E8%8C%83%E5%BC%8F%E6%9E%84%E5%BB%BA)
+
+### ReAct：边观察、边决策、边行动
+
+ReAct（Reasoning + Acting）把推理和行动交错在同一个循环里：Agent 根据当前上下文决定下一步 Action，调用工具或作用于环境，获得新的 Observation，再根据新观察重新决定下一步。因此它不是“一开始想完再做”，而是典型的**走一步看一步**。
+
+> **Thought / Decision → Action → Observation → 新一轮 Decision → ... → Finish**
+
+它特别适合搜索、浏览器操作、排障等路径事先不完全确定、必须依赖外部反馈才能继续的任务。优点是适应环境变化、能够动态纠错；缺点是多轮串行调用带来延迟和成本，并且如果没有全局计划与 Runtime 约束，容易绕路、重复调用工具甚至陷入循环。
+
+### Plan-and-Solve：先形成全局计划，再逐步执行
+
+Plan-and-Solve 将“想怎么做”和“真正去做”显式拆开：先针对完整任务生成 Plan，把复杂问题拆成多个子步骤，再按照计划逐项 Solve。
+
+> **Task → Plan → Step 1 → Step 2 → ... → Result**
+
+它的价值是结构清晰、全局性更强，适合逻辑路径较稳定、可以预先拆解的复杂任务。相对 ReAct，它不容易被某一步局部 Observation 带偏；但如果初始计划错误，或者执行途中环境发生变化，静态计划也可能失效，因此生产系统常会进一步加入“失败后重新规划”的机制。
+
+### Reflection：完成一版后，再评审并迭代改进
+
+Reflection 关注的不是第一次如何完成任务，而是**如何对已有结果进行事后自我校正**。Agent 先产生初稿或执行轨迹，再由同一个模型或独立 Reviewer 进行 Critique，找出事实、逻辑、遗漏、效率等问题，随后依据反馈 Refinement；这个过程可以循环，直到质量满足条件或达到迭代上限。
+
+> **Execute → Reflect / Critique → Refine → Reflect → ... → Stop**
+
+Reflection 因此更像一种可以包在其他 Agent Loop 外面的“质量优化层”：第一次执行本身可以采用 ReAct，也可以采用 Plan-and-Solve。它通常以更多模型调用、Token 和延迟换取更高的结果质量，适合代码、报告、复杂推理等质量优先于实时性的任务。
+
+简化来看：**ReAct 解决“下一步根据环境做什么”，Plan-and-Solve 解决“整件事按什么步骤做”，Reflection 解决“做完以后怎样发现问题并改好”。** 实际 Agent 往往把三者组合使用，而不是三选一。
+
+相关问题：[[Agent#ReAct 执行循环为什么需要运行时约束？|ReAct 执行循环为什么需要运行时约束？]]。
+
+---
+
+## AutoGen、AgentScope、CAMEL 与 LangGraph 的核心差异是什么？
+
+这四个框架并不是简单的“同类产品四选一”，而是在解决 Agent 系统的不同核心矛盾。按照 [Hello-Agents 第六章](https://hello-agents.datawhale.cc/#/./chapter6/%E7%AC%AC%E5%85%AD%E7%AB%A0%20%E6%A1%86%E6%9E%B6%E5%BC%80%E5%8F%91%E5%AE%9E%E8%B7%B5) 的划分，可以先抓住两个坐标轴：**AutoGen / CAMEL 更偏涌现式协作，LangGraph 更偏显式控制；AgentScope 则额外强调从原型走向生产时的工程化能力。**
+
+### AutoGen
+
+AutoGen 的核心抽象是“**通过对话完成协作**”：把 Product Manager、Coder、Reviewer 等不同角色建模成可对话 Agent，再规定轮询、接管或终止等基本交互规则，让任务在多轮群聊中逐渐完成。它的优点是贴近人类团队协作，角色扩展直观，在需求开放、路径不确定的多专家讨论和协作任务中，不需要预先把每条控制路径都写成代码；代价则是控制流有一部分交给了 LLM 和对话本身，Agent 可能跑题、越权、重复讨论或形成非预期循环，出现问题时还需要从较长的对话轨迹中定位原因。因此 AutoGen 更偏向“**定义谁参与、各自负责什么，让协作从对话中涌现**”，而不是精确规定每一步必须怎样迁移。
+
+### CAMEL
+
+CAMEL 最具代表性的思想是 Role-Playing 与 Inception Prompting：给两个互补角色设定身份、共同目标和协作规则，例如“懂业务但不懂代码的交易员”与“懂代码的 Python 程序员”，然后让它们通过多轮对话自主推进任务。它的优点是轻量，能够用较少的流程代码换来较深的专家协作，尤其适合创意、研究、写作和跨领域讨论；缺点也来自同一设计——效果高度依赖角色和 Prompt，当协作失败时，不容易判断究竟是角色定义、任务描述、交互协议还是模型能力出了问题。原始的双 Agent 范式扩展到大规模多 Agent 后，还会自然遇到消息路由、状态同步和冲突仲裁问题。因此 CAMEL 可以理解为“**用精心设计的角色关系换取协作涌现**”，而不是工程化地控制大型 Agent 网络。
+
+### AgentScope：重点是把多 Agent 从“能聊”推进到“能稳定运行”
+
+**Claim：AgentScope 的主要价值不只是提供另一种 Agent 对话 API，而是把多 Agent 系统当成需要并发、通信、部署、恢复和观测的软件系统来设计。** Hello-Agents 因此把它概括为“工程化优先”的多智能体平台。
+
+它采用消息驱动思路：Agent 之间的交互被抽象成 `Message` 的发送与接收，`MsgHub` 负责消息路由，`Pipeline` 负责编排顺序或并发流程；更上层再由 Runtime、Studio 等能力负责运行和开发支持。这里可以把几个后端概念拆开理解：
+
+- **消息驱动 / 异步解耦**：传统同步函数调用类似 `A()` 调 `B()` 后必须等 B 返回；消息模式更像 A 把任务投递出去，由 B 在能够处理时消费。于是“谁发消息”和“谁处理消息”在时间上可以解耦，更容易并行处理很多任务。这与后端里的[事件驱动架构（Event-Driven Architecture）](https://learn.microsoft.com/zh-cn/azure/architecture/guide/architecture-styles/event-driven)很接近：生产者与消费者不需要彼此紧耦合。不过二者不是完全相同的概念，AgentScope 的消息机制是框架内部多 Agent 通信抽象，而事件驱动架构是更广义的软件架构模式。
+- **位置透明与分布式部署**：Agent A 不必关心 Agent B 和自己是否在同一进程、同一台机器。框架可以把跨机器通信隐藏在统一接口后面。文中提到的 RPC（Remote Procedure Call）可以理解为“**像调用本地函数一样调用另一台机器上的服务**”；可参考 [gRPC 的介绍](https://grpc.io/docs/what-is-grpc/introduction/)。这使不同 Agent 可以拆到不同机器上独立运行。
+- **水平扩展（Horizontal Scaling）**：负载增加时，不一定给一台服务器不断加 CPU / 内存，而是启动更多相同服务实例共同处理请求。例如从 2 个 worker 扩成 10 个 worker；这与“给同一台机器加资源”的垂直扩展相对。Kubernetes 的 [Horizontal Pod Autoscaling](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/) 是这个思想的典型工程实现。
+- **可观测性（Observability）**：系统不是“能打印日志”就够了，而是要能够知道一次请求经过了哪些 Agent、哪一步慢、哪一步报错、吞吐和失败率怎样。后端通常用 Logs、Metrics、Traces 从不同角度观察系统；可参考 [OpenTelemetry Signals](https://opentelemetry.io/docs/concepts/signals/)。对多 Agent 而言，消息天然成为很好的追踪边界，因此比一长串隐式对话更容易记录通信轨迹。
+- **容错与恢复**：消息可以被记录、持久化并在失败时重试，使一次暂时的节点故障不一定让整条任务链彻底丢失。与之相伴的工程问题是重试、消息顺序、重复消费、幂等以及最终一致性：例如某个 Agent 已处理消息但确认信号丢失，系统重试后不能让同一个“扣款”动作执行两遍。这些不是 Agent 独有的问题，而是分布式异步系统普遍要处理的复杂性。
+
+这些能力带来的优点是高并发、模块解耦、故障隔离、分布式扩展和较好的追踪能力，适合需要 7×24 小时运行、Agent 数量较多、服务需要横向扩展的生产系统。缺点则是**工程复杂度显著上升**：开发者需要理解异步编程、消息生命周期、重试与幂等、分布式状态和部署运维；对于“一个 Researcher 调一个 Writer”这样的简单 Agent，使用如此完整的运行时可能属于过度工程化。换句话说，AgentScope 解决的是“**怎样让复杂 Agent 系统稳定地服务**”，而不只是“怎样让 Agent 更聪明地对话”。
+
+### LangGraph：把 Agent 应用变成显式状态图
+
+**Claim：LangGraph 最值得理解的地方，是它不把 Agent 主要看成一个“会说话的角色”，而是把整个 Agent 应用建模为一个随 State 演化的、可循环和可恢复的状态图。** 因而它尤其适合需要明确控制流、重试、审批、审计和长时间运行的 Agent。
+
+1. **State、Node、Edge 是核心抽象。** [Graph API](https://docs.langchain.com/oss/python/langgraph/graph-api) 中，`State` 表示当前应用状态的共享快照；`Node` 是读取状态并执行计算的函数，它可以是 LLM 调用、Tool、普通 Python 逻辑、数据库操作甚至另一个 Agent；`Edge` 决定下一个节点。普通 Edge 表示固定流转，Conditional Edge 则根据当前 State 动态路由。因此 LangGraph 的核心并不是“用图连几个 LLM”，而是**用图显式表达整个 Agent Runtime 的控制流**。
+
+   ```text
+   START → Planner → Executor → Reviewer
+                         ↑          │
+                         └── fail ──┘
+                                    │ pass
+                                    ↓
+                                   END
+   ```
+
+2. **循环是它对 Agent 特别重要的能力。** ReAct 的 Tool Loop、Reflection 的“生成—评审—修改”、代码 Agent 的“实现—测试—修复”，本质上都不是单向 Chain，而是包含条件回边的 Graph。条件边把“什么时候重试、什么时候结束、失败后回哪里”从自然语言协商提升为显式程序逻辑，因此比纯对话式协作更可预测、更容易审计。
+
+3. **State 进一步连接了持久化与 Human-in-the-loop。** LangGraph 的 [Persistence](https://docs.langchain.com/oss/python/langgraph/persistence) 可以在执行过程中保存 Checkpoint，因此流程崩溃后能够从成功步骤恢复，也能保留 thread 的状态历史；[Interrupt](https://docs.langchain.com/oss/python/langgraph/interrupts) 可以在关键动作前暂停图，等待人工批准、编辑或拒绝，然后从同一状态继续。于是一个 Agent 不必只是“一次函数调用”，而可以成为跨多个步骤、甚至跨人工等待时间的持久化工作流。
+
+4. **Subgraph 让多 Agent 仍然能够建立在图模型上。** 一个 Research Agent、Coding Agent 或 Reviewer 可以各自是一个子图，再由上层 Supervisor Graph 负责路由。是否让子 Agent 跨调用保留内部状态，还可以通过 [Subgraph persistence](https://docs.langchain.com/oss/python/langgraph/use-subgraphs) 单独控制。因此 LangGraph 并不是“只支持 Workflow、不支持 Multi-Agent”，而是把 Agent 本身也视为可以组合的计算图。
+
+它的主要优势是控制流清楚、循环与回退自然、状态可追踪、适合 Checkpoint 与人工审批；主要代价是需要提前设计 State Schema、节点职责、边和终止条件，简单任务会显得代码更多，而且“自由讨论后自然产生下一步”的涌现性不如 AutoGen / CAMEL。调试虽然比翻长对话更结构化，但仍需要同时检查节点逻辑、State 更新和边的路由条件。
+
+**总结 Claim：LangGraph 的价值不是替 LLM 增加一种新的推理能力，而是为 Agent 外部的执行过程提供一个可编程的控制平面——模型可以决定部分内容与动作，但哪些状态被保存、允许走哪些路径、失败如何回退、何时必须人工介入，都可以由 Graph Runtime 显式规定。** 这也是它与以“对话涌现”为中心的 AutoGen / CAMEL 最本质的区别。
+
+综合来看，可以把四种框架先记成四句话：**AutoGen 关心“多个角色怎样通过对话协作”；CAMEL 关心“怎样通过角色设定促成深度自主协作”；AgentScope 关心“多 Agent 怎样作为一个分布式软件系统稳定运行”；LangGraph 关心“整个 Agent 执行过程怎样被状态与控制流精确编排”。**
 
 ---
 
