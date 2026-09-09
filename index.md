@@ -9,6 +9,7 @@
 | [[LLM]] | KV Cache 的推理机制与大语言模型基础阅读 |
 | [[Agent]] | 状态、长期记忆、对话管理、冲突处理与 ReAct 循环 |
 | [[Agent框架]] | LangChain、LangGraph、Deep Agents 等框架的抽象层级、设计取舍与选型 |
+| [[Context]] | Agentic Context 的来源、动态治理、压缩、外部化、隔离与框架实现 |
 | [[Memory]] | 工程化 Agent Memory 的框架、写入策略、一致性维护、聚合与遗忘 |
 | [[RAG]] | 数据与索引组织、Embedding、Chunk、RAG 框架、Pipeline 与主流检索架构 |
 | [[评估]] | Agent 的任务结果、执行过程、可靠性与效率 |
