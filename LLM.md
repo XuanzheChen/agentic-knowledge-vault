@@ -1,44 +1,201 @@
 # LLM
 
-[[index|返回知识索引]]
+[[index|返回知识索引]] · [[部署]] · [[对比问题]]
 
-围绕大语言模型的基础机制与阅读疑问整理 Q&A。
+围绕大语言模型的基础机制与阅读疑问整理 Q&A。这里重点记录模型内部的表示、训练与推理机制；与 Agent Runtime、RAG 检索或部署服务相关的问题，通过链接延伸到对应主题。
 
 ## 问题目录
 
 - [[LLM#KV Cache 是什么，为什么能加速逐 Token 生成？|KV Cache 是什么，为什么能加速逐 Token 生成？]]
-- [[LLM#阅读大语言模型基础后，还有哪些问题需要整理？|阅读大语言模型基础后，还有哪些问题需要整理？]]（待补充）
+- [[LLM#标准 RNN 为什么存在长期依赖问题？|标准 RNN 为什么存在长期依赖问题？]]
+- [[LLM#RNN 参数更新明明计算的是 Loss 对参数 θ 的偏导，为什么仍会出现梯度消失或爆炸？|RNN 参数更新明明计算的是 Loss 对参数 θ 的偏导，为什么仍会出现梯度消失或爆炸？]]
+- [[LLM#文本中的词或 Token 是怎样变成 Transformer 输入向量的？|文本中的词或 Token 是怎样变成 Transformer 输入向量的？]]
+- [[LLM#为什么生成式 LLM 常强调 Decoder-only，Encoder 又用在哪里？|为什么生成式 LLM 常强调 Decoder-only，Encoder 又用在哪里？]]
 
 ---
 
 ## KV Cache 是什么，为什么能加速逐 Token 生成？
 
-### 参考回答
+### 参考回答（已本地化）
 
-[ChatGPT 原回答](https://chatgpt.com/share/6a9a7137-7020-83ea-8a03-dd39f1a5d76f)
+**KV Cache 是在 Transformer 自回归推理过程中，将历史 Token 在 Attention 中已经产生的 Key（K）和 Value（V）张量缓存起来。**
 
-**KV Cache 是在 Transformer 自回归推理过程中，将历史 Token 在 Attention 中产生的 Key（K）和 Value（V）张量缓存起来。**
+自回归生成第 `t` 个 Token 时，当前 Token 需要关注此前所有 Token。如果每生成一步都重新计算整段历史的 K/V，就会重复做大量相同计算。使用 KV Cache 后，历史位置的 K/V 直接复用，只计算新增 Token 对应的表示，再与缓存中的历史 K/V 做 Attention，因此显著降低逐 Token 解码的重复计算。
 
-生成新 Token 时，只需计算新增 Token 对应的 K/V，并复用历史 Token 已计算的 K/V，避免重复计算历史部分，从而显著提高逐 Token 的生成速度。
+需要注意，KV Cache 主要减少的是**同一次生成序列内部**的重复计算；它并不意味着下一次独立 API 请求一定能够复用上一次请求的缓存。
 
 延伸阅读：[[部署#KV Cache 为什么会影响显存、并发和长上下文服务？|KV Cache 为什么会影响显存、并发和长上下文服务？]]；[[对比问题#KV Cache 与 Prompt Cache 有什么区别？|KV Cache 与 Prompt Cache 有什么区别？]]。
 
 ---
 
-## 阅读大语言模型基础后，还有哪些问题需要整理？
+## 标准 RNN 为什么存在长期依赖问题？
 
-阅读材料：HelloAgent Blog 的大语言模型基础章节。
+### 阅读背景
 
-### 参考资料
+参考：[Hello-Agents 第三章：大语言模型基础](https://hello-agents.datawhale.cc/#/./chapter3/%E7%AC%AC%E4%B8%89%E7%AB%A0%20%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%9F%BA%E7%A1%80)
 
-- [第三章：大语言模型基础](https://hello-agents.datawhale.cc/)
+### 参考回答（已本地化）
 
-### 参考对话
+标准 RNN 的隐藏状态递推可以简化写成：
 
-- [ChatGPT 原回答](https://chatgpt.com/share/6a8e5bf4-042c-83ec-b097-0d082a3bf303)
+```text
+h_t = f(W_h h_{t-1} + W_x x_t + b)
+```
 
-> 待补充：阅读后的具体问题、结论或案例。
+当前状态 `h_t` 依赖 `h_{t-1}`，而 `h_{t-1}` 又依赖更早的状态。因此，如果一个很早的输入要影响很晚的输出，信息和梯度都必须连续经过很多次状态转移。
+
+反向传播通过时间（BPTT）时，会出现一串 Jacobian 的连乘：
+
+```text
+∂h_T / ∂h_t
+= ∂h_T/∂h_{T-1} · ∂h_{T-1}/∂h_{T-2} · ... · ∂h_{t+1}/∂h_t
+```
+
+每一项都与循环权重 `W_h` 和激活函数导数有关。若这些局部导数的尺度长期小于 1，连乘后会快速趋近于 0，形成**梯度消失**；若长期大于 1，则可能指数放大，形成**梯度爆炸**。
+
+因此，“长期依赖问题”不是说 RNN 理论上完全不能保存远处信息，而是说：**随着依赖距离增加，早期状态对后期 Loss 的训练信号越来越难稳定传回，模型很难学会保留真正需要跨很多时间步的信息。**
+
+LSTM 和 GRU 通过门控与更接近加性的信息通路缓解这一问题，使梯度不必完全依赖长链式乘法，但并不意味着所有长程建模问题都会自动消失。
 
 ---
 
-相关主题：[[Agent]] · [[部署]] · [[对比问题]]
+## RNN 参数更新明明计算的是 Loss 对参数 θ 的偏导，为什么仍会出现梯度消失或爆炸？
+
+是的，真正用于更新网络参数的量确实是：
+
+```text
+∂L / ∂θ
+```
+
+长期依赖问题并不与这一点矛盾。关键在于：**`∂L / ∂θ` 本身就是通过计算图的链式法则得到的，而 RNN 的计算图沿时间反复复用同一组参数。**
+
+以循环权重 `W_h` 为例，它会在每一个时间步参与状态更新。最终 Loss 对 `W_h` 的梯度，需要把参数在不同时间步产生的影响累积起来；其中，较早时间步对较晚 Loss 的影响仍然要经过多次隐藏状态之间的链式传播。
+
+可以粗略理解为：
+
+```text
+参数 θ 在早期状态产生影响
+        ↓
+h_t → h_{t+1} → ... → h_T
+        ↓
+       Loss
+```
+
+所以虽然最外层目标是求 `∂L/∂θ`，但这个偏导内部仍包含诸如 `∂h_T/∂h_t` 这样的长链 Jacobian 连乘。梯度消失或爆炸正是在这些中间链路中产生，最后反映到参数梯度上。
+
+换句话说：
+
+> **“更新的是参数梯度”描述的是优化对象；“梯度消失 / 爆炸”描述的是这个参数梯度通过长计算图被求出来时遇到的数值与信息传播问题。**
+
+---
+
+## 文本中的词或 Token 是怎样变成 Transformer 输入向量的？
+
+### 阅读背景
+
+参考：[Hello-Agents 第三章：大语言模型基础](https://hello-agents.datawhale.cc/#/./chapter3/%E7%AC%AC%E4%B8%89%E7%AB%A0%20%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%9F%BA%E7%A1%80)
+
+### 参考回答（已本地化）
+
+现代 LLM 通常不是“先调用一个独立、训练好的 Embedding 模型，再把向量送入 Transformer”。更典型的路径是：
+
+```text
+原始文本
+  ↓
+Tokenizer
+  ↓
+Token / Subword
+  ↓
+Token ID
+  ↓
+模型内部的 Token Embedding Matrix 查表
+  ↓
+连续向量表示
+  ↓
+加入或注入位置信息
+  ↓
+Transformer Blocks
+```
+
+#### 1. Tokenization：先把文本离散化
+
+Tokenizer 使用 BPE、Unigram、SentencePiece 一类方法，把字符串切成词、子词或字符级 Token，再映射成整数 Token ID。模型真正接收的入口不是“汉字”或“单词”本身，而是一串离散 ID。
+
+#### 2. Token Embedding：用模型自己的 Embedding Matrix 查表
+
+模型内部维护一个可训练矩阵：
+
+```text
+E ∈ R^(V × d)
+```
+
+其中 `V` 是词表大小，`d` 是隐藏维度。一个 Token ID 相当于索引矩阵 `E` 的某一行，得到长度为 `d` 的向量。
+
+这个 Embedding Matrix 通常就是 LLM 参数的一部分，在预训练过程中和 Transformer 其他参数一起学习，而不是额外调用一个类似 RAG Embedding API 的外部模型。有些架构还会让输入 Embedding 与最终输出词表投影共享权重。
+
+因此要区分两种都叫 Embedding 的东西：
+
+- **LLM Token Embedding**：模型内部把 Token ID 映射到隐藏向量，是 Transformer 输入表示的一部分。
+- **RAG / Semantic Embedding Model**：把一段文本编码成用于相似度检索的向量，目标是建立文本级语义空间。参见 [[RAG#Embedding 模型应如何选择，选型不匹配会有什么表现？|RAG 中的 Embedding 模型选型]]。
+
+#### 3. 位置信息：让模型知道 Token 的顺序
+
+仅有 Token Embedding 时，同一组 Token 调换顺序后仍只是同一组向量，因此 Transformer 还必须获得位置关系。
+
+原始 Transformer 会把 Positional Encoding 与 Token Embedding 相加；很多现代 Decoder-only LLM 则使用 RoPE 等方式，把位置信息作用到 Attention 中的 Query / Key，而不一定直接给输入向量加一个位置向量。
+
+所以“Token 到 Transformer 输入向量”的核心不是调用独立 Embedding 服务，而是：**Tokenizer 离散化 → 模型内部 Embedding 查表 → 注入位置关系 → 进入 Transformer。**
+
+---
+
+## 为什么生成式 LLM 常强调 Decoder-only，Encoder 又用在哪里？
+
+### 阅读背景
+
+参考：[Hello-Agents 第三章：大语言模型基础](https://hello-agents.datawhale.cc/#/./chapter3/%E7%AC%AC%E4%B8%89%E7%AB%A0%20%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%9F%BA%E7%A1%80)
+
+### 参考回答（已本地化）
+
+“Decoder-only” 的说法来自原始 Transformer 的 Encoder–Decoder 架构，但现代 GPT 类模型并不是简单把原始 Transformer 的 Decoder 原封不动拿出来使用。
+
+原始 Transformer 可以先区分三种典型结构：
+
+| 架构 | Attention 特点 | 典型用途 / 模型 |
+| --- | --- | --- |
+| **Encoder-only** | 输入内部通常可以双向互相关注 | BERT 一类表示学习、理解、分类、抽取 |
+| **Decoder-only** | 使用 Causal Mask，只允许当前位置关注过去 Token | GPT 类自回归生成式 LLM |
+| **Encoder–Decoder** | Encoder 双向编码输入；Decoder 自回归生成，并通过 Cross-Attention 读取 Encoder 表示 | T5、BART、机器翻译等 Seq2Seq 任务 |
+
+### Encoder 做什么
+
+Encoder 的核心目标是把整段输入编码成上下文化表示。由于它通常可以同时看到一个 Token 左右两侧的信息，因此特别适合“理解一个已经完整给出的输入”，例如分类、匹配、抽取和句子表示。
+
+BERT 就是典型 Encoder-only 模型：它关注如何得到高质量上下文表示，而不是从左到右持续生成后续文本。
+
+### Decoder-only 为什么适合生成式 LLM
+
+生成任务天然符合自回归分解：
+
+```text
+P(x_1, x_2, ..., x_n)
+= Π P(x_t | x_<t)
+```
+
+也就是每一步根据此前 Token 预测下一个 Token。Causal Self-Attention 正好对应这一约束，因此同一套架构可以统一处理“Prompt + 已生成内容 → 下一个 Token”。
+
+对于聊天、代码生成、工具调用等开放式生成任务，不再需要先把输入编码成一套独立的 Encoder 表示，再由 Decoder 解码；Prompt 本身就可以作为同一个自回归序列的前缀。这让训练目标与推理流程非常统一，也是 Decoder-only 成为现代通用生成式 LLM 主流架构的重要原因之一。
+
+### 现代 Decoder-only 与原始 Transformer Decoder 的区别
+
+原始 Transformer Decoder 既有：
+
+1. Masked Self-Attention；
+2. 对 Encoder 输出的 Cross-Attention。
+
+但 GPT 类 Decoder-only 模型没有独立 Encoder，所以通常也没有这层面向 Encoder 输出的 Cross-Attention。它保留的是**因果自注意力 + 前馈网络等 Decoder 风格核心结构**。
+
+因此“强调 Decoder-only”主要是在说明模型采用**单栈、因果、自回归生成**路线；Encoder 并没有消失，而是在 BERT 类表示模型以及 T5 / BART 等 Encoder–Decoder 模型中承担另一种角色。
+
+---
+
+相关主题：[[Agent]] · [[RAG]] · [[部署]] · [[对比问题]]
