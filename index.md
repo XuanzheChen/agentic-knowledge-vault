@@ -9,6 +9,7 @@
 | [LLM](LLM.md) | RNN 长期依赖、Token Embedding、Transformer 架构与 KV Cache 等模型基础机制 |
 | [Agent](Agent.md) | Agent State、持续对话、意图冲突、执行范式与运行时约束 |
 | [Agent框架](Agent框架.md) | LangChain、LangGraph、Deep Agents 等框架的抽象层级、设计取舍与选型 |
+| [通信协议](通信协议.md) | MCP、A2A、ANP 的协议定位，以及 MCP 与 Function Calling、Code Mode 的关系 |
 | [Context](context.md) | Agentic Context 的来源、动态治理、压缩、外部化、隔离与框架实现 |
 | [Memory](Memory.md) | 工程化 Agent Memory 的框架、写入策略、一致性维护、聚合与遗忘 |
 | [RAG](RAG.md) | 数据与索引组织、Embedding、Chunk、RAG 框架、Pipeline 与主流检索架构 |
