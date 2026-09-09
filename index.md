@@ -6,10 +6,10 @@
 
 | 主题 | 内容 |
 | --- | --- |
-| [[LLM]] | KV Cache 的推理机制与大语言模型基础阅读 |
-| [[Agent]] | 状态、长期记忆、对话管理、冲突处理与 ReAct 循环 |
+| [[LLM]] | RNN 长期依赖、Token Embedding、Transformer 架构与 KV Cache 等模型基础机制 |
+| [[Agent]] | Agent State、持续对话、意图冲突、执行范式与运行时约束 |
 | [[Agent框架]] | LangChain、LangGraph、Deep Agents 等框架的抽象层级、设计取舍与选型 |
-| [[Context]] | Agentic Context 的来源、动态治理、压缩、外部化、隔离与框架实现 |
+| [[context|Context]] | Agentic Context 的来源、动态治理、压缩、外部化、隔离与框架实现 |
 | [[Memory]] | 工程化 Agent Memory 的框架、写入策略、一致性维护、聚合与遗忘 |
 | [[RAG]] | 数据与索引组织、Embedding、Chunk、RAG 框架、Pipeline 与主流检索架构 |
 | [[评估]] | Agent 的任务结果、执行过程、可靠性与效率 |
@@ -19,6 +19,5 @@
 
 ## 待继续思考的问题
 
-- [[LLM#阅读大语言模型基础后，还有哪些问题需要整理？|阅读大语言模型基础后，还有哪些问题需要整理？]]（待补充）
 - [[RAG#RAG 解决什么问题，与幻觉有什么关系？|RAG 解决什么问题，与幻觉有什么关系？]]（待补充）
 - [[对比问题#Memory 与 RAG 的作用和增强策略有什么区别？|Memory 与 RAG 的作用和增强策略有什么区别？]]（待补充）
