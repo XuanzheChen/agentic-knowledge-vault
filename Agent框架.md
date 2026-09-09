@@ -1,8 +1,8 @@
 # Agent 框架
 
-[[index|返回知识索引]] · [[Agent|Agent 基础]]
+[[index|返回知识索引]] · [[Agent|Agent 基础]] · [[Context|Context 工程]]
 
-围绕 Agent 开发框架的抽象层级、设计取舍与选型整理。AutoGen、AgentScope、CAMEL 与 LangGraph 的横向比较见 [[Agent#AutoGen、AgentScope、CAMEL 与 LangGraph 的核心差异是什么？|AutoGen、AgentScope、CAMEL 与 LangGraph 的核心差异是什么？]]。
+围绕 Agent 开发框架的抽象层级、设计取舍与选型整理。AutoGen、AgentScope、CAMEL 与 LangGraph 的横向比较见 [[Agent#AutoGen、AgentScope、CAMEL 与 LangGraph 的核心差异是什么？|AutoGen、AgentScope、CAMEL 与 LangGraph 的核心差异是什么？]]。LangChain 与 Deep Agents 的上下文治理实现见 [[context#LangChain 如何设计 Context Engineering？|LangChain 的 Context Engineering]] 与 [[context#Deep Agents 如何管理长时程 Context？|Deep Agents 的长时程 Context 管理]]。
 
 ## 问题目录
 
@@ -36,6 +36,8 @@ Model → Tool → Model → Tool → ... → Finish
 2. **Agent Harness 与 Middleware**：`create_agent` 给出标准 Tool Loop；Middleware 则在模型调用、工具调用和状态更新等位置插入能力，例如动态 Prompt、重试、限流、PII 检查、Human-in-the-loop、Summarization、Memory、Skills、Subagent 等。
 
 可以把 Middleware 类比成 Web 后端的中间件：核心请求流程不变，但每个 Middleware 在流程的特定位置增加一个横切能力，例如认证、日志、重试或限流。对 Agent 而言，它所拦截和增强的对象从 HTTP 请求变成了 **Model Call、Tool Call 和 Agent State**。
+
+更具体的 Context 生命周期控制见 [[context#LangChain 如何设计 Context Engineering？|LangChain 如何设计 Context Engineering？]]。
 
 ### 优点
 
@@ -93,6 +95,8 @@ Subagent 不只是“多一个模型”。它还有一个重要的 **Context Iso
 
 - **并行计算**：多个独立任务可以同时推进。
 - **上下文隔离**：局部任务的过程信息不必全部进入主 Agent Context。
+
+Deep Agents 更完整的 Context Offloading、Summarization、Isolation 与 Long-term Memory 设计见 [[context#Deep Agents 如何管理长时程 Context？|Deep Agents 如何管理长时程 Context？]]。
 
 ### 优点
 
@@ -235,4 +239,4 @@ Runtime                 Framework                 Harness
 
 ---
 
-相关主题：[[Agent]] · [[对比问题]] · [[评估]] · [[部署]]
+相关主题：[[Agent]] · [[Context]] · [[对比问题]] · [[评估]] · [[部署]]
