@@ -22,7 +22,7 @@
 
 仿照 Claude Code 的工作流。
 
-![[Pasted image 20260811114418.png]]
+![[ClaudeCodeAgenticLoop.png]]
 
 ### 参考回答
 
