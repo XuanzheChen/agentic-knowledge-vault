@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+<style>text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}.t{font-size:28px;font-weight:700}.h{font-size:20px;font-weight:700}.s{font-size:16px}.box{fill:#f8fafc;stroke:#64748b;stroke-width:2}.r{fill:#fff0f0;stroke:#dc5a5a;stroke-width:2}.g{fill:#edf9f0;stroke:#38a169;stroke-width:2}.b{fill:#eaf3ff;stroke:#3b82f6;stroke-width:2}.line{stroke:#394b63;stroke-width:2.5;fill:none;marker-end:url(#a)}</style>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#394b63"/></marker></defs>
+<text x="40" y="50" class="t">mHC：把自由的 residual mixing 约束成稳定的路由</text>
+<text x="40" y="85" class="s">核心变化发生在 H_res；H_pre / H_post 也使用有界门控</text>
+<text x="75" y="135" class="h">一般 HC</text>
+<rect x="70" y="160" width="190" height="100" class="r" rx="10"/><text x="105" y="195" class="h">raw H_res</text><text x="88" y="225" class="s">任意 4×4 mixing matrix</text><text x="92" y="248" class="s">可放大 / 衰减 signal</text>
+<path d="M260 210 L390 210" class="line"/><rect x="395" y="160" width="220" height="100" class="r" rx="10"/><text x="420" y="195" class="h">跨很多层连续相乘</text><text x="420" y="225" class="s">H_res^(L)...H_res^(1)</text><text x="420" y="248" class="s">可能破坏 identity-like path</text>
+<path d="M615 210 L720 210" class="line"/><rect x="725" y="160" width="350" height="100" class="r" rx="10"/><text x="755" y="195" class="h">结果：训练稳定性变差</text><text x="755" y="225" class="s">residual stream 幅值可能爆炸/衰减</text><text x="755" y="248" class="s">大规模训练时更难 scale</text>
+<text x="75" y="330" class="h">mHC</text>
+<rect x="70" y="355" width="190" height="105" class="b" rx="10"/><text x="102" y="390" class="h">raw logits</text><text x="93" y="420" class="s">输入相关的 4×4 矩阵</text>
+<path d="M260 407 L350 407" class="line"/><rect x="355" y="350" width="230" height="115" class="b" rx="10"/><text x="390" y="385" class="h">Sinkhorn-Knopp</text><text x="382" y="415" class="s">exp → 行归一化 → 列归一化</text><text x="400" y="440" class="s">重复若干次</text>
+<path d="M585 407 L675 407" class="line"/><rect x="680" y="340" width="250" height="135" class="g" rx="10"/><text x="720" y="375" class="h">H_res：双随机矩阵</text><text x="710" y="405" class="s">非负；每行和 = 1</text><text x="710" y="430" class="s">每列和 = 1</text><text x="710" y="455" class="s">4 路之间做归一化混合</text>
+<path d="M930 407 L1030 407" class="line"/><rect x="1035" y="350" width="130" height="115" class="g" rx="10"/><text x="1058" y="385" class="h">稳定传播</text><text x="1054" y="415" class="s">norm 受控</text><text x="1054" y="440" class="s">乘积仍双随机</text>
+<rect x="70" y="530" width="1095" height="120" class="box" rx="10"/><text x="95" y="565" class="h">为什么这样做？</text><text x="95" y="595" class="s">HC 的表达力来自“多路 + 可学习连接”，但完全自由的 H_res 会失去传统 residual 的稳定 identity mapping 性质。</text><text x="95" y="625" class="s">mHC 保留多路交互，同时把 residual mixing 限制在 Birkhoff polytope，使深层组合时信号不被任意放大。</text>
+</svg>
