@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="820" viewBox="0 0 1300 820">
+<style>text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}.t{font-size:28px;font-weight:700}.h{font-size:20px;font-weight:700}.s{font-size:16px}.box{fill:#f8fafc;stroke:#64748b;stroke-width:2}.b{fill:#eaf3ff;stroke:#3b82f6;stroke-width:2}.g{fill:#edf9f0;stroke:#38a169;stroke-width:2}.o{fill:#fff4e8;stroke:#e58a2c;stroke-width:2}.p{fill:#f3edff;stroke:#805ad5;stroke-width:2}.line{stroke:#394b63;stroke-width:2.5;fill:none;marker-end:url(#a)}</style>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#394b63"/></marker></defs>
+<text x="35" y="48" class="t">Qwen3.8-Flash-Next：Gated HC / Gated Residual</text>
+<text x="35" y="80" class="s">4 条 residual branch；Read 是逐 feature 动态门控，Write 是每 branch 一个动态标量</text>
+<rect x="40" y="130" width="180" height="270" class="box" rx="10"/>
+<text x="66" y="162" class="h">R ∈ R^(4×d)</text>
+<rect x="70" y="185" width="120" height="42" class="b"/><text x="104" y="212" class="s">R1</text>
+<rect x="70" y="235" width="120" height="42" class="g"/><text x="104" y="262" class="s">R2</text>
+<rect x="70" y="285" width="120" height="42" class="o"/><text x="104" y="312" class="s">R3</text>
+<rect x="70" y="335" width="120" height="42" class="p"/><text x="104" y="362" class="s">R4</text>
+<path d="M220 260 L300 260" class="line"/><rect x="305" y="195" width="190" height="130" class="b" rx="10"/><text x="342" y="230" class="h">独立 RMSNorm</text><text x="330" y="260" class="s">得到 R_hat ∈ R^(4×d)</text><text x="330" y="290" class="s">再 flatten / concat</text><text x="330" y="315" class="s">r ∈ R^(4d)</text>
+<path d="M495 260 L575 260" class="line"/><rect x="580" y="170" width="230" height="180" class="g" rx="10"/><text x="620" y="205" class="h">Read Gate MLP</text><text x="610" y="237" class="s">r : 4d → d/8 → 4d</text><text x="610" y="267" class="s">Linear → SiLU → Linear</text><text x="610" y="297" class="s">Sigmoid + reshape</text><text x="610" y="327" class="s">G ∈ R^(4×d)</text>
+<path d="M810 260 L885 260" class="line"/><rect x="890" y="190" width="230" height="140" class="o" rx="10"/><text x="920" y="225" class="h">逐元素 Read</text><text x="920" y="255" class="s">每个 branch × feature</text><text x="920" y="285" class="s">都有自己的 gate</text><text x="920" y="312" class="s">4 路加权平均 → x ∈ R^d</text>
+<path d="M1120 260 L1200 260" class="line"/><rect x="1205" y="205" width="70" height="110" class="p" rx="10"/><text x="1225" y="245" class="h">F</text><text x="1215" y="275" class="s">Attn</text><text x="1215" y="300" class="s">/ MoE</text>
+<text x="40" y="470" class="h">Write 路径：同一个 block output y 写回 4 条 branch，但每条 branch 的写入强度不同</text>
+<rect x="80" y="510" width="180" height="90" class="o" rx="10"/><text x="110" y="545" class="h">block output y</text><text x="120" y="575" class="s">y ∈ R^d</text>
+<rect x="380" y="500" width="230" height="110" class="g" rx="10"/><text x="430" y="535" class="h">Write Gate</text><text x="410" y="565" class="s">r ∈ R^(4d) → Linear → 4</text><text x="420" y="592" class="s">2·sigmoid → s ∈ R^4</text>
+<path d="M260 555 L375 555" class="line"/><path d="M610 555 L710 555" class="line"/>
+<rect x="715" y="480" width="500" height="150" class="box" rx="10"/><text x="750" y="515" class="h">对第 i 条 branch</text><text x="750" y="550" class="s">R_i' = R_i + s_i · y</text><text x="750" y="580" class="s">s_i 是一个 scalar，只控制“这一整条 branch 写多少”</text><text x="750" y="610" class="s">不是逐 feature gate；逐 feature 的细粒度选择只发生在 Read</text>
+<rect x="40" y="680" width="1235" height="105" class="box" rx="10"/><text x="65" y="715" class="h">r 到底是什么？</text><text x="65" y="747" class="s">r 不是新的 residual branch，也不是 projection matrix。它只是把 4 条已归一化 residual stream 展平拼接后的当前状态向量，维度 4d。</text><text x="65" y="773" class="s">Read MLP 和 Write Linear 都读取这个联合状态，因此 gate 会随当前 token、当前层和当前四路内容动态变化。</text>
+</svg>
