@@ -10,6 +10,8 @@
 | [预训练](预训练.md) | 大规模通用数据上的基础能力与知识学习 |
 | [中训练](中训练.md) | 通过更定向的继续训练强化领域、推理、代码、长上下文等基础能力 |
 | [后训练](后训练.md) | SFT、偏好学习、强化学习、自训练与蒸馏等后训练范式及训练数据 |
+| [残差连接](残差连接.md) | 传统 Residual、Hyper-Connections、mHC、Gated Residual 与 AttnRes 的深度信息流 |
+| [注意力机制](注意力机制.md) | 现代 Attention / Linear Attention 机制，目前包括 KDA 及相关架构演进 |
 | [Agent](Agent.md) | Agent State、持续对话、意图冲突、执行范式与运行时约束 |
 | [Agent框架](Agent框架.md) | LangChain、LangGraph、Deep Agents 等框架的抽象层级、设计取舍与选型 |
 | [通信协议](通信协议.md) | MCP、A2A、ANP 的协议定位，以及 MCP 与 Function Calling、Code Mode 的关系 |
