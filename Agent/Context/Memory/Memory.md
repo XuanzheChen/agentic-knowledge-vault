@@ -1,6 +1,6 @@
 # Memory
 
-[[main|返回知识主干]] · [[Agent|Agent 基础]] · [[RAG]]
+[[context|返回上级：Context]] · [[main|返回知识主干]] · [[Agent|Agent 基础]] · [[RAG]]
 
 围绕工程化 Agent Memory 的框架、写入策略、一致性维护、聚合与遗忘机制整理。这里的 Memory 重点是 **Agent 如何从长期交互和执行经验中形成可复用状态**，而不是简单保存 Chat History；检索算法与 RAG 高度重叠的部分只保留必要说明。
 

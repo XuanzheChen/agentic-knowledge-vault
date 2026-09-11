@@ -1,6 +1,6 @@
 # Agent 框架
 
-[[main|返回知识主干]] · [[Agent|Agent 基础]] · [[context|Context 工程]]
+[[Agent|返回上级：Agent]] · [[main|返回知识主干]] · [[context|Context 工程]]
 
 围绕 Agent 开发框架的抽象层级、协作范式、工程取舍与选型整理。经典多 Agent 框架与 LangGraph 的横向比较、LangChain / LangGraph / Deep Agents 的层级关系统一放在这里；具体的 Agent 执行范式与运行时约束见 [[Agent]]。
 
