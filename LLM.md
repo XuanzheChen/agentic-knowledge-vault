@@ -163,42 +163,38 @@ Q、K、V 是否可以理解成输入 Token 或 Hidden State 的线性组合？M
 
 标准 Self-Attention 中，假设一层输入为：
 
-```text
-X ∈ R^(n × d_model)
-```
+$$
+X \in \mathbb{R}^{n \times d_{\text{model}}}
+$$
 
-其中第 `i` 行 `x_i` 是第 `i` 个 Token 在当前层的 Hidden State。Q、K、V 由三个可学习线性投影得到：
+其中第 $i$ 行 $x_i$ 是第 $i$ 个 Token 在当前层的 Hidden State。Q、K、V 由三个可学习线性投影得到：
 
-```text
-Q = XW_Q
-K = XW_K
-V = XW_V
-```
+$$
+Q = XW_Q, \qquad K = XW_K, \qquad V = XW_V
+$$
 
 对单个 Token 来说：
 
-```text
-q_i = x_i W_Q
-k_i = x_i W_K
-v_i = x_i W_V
-```
+$$
+q_i = x_iW_Q, \qquad k_i = x_iW_K, \qquad v_i = x_iW_V
+$$
 
 因此，**Q/K/V 的确是线性组合，但这里首先组合的是一个 Token 自己 Hidden State 的各个特征维度，而不是把不同 Token 直接线性组合起来。**
 
 真正发生跨 Token 信息混合的是 Attention：
 
-```text
-Attention(Q, K, V)
-= softmax(QK^T / √d_k) V
-```
+$$
+\operatorname{Attention}(Q,K,V)
+= \operatorname{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+$$
 
-对于第 `i` 个 Token，其输出可以写成：
+对于第 $i$ 个 Token，其输出可以写成：
 
-```text
-o_i = Σ_j α_ij v_j
-```
+$$
+o_i = \sum_j \alpha_{ij}v_j
+$$
 
-其中 `α_ij` 由 `q_i` 与各个 `k_j` 的匹配程度决定。也就是说：
+其中 $\alpha_{ij}$ 由 $q_i$ 与各个 $k_j$ 的匹配程度决定。也就是说：
 
 ```text
 x_i
@@ -217,27 +213,30 @@ q_i, k_i, v_i
 
 每个 Head 都接收同一组输入 Hidden States，但拥有自己对应的 Q/K/V 投影参数。概念上可写为：
 
-```text
-Q^(h) = X W_Q^(h)
-K^(h) = X W_K^(h)
-V^(h) = X W_V^(h)
-```
+$$
+Q^{(h)} = XW_Q^{(h)}, \qquad
+K^{(h)} = XW_K^{(h)}, \qquad
+V^{(h)} = XW_V^{(h)}
+$$
 
 然后每个 Head 独立计算：
 
-```text
-O^(h) = softmax(Q^(h) K^(h)T / √d_h) V^(h)
-```
+$$
+O^{(h)}
+= \operatorname{softmax}\left(
+\frac{Q^{(h)}{K^{(h)}}^T}{\sqrt{d_h}}
+\right)V^{(h)}
+$$
 
 最后把各个 Head 的结果拼接并再次投影：
 
-```text
-O = Concat(O^(1), ..., O^(H)) W_O
-```
+$$
+O = \operatorname{Concat}\left(O^{(1)},\ldots,O^{(H)}\right)W_O
+$$
 
 因此更准确地说：**每个 Head 都看到了所有输入 Token，但并不是先把所有 Token 混合成自己的 Q/K/V；而是先用该 Head 的投影参数分别表示每个 Token，再由该 Head 的 Attention 在 Token 之间进行信息聚合。** 不同 Head 的投影空间不同，因此可以学习不同类型的关系模式。
 
-还有一个容易混淆的细节：第一层中的 `x_i` 基本来自当前 Token 的 Embedding 和位置信息；到了更深层，`x_i` 已经经过前面多层 Attention，本身已经融合了其他 Token 的上下文。因此深层的 `q_i/k_i/v_i` 虽然在当前层仍只是对 `x_i` 做线性投影，但它们间接包含了此前上下文的信息。
+还有一个容易混淆的细节：第一层中的 $x_i$ 基本来自当前 Token 的 Embedding 和位置信息；到了更深层，$x_i$ 已经经过前面多层 Attention，本身已经融合了其他 Token 的上下文。因此深层的 $q_i/k_i/v_i$ 虽然在当前层仍只是对 $x_i$ 做线性投影，但它们间接包含了此前上下文的信息。
 
 所以核心关系可以记成：
 
