@@ -1,6 +1,6 @@
 # RAG
 
-[[context|返回上级：Context]] · [[main|返回知识主干]] · [[Memory]]
+[[Agent/Context/context|返回上级：Context]] · [[main|返回知识主干]] · [[Memory]]
 
 围绕检索增强生成中的知识组织、Embedding、Chunk 切分、检索架构与工程框架整理 Q&A。
 
