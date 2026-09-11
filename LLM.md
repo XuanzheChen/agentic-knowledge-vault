@@ -10,6 +10,7 @@
 - [[LLM#标准 RNN 为什么存在长期依赖问题？|标准 RNN 为什么存在长期依赖问题？]]
 - [[LLM#RNN 参数更新明明计算的是 Loss 对参数 θ 的偏导，为什么仍会出现梯度消失或爆炸？|RNN 参数更新明明计算的是 Loss 对参数 θ 的偏导，为什么仍会出现梯度消失或爆炸？]]
 - [[LLM#文本中的词或 Token 是怎样变成 Transformer 输入向量的？|文本中的词或 Token 是怎样变成 Transformer 输入向量的？]]
+- [[LLM#Q、K、V 到底是什么，Multi-Head Attention 中每个 Head 的 QKV 来自哪里？|Q、K、V 到底是什么，Multi-Head Attention 中每个 Head 的 QKV 来自哪里？]]
 - [[LLM#为什么生成式 LLM 常强调 Decoder-only，Encoder 又用在哪里？|为什么生成式 LLM 常强调 Decoder-only，Encoder 又用在哪里？]]
 
 ---
@@ -145,6 +146,110 @@ E ∈ R^(V × d)
 原始 Transformer 会把 Positional Encoding 与 Token Embedding 相加；很多现代 Decoder-only LLM 则使用 RoPE 等方式，把位置信息作用到 Attention 中的 Query / Key，而不一定直接给输入向量加一个位置向量。
 
 所以“Token 到 Transformer 输入向量”的核心不是调用独立 Embedding 服务，而是：**Tokenizer 离散化 → 模型内部 Embedding 查表 → 注入位置关系 → 进入 Transformer。**
+
+---
+
+## Q、K、V 到底是什么，Multi-Head Attention 中每个 Head 的 QKV 来自哪里？
+
+### 阅读背景
+
+参考：[Attention Is All You Need](https://arxiv.org/abs/1706.03762)
+
+### 我的疑问
+
+Q、K、V 是否可以理解成输入 Token 或 Hidden State 的线性组合？Multi-Head Attention 中，每个 Head 的 Q、K、V 是否又是所有输入的某种线性组合？
+
+### 参考回答（已本地化）
+
+标准 Self-Attention 中，假设一层输入为：
+
+```text
+X ∈ R^(n × d_model)
+```
+
+其中第 `i` 行 `x_i` 是第 `i` 个 Token 在当前层的 Hidden State。Q、K、V 由三个可学习线性投影得到：
+
+```text
+Q = XW_Q
+K = XW_K
+V = XW_V
+```
+
+对单个 Token 来说：
+
+```text
+q_i = x_i W_Q
+k_i = x_i W_K
+v_i = x_i W_V
+```
+
+因此，**Q/K/V 的确是线性组合，但这里首先组合的是一个 Token 自己 Hidden State 的各个特征维度，而不是把不同 Token 直接线性组合起来。**
+
+真正发生跨 Token 信息混合的是 Attention：
+
+```text
+Attention(Q, K, V)
+= softmax(QK^T / √d_k) V
+```
+
+对于第 `i` 个 Token，其输出可以写成：
+
+```text
+o_i = Σ_j α_ij v_j
+```
+
+其中 `α_ij` 由 `q_i` 与各个 `k_j` 的匹配程度决定。也就是说：
+
+```text
+x_i
+  ↓ 线性投影，只变换当前 Token 的特征
+q_i, k_i, v_i
+  ↓ Attention，与其他 Token 建立关系
+Σ_j α_ij v_j
+```
+
+可以据此区分两个过程：
+
+- **QKV Projection：特征维度的变换（feature mixing）**，每个 Token 独立经过线性层。
+- **Attention：Token 维度的信息混合（token mixing）**，一个位置根据 Attention 权重聚合其他位置的 Value。
+
+### Multi-Head Attention 中发生了什么？
+
+每个 Head 都接收同一组输入 Hidden States，但拥有自己对应的 Q/K/V 投影参数。概念上可写为：
+
+```text
+Q^(h) = X W_Q^(h)
+K^(h) = X W_K^(h)
+V^(h) = X W_V^(h)
+```
+
+然后每个 Head 独立计算：
+
+```text
+O^(h) = softmax(Q^(h) K^(h)T / √d_h) V^(h)
+```
+
+最后把各个 Head 的结果拼接并再次投影：
+
+```text
+O = Concat(O^(1), ..., O^(H)) W_O
+```
+
+因此更准确地说：**每个 Head 都看到了所有输入 Token，但并不是先把所有 Token 混合成自己的 Q/K/V；而是先用该 Head 的投影参数分别表示每个 Token，再由该 Head 的 Attention 在 Token 之间进行信息聚合。** 不同 Head 的投影空间不同，因此可以学习不同类型的关系模式。
+
+还有一个容易混淆的细节：第一层中的 `x_i` 基本来自当前 Token 的 Embedding 和位置信息；到了更深层，`x_i` 已经经过前面多层 Attention，本身已经融合了其他 Token 的上下文。因此深层的 `q_i/k_i/v_i` 虽然在当前层仍只是对 `x_i` 做线性投影，但它们间接包含了此前上下文的信息。
+
+所以核心关系可以记成：
+
+```text
+上一层 Attention：跨 Token 混合上下文
+        ↓
+当前层 Hidden State x_i
+        ↓ W_Q / W_K / W_V
+当前层 q_i / k_i / v_i
+        ↓ Attention
+再次跨 Token 聚合
+```
 
 ---
 
