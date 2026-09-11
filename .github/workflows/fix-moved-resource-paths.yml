@@ -1,0 +1,64 @@
+name: Fix moved-note resource paths
+
+on:
+  push:
+    branches:
+      - reorganize-knowledge-forest
+
+permissions:
+  contents: write
+
+jobs:
+  fix-paths:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reorganize-knowledge-forest
+      - name: Repair relative resource links
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          root = Path('.').resolve()
+          asset_link = re.compile(r'\((assets/[^)]+)\)')
+          changed = []
+
+          for path in Path('.').rglob('*.md'):
+              if '.git' in path.parts:
+                  continue
+              text = path.read_text(encoding='utf-8')
+
+              def repl(match):
+                  target = Path(match.group(1))
+                  absolute = root / target
+                  relative = os.path.relpath(absolute, path.parent.resolve()).replace(os.sep, '/')
+                  return f'({relative})'
+
+              updated = asset_link.sub(repl, text)
+
+              if path == Path('main.md'):
+                  legacy_frontmatter = '---\naliases:\n  - index\n---\n\n'
+                  if updated.startswith(legacy_frontmatter):
+                      updated = updated[len(legacy_frontmatter):]
+
+              if updated != text:
+                  path.write_text(updated, encoding='utf-8')
+                  changed.append(str(path))
+
+          print('\n'.join(changed))
+          PY
+      - name: Remove one-off workflow and commit
+        shell: bash
+        run: |
+          rm .github/workflows/fix-moved-resource-paths.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Fix resource links after tree reorganization"
+            git push origin HEAD:reorganize-knowledge-forest
+          fi
