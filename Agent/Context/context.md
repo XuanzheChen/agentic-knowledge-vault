@@ -1,6 +1,6 @@
 # Context
 
-[[index|返回知识索引]] · [[Agent|Agent 基础]] · [[Agent框架|Agent 框架]]
+[[main|返回知识主干]] · [[Agent|Agent 基础]] · [[Agent框架|Agent 框架]]
 
 围绕现代 Agentic Context 的来源、生命周期、治理策略与框架实现整理。这里的 Context 不等同于 Chat History，也不等同于 Memory 或 RAG；更准确地说，它是**某一次模型调用真正可见的工作集（working set）**，由 Runtime 从更大的 Agent State、Memory、知识库、工具、文件系统和运行环境中动态构造。
 

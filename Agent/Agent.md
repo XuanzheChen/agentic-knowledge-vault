@@ -1,6 +1,6 @@
 # Agent
 
-[[index|返回知识索引]] · [[Agent框架]] · [[context|Context]] · [[Memory]]
+[[main|返回知识主干]] · [[Agent框架]] · [[context|Context]] · [[Memory]]
 
 围绕 Agent 的状态、持续对话、执行范式与运行时约束整理 Q&A。长期记忆的工程实现集中在 [[Memory]]，框架选型与框架层级集中在 [[Agent框架]]。
 
