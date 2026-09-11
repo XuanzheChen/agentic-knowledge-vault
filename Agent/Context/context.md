@@ -1,16 +1,23 @@
 # Context
 
-[[index|返回知识索引]] · [[Agent|Agent 基础]] · [[Agent框架|Agent 框架]]
+[[Agent|返回上级：Agent]] · [[main|返回知识主干]] · [[Agent框架|Agent 框架]]
 
 围绕现代 Agentic Context 的来源、生命周期、治理策略与框架实现整理。这里的 Context 不等同于 Chat History，也不等同于 Memory 或 RAG；更准确地说，它是**某一次模型调用真正可见的工作集（working set）**，由 Runtime 从更大的 Agent State、Memory、知识库、工具、文件系统和运行环境中动态构造。
 
+## 子树
+
+| 子树 | 内容 |
+| --- | --- |
+| [[Memory]] | 长期记忆的形成、检索、更新、聚合与遗忘 |
+| [[RAG]] | 外部知识的组织、索引、检索、重排与增强生成 |
+
 ## 问题目录
 
-- [[context#现代 Agentic Context 应如何理解？|现代 Agentic Context 应如何理解？]]
-- [[context#Agent 的 Context 有哪些来源？|Agent 的 Context 有哪些来源？]]
-- [[context#现代 Agent 应如何治理 Context？|现代 Agent 应如何治理 Context？]]
-- [[context#LangChain 如何设计 Context Engineering？|LangChain 如何设计 Context Engineering？]]
-- [[context#Deep Agents 如何管理长时程 Context？|Deep Agents 如何管理长时程 Context？]]
+- [[Agent/Context/context#现代 Agentic Context 应如何理解？|现代 Agentic Context 应如何理解？]]
+- [[Agent/Context/context#Agent 的 Context 有哪些来源？|Agent 的 Context 有哪些来源？]]
+- [[Agent/Context/context#现代 Agent 应如何治理 Context？|现代 Agent 应如何治理 Context？]]
+- [[Agent/Context/context#LangChain 如何设计 Context Engineering？|LangChain 如何设计 Context Engineering？]]
+- [[Agent/Context/context#Deep Agents 如何管理长时程 Context？|Deep Agents 如何管理长时程 Context？]]
 
 ---
 

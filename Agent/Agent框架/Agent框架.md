@@ -1,6 +1,6 @@
 # Agent 框架
 
-[[index|返回知识索引]] · [[Agent|Agent 基础]] · [[context|Context 工程]]
+[[Agent|返回上级：Agent]] · [[main|返回知识主干]] · [[Agent/Context/context|Context 工程]]
 
 围绕 Agent 开发框架的抽象层级、协作范式、工程取舍与选型整理。经典多 Agent 框架与 LangGraph 的横向比较、LangChain / LangGraph / Deep Agents 的层级关系统一放在这里；具体的 Agent 执行范式与运行时约束见 [[Agent]]。
 
@@ -103,7 +103,7 @@ Model → Tool → Model → Tool → ... → Finish
 
 可以把 Middleware 类比成 Web 后端的中间件：核心请求流程不变，但每个 Middleware 在流程的特定位置增加一个横切能力，例如认证、日志、重试或限流。对 Agent 而言，它所拦截和增强的对象从 HTTP 请求变成了 **Model Call、Tool Call 和 Agent State**。
 
-更具体的 Context 生命周期控制见 [[context#LangChain 如何设计 Context Engineering？|LangChain 如何设计 Context Engineering？]]。
+更具体的 Context 生命周期控制见 [[Agent/Context/context#LangChain 如何设计 Context Engineering？|LangChain 如何设计 Context Engineering？]]。
 
 ### 优点
 
@@ -162,7 +162,7 @@ Subagent 不只是“多一个模型”。它还有一个重要的 **Context Iso
 - **并行计算**：多个独立任务可以同时推进。
 - **上下文隔离**：局部任务的过程信息不必全部进入主 Agent Context。
 
-Deep Agents 更完整的 Context Offloading、Summarization、Isolation 与 Long-term Memory 设计见 [[context#Deep Agents 如何管理长时程 Context？|Deep Agents 如何管理长时程 Context？]]。
+Deep Agents 更完整的 Context Offloading、Summarization、Isolation 与 Long-term Memory 设计见 [[Agent/Context/context#Deep Agents 如何管理长时程 Context？|Deep Agents 如何管理长时程 Context？]]。
 
 ### 优点
 
@@ -305,4 +305,4 @@ Runtime                 Framework                 Harness
 
 ---
 
-相关主题：[[Agent]] · [[context|Context]] · [[对比问题]] · [[评估]] · [[部署]]
+相关主题：[[Agent]] · [[Agent/Context/context|Context]] · [[对比问题]] · [[评估]] · [[部署]]

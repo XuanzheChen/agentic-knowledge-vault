@@ -1,8 +1,17 @@
 # Agent
 
-[[index|返回知识索引]] · [[Agent框架]] · [[context|Context]] · [[Memory]]
+[[main|返回知识主干]] · [[Agent框架]] · [[Agent/Context/context|Context]] · [[Memory]]
 
 围绕 Agent 的状态、持续对话、执行范式与运行时约束整理 Q&A。长期记忆的工程实现集中在 [[Memory]]，框架选型与框架层级集中在 [[Agent框架]]。
+
+## 子树
+
+| 子树 | 内容 |
+| --- | --- |
+| [[Agent框架]] | Agent 开发框架的抽象层级、控制流与工程取舍 |
+| [[通信协议]] | MCP、A2A、ANP 等 Agent 互操作协议 |
+| [[Agent/Context/context|Context]] | Context Engineering，以及 Memory、RAG 等工作集来源与治理 |
+| [[评估]] | Agent 的任务结果、轨迹、可靠性、安全与效率评估 |
 
 ## 问题目录
 
@@ -48,7 +57,7 @@
 
 > **State → Policy / LLM → Action → Environment → Observation → New State**
 
-相关问题：[[Agent#ReAct 执行循环为什么需要运行时约束？|ReAct 执行循环为什么需要运行时约束？]]；[[对比问题#CoT、ToT 与 Agent Thought 有什么区别，哪些发生在 LLM 调用内部？|CoT、ToT 与 Agent Thought 有什么区别，哪些发生在 LLM 调用内部？]]；Context 如何由这些状态动态构造见 [[context#现代 Agentic Context 应如何理解？|现代 Agentic Context 应如何理解？]]。
+相关问题：[[Agent#ReAct 执行循环为什么需要运行时约束？|ReAct 执行循环为什么需要运行时约束？]]；[[对比问题#CoT、ToT 与 Agent Thought 有什么区别，哪些发生在 LLM 调用内部？|CoT、ToT 与 Agent Thought 有什么区别，哪些发生在 LLM 调用内部？]]；Context 如何由这些状态动态构造见 [[Agent/Context/context#现代 Agentic Context 应如何理解？|现代 Agentic Context 应如何理解？]]。
 
 ---
 
@@ -187,4 +196,4 @@ Reflection 因此更像一种可以包在其他 Agent Loop 外面的“质量优
 
 ---
 
-相关主题：[[LLM]] · [[Agent框架]] · [[context|Context]] · [[Memory]] · [[RAG]] · [[评估]] · [[对比问题]]
+相关主题：[[LLM]] · [[Agent框架]] · [[Agent/Context/context|Context]] · [[Memory]] · [[RAG]] · [[评估]] · [[对比问题]]
