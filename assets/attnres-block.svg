@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760">
+<style>text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}.t{font-size:28px;font-weight:700}.h{font-size:20px;font-weight:700}.s{font-size:16px}.box{fill:#f8fafc;stroke:#64748b;stroke-width:2}.b{fill:#eaf3ff;stroke:#3b82f6;stroke-width:2}.g{fill:#edf9f0;stroke:#38a169;stroke-width:2}.o{fill:#fff4e8;stroke:#e58a2c;stroke-width:2}.line{stroke:#394b63;stroke-width:2.5;fill:none;marker-end:url(#a)}</style>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#394b63"/></marker></defs>
+<text x="35" y="48" class="t">Kimi AttnRes：沿“深度轴”做 attention</text>
+<text x="35" y="80" class="s">不是 token 对 token 的序列 attention，而是同一个 token 在不同历史深度表示之间做选择</text>
+<text x="60" y="130" class="h">Full AttnRes（概念）</text>
+<rect x="55" y="155" width="185" height="65" class="b" rx="10"/><text x="85" y="193" class="s">embedding b0 ∈ R^d</text>
+<rect x="55" y="240" width="185" height="65" class="g" rx="10"/><text x="82" y="278" class="s">layer 1 output</text>
+<rect x="55" y="325" width="185" height="65" class="g" rx="10"/><text x="82" y="363" class="s">layer 2 output</text>
+<text x="130" y="430" class="h">⋮</text>
+<rect x="55" y="455" width="185" height="65" class="g" rx="10"/><text x="72" y="493" class="s">layer l-1 output</text>
+<path d="M240 187 L410 187" class="line"/><path d="M240 272 L410 272" class="line"/><path d="M240 357 L410 357" class="line"/><path d="M240 487 L410 487" class="line"/>
+<rect x="415" y="210" width="225" height="240" class="o" rx="10"/><text x="452" y="248" class="h">Depth Attention</text><text x="445" y="285" class="s">每层有 learnable pseudo-query w_l</text><text x="445" y="320" class="s">每个历史 source 先 RMSNorm</text><text x="445" y="355" class="s">与 w_l 做点积得到 score</text><text x="445" y="390" class="s">softmax 只沿“历史深度”维</text><text x="445" y="425" class="s">加权和 → 当前层输入 h_l</text>
+<path d="M640 330 L760 330" class="line"/><rect x="765" y="280" width="180" height="100" class="b" rx="10"/><text x="805" y="318" class="h">h_l ∈ R^d</text><text x="797" y="350" class="s">送入当前子层</text>
+<text x="60" y="590" class="h">Block AttnRes（Kimi K3 实际采用）</text>
+<rect x="55" y="615" width="180" height="70" class="b" rx="10"/><text x="92" y="657" class="s">embedding b0</text>
+<rect x="270" y="615" width="180" height="70" class="g" rx="10"/><text x="310" y="645" class="s">block 1</text><text x="292" y="670" class="s">12 层输出求和 → b1</text>
+<rect x="485" y="615" width="180" height="70" class="g" rx="10"/><text x="525" y="645" class="s">block 2</text><text x="507" y="670" class="s">12 层输出求和 → b2</text>
+<rect x="700" y="615" width="180" height="70" class="o" rx="10"/><text x="732" y="645" class="s">current block</text><text x="715" y="670" class="s">partial sum → b_n^(i-1)</text>
+<path d="M235 650 L270 650" class="line"/><path d="M450 650 L485 650" class="line"/><path d="M665 650 L700 650" class="line"/><path d="M880 650 L1030 650" class="line"/>
+<rect x="1035" y="605" width="210" height="90" class="box" rx="10"/><text x="1060" y="638" class="h">attention over blocks</text><text x="1060" y="670" class="s">memory 从 O(Ld) → O(Nd)</text>
+</svg>
