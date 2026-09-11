@@ -1,19 +1,75 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760">
-<style>text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}.t{font-size:28px;font-weight:700}.h{font-size:20px;font-weight:700}.s{font-size:16px}.box{fill:#f8fafc;stroke:#64748b;stroke-width:2}.b{fill:#eaf3ff;stroke:#3b82f6;stroke-width:2}.g{fill:#edf9f0;stroke:#38a169;stroke-width:2}.o{fill:#fff4e8;stroke:#e58a2c;stroke-width:2}.r{fill:#fff0f0;stroke:#dc5a5a;stroke-width:2}.line{stroke:#394b63;stroke-width:2.5;fill:none;marker-end:url(#a)}</style>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="780" viewBox="0 0 1280 780">
+<style>
+text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#172033}
+.t{font-size:28px;font-weight:700}.h{font-size:20px;font-weight:700}.s{font-size:16px}.sub{font-size:11px}
+.box{fill:#f8fafc;stroke:#64748b;stroke-width:2}.b{fill:#eaf3ff;stroke:#3b82f6;stroke-width:2}.g{fill:#edf9f0;stroke:#38a169;stroke-width:2}.o{fill:#fff4e8;stroke:#e58a2c;stroke-width:2}.r{fill:#fff0f0;stroke:#dc5a5a;stroke-width:2}
+.line{stroke:#394b63;stroke-width:2.5;fill:none;marker-end:url(#a)}
+</style>
 <defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#394b63"/></marker></defs>
-<text x="35" y="48" class="t">Kimi Delta Attention（KDA）：固定大小 recurrent memory 的“衰减 → 擦除 → 写入 → 读取”</text>
-<text x="35" y="80" class="s">示意单个 attention head；t 表示 token 位置，S<tspan baseline-shift="sub" font-size="70%">t</tspan> 是跨 token 递推的记忆矩阵</text>
-<rect x="50" y="145" width="210" height="110" class="b" rx="10"/><text x="78" y="185" class="h">上一时刻记忆 S<tspan baseline-shift="sub" font-size="70%">t−1</tspan></text><text x="92" y="218" class="s">shape：d<tspan baseline-shift="sub" font-size="70%">k</tspan> × d<tspan baseline-shift="sub" font-size="70%">v</tspan></text>
-<path d="M260 200 L350 200" class="line"/>
-<rect x="355" y="130" width="210" height="140" class="g" rx="10"/><text x="420" y="170" class="h">① Forget</text><text x="385" y="205" class="s">α<tspan baseline-shift="sub" font-size="70%">t</tspan>：按 key-channel 的</text><text x="385" y="233" class="s">细粒度 decay gate</text><text x="385" y="258" class="s">先衰减旧 memory</text>
+
+<text x="35" y="48" class="t">Kimi Delta Attention（KDA）：固定大小 recurrent memory</text>
+<text x="35" y="80" class="s">单个 attention head；沿 token 轴递推：Forget → Delta Erase → Write → Read</text>
+
+<!-- Previous memory -->
+<rect x="50" y="145" width="220" height="110" class="b" rx="10"/>
+<text x="82" y="182" class="h">上一时刻记忆</text>
+<text x="112" y="220" class="h">S</text><text x="128" y="226" class="sub">t−1</text>
+<text x="158" y="220" class="s">key dim × value dim</text>
+
+<!-- Forget -->
+<path d="M270 200 L350 200" class="line"/>
+<rect x="355" y="130" width="210" height="140" class="g" rx="10"/>
+<text x="420" y="168" class="h">① Forget</text>
+<text x="386" y="205" class="s">α</text><text x="398" y="211" class="sub">t</text>
+<text x="413" y="205" class="s">：按 key channel</text>
+<text x="386" y="233" class="s">做细粒度 decay</text>
+<text x="386" y="258" class="s">先衰减旧 memory</text>
+
+<!-- Delta erase -->
 <path d="M565 200 L655 200" class="line"/>
-<rect x="660" y="130" width="220" height="140" class="r" rx="10"/><text x="730" y="170" class="h">② Delta Erase</text><text x="692" y="205" class="s">β<tspan baseline-shift="sub" font-size="70%">t</tspan> 与 k<tspan baseline-shift="sub" font-size="70%">t</tspan> 决定</text><text x="692" y="233" class="s">沿当前 key 方向擦除</text><text x="692" y="258" class="s">旧的冲突内容</text>
+<rect x="660" y="130" width="220" height="140" class="r" rx="10"/>
+<text x="715" y="168" class="h">② Delta Erase</text>
+<text x="690" y="205" class="s">β</text><text x="702" y="211" class="sub">t</text>
+<text x="717" y="205" class="s">与 k</text><text x="755" y="211" class="sub">t</text>
+<text x="770" y="205" class="s">决定</text>
+<text x="690" y="233" class="s">沿当前 key 方向擦除</text>
+<text x="690" y="258" class="s">旧的冲突内容</text>
+
+<!-- Write -->
 <path d="M880 200 L970 200" class="line"/>
-<rect x="975" y="130" width="245" height="140" class="o" rx="10"/><text x="1050" y="170" class="h">③ Write</text><text x="1005" y="205" class="s">把当前 k<tspan baseline-shift="sub" font-size="70%">t</tspan> ⊗ v<tspan baseline-shift="sub" font-size="70%">t</tspan></text><text x="1005" y="233" class="s">按 β<tspan baseline-shift="sub" font-size="70%">t</tspan> 写入 memory</text><text x="1005" y="258" class="s">得到新的 S<tspan baseline-shift="sub" font-size="70%">t</tspan></text>
-<path d="M1095 270 L1095 360" class="line"/>
-<rect x="965" y="365" width="255" height="115" class="b" rx="10"/><text x="1050" y="405" class="h">S<tspan baseline-shift="sub" font-size="70%">t</tspan></text><text x="995" y="438" class="s">固定大小：d<tspan baseline-shift="sub" font-size="70%">k</tspan> × d<tspan baseline-shift="sub" font-size="70%">v</tspan></text><text x="995" y="465" class="s">不随上下文长度增长</text>
-<path d="M965 422 L815 422" class="line"/>
-<rect x="585" y="365" width="225" height="115" class="g" rx="10"/><text x="655" y="405" class="h">④ Read</text><text x="615" y="438" class="s">当前 query q<tspan baseline-shift="sub" font-size="70%">t</tspan></text><text x="615" y="465" class="s">从 S<tspan baseline-shift="sub" font-size="70%">t</tspan> 读取 → o<tspan baseline-shift="sub" font-size="70%">t</tspan></text>
-<rect x="50" y="335" width="410" height="170" class="box" rx="10"/><text x="80" y="375" class="h">当前 token x<tspan baseline-shift="sub" font-size="70%">t</tspan> 产生控制量</text><text x="80" y="410" class="s">q<tspan baseline-shift="sub" font-size="70%">t</tspan>：读什么　k<tspan baseline-shift="sub" font-size="70%">t</tspan>：写到哪个方向　v<tspan baseline-shift="sub" font-size="70%">t</tspan>：写什么</text><text x="80" y="442" class="s">β<tspan baseline-shift="sub" font-size="70%">t</tspan>：当前 key 的更新/擦除强度</text><text x="80" y="474" class="s">α<tspan baseline-shift="sub" font-size="70%">t</tspan>：不同 key-channel 的长期遗忘速度</text>
-<rect x="50" y="565" width="1170" height="135" class="box" rx="10"/><text x="80" y="605" class="h">为什么叫 Delta Attention？</text><text x="80" y="637" class="s">它不是简单“衰减旧 S<tspan baseline-shift="sub" font-size="70%">t−1</tspan> 后再累加 k<tspan baseline-shift="sub" font-size="70%">t</tspan> ⊗ v<tspan baseline-shift="sub" font-size="70%">t</tspan>”；写入前先沿 k<tspan baseline-shift="sub" font-size="70%">t</tspan> 对应方向删除旧预测，再写入新 value，类似 delta-rule 的误差修正。</text><text x="80" y="670" class="s">优点：序列长度增加时 recurrent state 大小不变；代价：历史 token 被压缩进有限状态，精确内容寻址能力弱于 full attention，因此 Kimi K3 与 Gated MLA 混合使用。</text>
+<rect x="975" y="130" width="245" height="140" class="o" rx="10"/>
+<text x="1050" y="168" class="h">③ Write</text>
+<text x="1005" y="205" class="s">把当前 k</text><text x="1072" y="211" class="sub">t</text>
+<text x="1088" y="205" class="s">⊗ v</text><text x="1120" y="211" class="sub">t</text>
+<text x="1005" y="233" class="s">按 β</text><text x="1038" y="239" class="sub">t</text><text x="1052" y="233" class="s"> 写入 memory</text>
+<text x="1005" y="258" class="s">得到新的 S</text><text x="1090" y="264" class="sub">t</text>
+
+<!-- New state -->
+<path d="M1095 270 L1095 350" class="line"/>
+<rect x="965" y="355" width="255" height="120" class="b" rx="10"/>
+<text x="1040" y="395" class="h">新记忆状态 S</text><text x="1161" y="401" class="sub">t</text>
+<text x="995" y="432" class="s">固定大小：key dim × value dim</text>
+<text x="995" y="460" class="s">不随上下文长度增长</text>
+
+<!-- Read -->
+<path d="M965 415 L820 415" class="line"/>
+<rect x="585" y="355" width="230" height="120" class="g" rx="10"/>
+<text x="655" y="395" class="h">④ Read</text>
+<text x="615" y="432" class="s">query q</text><text x="668" y="438" class="sub">t</text><text x="684" y="432" class="s">读取 S</text><text x="735" y="438" class="sub">t</text>
+<text x="615" y="460" class="s">得到输出 o</text><text x="707" y="466" class="sub">t</text>
+
+<!-- Controls -->
+<rect x="50" y="330" width="420" height="185" class="box" rx="10"/>
+<text x="80" y="370" class="h">当前 token 产生的控制量</text>
+<text x="80" y="407" class="s">q</text><text x="92" y="413" class="sub">t</text><text x="108" y="407" class="s">：读什么</text>
+<text x="200" y="407" class="s">k</text><text x="212" y="413" class="sub">t</text><text x="228" y="407" class="s">：写到哪个方向</text>
+<text x="80" y="439" class="s">v</text><text x="92" y="445" class="sub">t</text><text x="108" y="439" class="s">：写什么</text>
+<text x="200" y="439" class="s">β</text><text x="212" y="445" class="sub">t</text><text x="228" y="439" class="s">：擦除 / 写入强度</text>
+<text x="80" y="471" class="s">α</text><text x="92" y="477" class="sub">t</text><text x="108" y="471" class="s">：不同 key channel 的长期遗忘速度</text>
+
+<!-- Explanation -->
+<rect x="50" y="565" width="1170" height="150" class="box" rx="10"/>
+<text x="80" y="605" class="h">为什么叫 Delta Attention？</text>
+<text x="80" y="640" class="s">它不是简单“衰减旧状态后再累加当前 KV”。写入前先沿当前 key 方向删除旧预测，再把新的 value 写入，</text>
+<text x="80" y="668" class="s">因此更像 delta-rule 的误差修正。历史信息被压缩进固定大小状态，长上下文更省内存，但精确回看任意历史 token 的能力弱于 Full Attention。</text>
 </svg>
