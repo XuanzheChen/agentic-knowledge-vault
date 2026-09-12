@@ -16,6 +16,7 @@
 ## 问题目录
 
 - [[LLM#KV Cache 是什么，为什么能加速逐 Token 生成？|KV Cache 是什么，为什么能加速逐 Token 生成？]]
+- [[LLM#LLM 的上下文窗口大小由什么决定？计算资源足够时输入 Sequence 可以无限长吗？|LLM 的上下文窗口大小由什么决定？计算资源足够时输入 Sequence 可以无限长吗？]]
 - [[LLM#标准 RNN 为什么存在长期依赖问题？|标准 RNN 为什么存在长期依赖问题？]]
 - [[LLM#RNN 参数更新明明计算的是 Loss 对参数 θ 的偏导，为什么仍会出现梯度消失或爆炸？|RNN 参数更新明明计算的是 Loss 对参数 θ 的偏导，为什么仍会出现梯度消失或爆炸？]]
 - [[LLM#文本中的词或 Token 是怎样变成 Transformer 输入向量的？|文本中的词或 Token 是怎样变成 Transformer 输入向量的？]]
@@ -35,6 +36,67 @@
 需要注意，KV Cache 主要减少的是**同一次生成序列内部**的重复计算；它并不意味着下一次独立 API 请求一定能够复用上一次请求的缓存。
 
 延伸阅读：[[部署#KV Cache 为什么会影响显存、并发和长上下文服务？|KV Cache 为什么会影响显存、并发和长上下文服务？]]；[[对比问题#KV Cache 与 Prompt Cache 有什么区别？|KV Cache 与 Prompt Cache 有什么区别？]]。
+
+---
+
+## LLM 的上下文窗口大小由什么决定？计算资源足够时输入 Sequence 可以无限长吗？
+
+不能简单理解成“只要计算资源足够，Sequence 就可以无限长”。**LLM 的上下文窗口是模型结构、位置编码、训练时见过的序列长度，以及推理系统资源约束共同决定的。**
+
+### 1. Attention 的计算与存储成本会随序列增长
+
+对长度为 $n$ 的输入，标准 Full Attention 需要计算：
+
+$$
+\operatorname{Attention}(Q,K,V)
+=\operatorname{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+$$
+
+其中 $QK^T$ 会形成一个 $n\times n$ 的注意力矩阵，因此标准 Attention 的主要计算复杂度随序列长度近似按 $O(n^2)$ 增长。序列从 8K 增长到 16K，Attention 相关计算量不是简单翻倍，而会接近四倍。
+
+自回归推理使用 KV Cache 后，不需要在每一步重新计算历史 Token 的 K/V，但缓存本身仍会随上下文长度近似线性增长。因此长上下文不仅影响单次计算，也直接影响显存、并发与服务成本。参见 [[注意力机制#为什么注意力结构会从 MHA 发展到 GQA，再到 MLA？|注意力机制中的长序列成本]] 和 [[部署#KV Cache 为什么会影响显存、并发和长上下文服务？|KV Cache 的部署约束]]。
+
+### 2. 更本质的限制之一是位置表示
+
+Transformer 的 Attention 本身并不知道 Token 的先后顺序，因此必须注入位置信息。
+
+如果模型使用固定长度的 Learned Absolute Position Embedding，例如只学习了位置 $1\sim4096$ 的向量，那么第 4097 个位置甚至没有对应的已学习位置参数，这会形成很直接的长度上限。
+
+现代 LLM 常使用 RoPE。RoPE 的旋转位置可以从数学上继续计算到训练长度之外，所以它不像固定位置表那样天然具有一个同样硬的边界。但**能够计算更大的位置编号，不等于模型已经学会处理这么远的位置关系**。当模型进入训练阶段没有见过的位置和相对距离时，会出现 positional OOD；Position Interpolation、NTK-aware Scaling、YaRN 等方法，本质上都在尝试缓解这种长上下文外推问题。参见 [[RoPE#RoPE 的现代演进脉络是什么样的？|RoPE 的长上下文扩展]]。
+
+### 3. “能够输入”不等于“模型能够可靠利用”
+
+假设一个模型训练时主要见过最长 8K 的序列，即使推理代码和位置编码允许直接塞入 100K、1M Token，模型也没有因此自动获得稳定的百万 Token 建模能力。长上下文模型通常还需要长序列继续预训练、长上下文微调或专门的数据构造，让模型适应新的长度分布。
+
+因此要区分两个概念：
+
+- **Context Window**：系统允许模型访问的最大 Token 范围。
+- **Effective Context**：模型实际上能够稳定检索、关联并用于推理的信息范围。
+
+二者并不相等。一个模型“看得到”很长的上下文，不代表它对所有位置的信息利用能力都同样可靠；超长序列中的远距离检索、多跳关联和信息整合仍可能明显变难。
+
+### 4. 如果计算资源无限，能否无限长？
+
+即使暂时忽略 GPU 显存和算力，也仍不能把一个已经训练好的固定模型视为拥有“无限上下文”。原因在于：
+
+1. 模型的位置表示和架构必须能够定义这些位置；
+2. 模型训练时必须学会处理足够长的依赖关系，而不是只在数学上允许输入；
+3. 长序列中的有效检索与信息整合能力并不会因为上下文窗口扩大而自动保持不变。
+
+所以更准确地说：
+
+$$
+\text{Context Window}
+\approx
+\text{Architecture / Position Encoding}
++\text{Training Length Distribution}
++\text{Compute and Memory Constraints}
++\text{Serving Constraints}
+$$
+
+> **计算资源主要决定“长序列是否算得动”，但不能单独决定“模型是否会正确使用这么长的序列”。上下文窗口描述的是可访问范围，而不是无限可靠的记忆或推理能力。**
+
+参考：[Attention Is All You Need](https://arxiv.org/abs/1706.03762) · [RoFormer](https://arxiv.org/abs/2104.09864) · [Extending Context Window of Large Language Models via Position Interpolation](https://arxiv.org/abs/2306.15595) · [Lost in the Middle](https://arxiv.org/abs/2307.03172)
 
 ---
 
