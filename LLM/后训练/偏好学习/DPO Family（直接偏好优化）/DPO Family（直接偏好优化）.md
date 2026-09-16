@@ -2,7 +2,7 @@
 
 [[LLM/后训练/偏好学习/偏好学习|返回上级：偏好学习]] · [[main|返回知识主干]]
 
-围绕 DPO（Direct Preference Optimization）及其后续变体整理直接偏好优化方法。当前重点记录 DPO、IPO、SimPO 与 ORPO 的数学原理、改进关系、工程取舍和仍然存在的局限，后续再逐步扩展 KTO 等方法。
+围绕 DPO（Direct Preference Optimization）及其后续变体整理直接偏好优化方法。当前重点记录 DPO、IPO、SimPO、ORPO 与 CPO 的数学原理、改进关系、工程取舍和仍然存在的局限，后续再逐步扩展 KTO 等方法。
 
 ## 问题目录
 
@@ -17,6 +17,9 @@
 - [[DPO Family（直接偏好优化）#ORPO 的基本原理是什么？|ORPO 的基本原理是什么？]]
 - [[DPO Family（直接偏好优化）#ORPO 的核心 Trade-off 是什么？|ORPO 的核心 Trade-off 是什么？]]
 - [[DPO Family（直接偏好优化）#ORPO 仍然存在哪些缺点？|ORPO 仍然存在哪些缺点？]]
+- [[DPO Family（直接偏好优化）#CPO 的基本原理是什么？|CPO 的基本原理是什么？]]
+- [[DPO Family（直接偏好优化）#CPO 与 ORPO、SimPO 的设计差异是什么？|CPO 与 ORPO、SimPO 的设计差异是什么？]]
+- [[DPO Family（直接偏好优化）#CPO 的核心 Trade-off 与缺点是什么？|CPO 的核心 Trade-off 与缺点是什么？]]
 
 ---
 
@@ -973,3 +976,304 @@ ORPO 仍然优化的是由 Preference Pair 与 SFT Demonstration 共同定义的
 > **在 Chosen 上做 SFT，用强正向信号学习期望分布；同时用 Odds-Ratio Loss 对 Rejected 施加较弱的相对惩罚，从而把 Instruction / Domain Adaptation 与 Preference Alignment 合并成一个 Reference-free 的训练阶段。**
 
 它的核心 trade-off 也来自这里：**训练更简单、Chosen likelihood 有明确正向监督，但模型因此更依赖 Chosen 的绝对质量，并失去显式 Reference / KL Anchor。**
+
+---
+
+## CPO 的基本原理是什么？
+
+这里的 CPO 指 **Contrastive Preference Optimization**。它最初用于机器翻译，但目标函数本身是对 DPO 的一种 Reference-free 近似，因此也可以推广到一般的 Chosen / Rejected Preference Data。参考：[Contrastive Preference Optimization](https://arxiv.org/abs/2401.08417)。
+
+### 1. 从 DPO 的 Reference Model 开销出发
+
+DPO 的 Preference Logit 包含：
+
+$$
+\beta
+\left[
+\log\frac{\pi_\theta(y_w\mid x)}{\pi_{\mathrm{ref}}(y_w\mid x)}
+-
+\log\frac{\pi_\theta(y_l\mid x)}{\pi_{\mathrm{ref}}(y_l\mid x)}
+\right]
+$$
+
+因此需要额外保存并 Forward Frozen Reference Model。CPO 希望把 Reference Model 去掉，但它不是简单把 $\pi_{\mathrm{ref}}$ 从公式中删除。
+
+CPO 先把 Reference Policy 设成 Uniform Prior $U$。由于对同一 Prompt 的 Chosen / Rejected，Uniform Reference 对两者提供相同常数，因此在差分中抵消，Preference Term 变成：
+
+$$
+\boxed{
+\mathcal L_{\mathrm{prefer}}
+=
+-
+\mathbb E_{(x,y_w,y_l)\sim\mathcal D}
+\left[
+\log\sigma
+\left(
+\beta
+\left[
+\log\pi_\theta(y_w\mid x)
+-
+\log\pi_\theta(y_l\mid x)
+\right]
+\right)
+\right]
+}
+$$
+
+也就是直接要求当前 Policy 的 Chosen Log-Likelihood 高于 Rejected。参考：[CPO，Sec. 3.2](https://arxiv.org/abs/2401.08417)。
+
+### 2. Uniform Reference 是 DPO 的 Surrogate，而不是严格等价替换
+
+CPO 论文给出一个重要理论说明：如果把理想 Reference Policy 设为真正符合 Preferred Data Distribution 的 $\pi_w$，那么在论文条件下，使用 Uniform Reference 得到的目标可以作为相应 DPO Loss 的 Upper-bound Surrogate。也就是说，CPO 通过最小化这个更容易计算的上界来近似原本理想的 Reference-based Preference Objective。
+
+因此更准确的理解不是“Reference Model 没有用”，而是：
+
+> **CPO 用一个可直接训练的 Uniform-reference surrogate 替代了不可获得的理想 Preferred Policy Reference。**
+
+这个理论关系依赖论文关于理想 Preferred Policy $\pi_w$ 的假设，不能把 CPO 与经典 DPO 视为无条件严格等价。参考：[CPO，Theorem 1](https://arxiv.org/abs/2401.08417)。
+
+### 3. 仅做 Contrastive Preference 仍不能保证 Chosen 自身概率足够高
+
+如果只优化：
+
+$$
+\log\pi_\theta(y_w\mid x)
+-
+\log\pi_\theta(y_l\mid x)
+$$
+
+Preference Margin 可以通过提高 Chosen，也可以通过更快地压低 Rejected 来改善。因此“Chosen 相对更优”并不自动保证 Policy 真正靠近 Preferred Data Distribution。
+
+CPO 因此再加入 **Behavior Cloning（BC）Regularizer**。论文从约束：
+
+$$
+\mathbb E_{(x,y_w)\sim\mathcal D}
+\left[
+D_{\mathrm{KL}}
+\left(
+\pi_w(y_w\mid x)
+\Vert
+\pi_\theta(y_w\mid x)
+\right)
+\right]
+<\epsilon
+$$
+
+出发，最终把它化成对 Preferred Response 的 NLL / SFT Term：
+
+$$
+\boxed{
+\mathcal L_{\mathrm{NLL}}
+=
+-
+\mathbb E_{(x,y_w)\sim\mathcal D}
+\left[
+\log\pi_\theta(y_w\mid x)
+\right]
+}
+$$
+
+参考：[CPO，Eq. 4–5](https://arxiv.org/abs/2401.08417)。
+
+### 4. 最终 CPO = Preference Contrast + Preferred Behavior Cloning
+
+原论文的核心目标可以写成：
+
+$$
+\boxed{
+\mathcal L_{\mathrm{CPO}}
+=
+\mathcal L_{\mathrm{prefer}}
++
+\mathcal L_{\mathrm{NLL}}
+}
+$$
+
+工程实现也常把 BC / NLL 权重显式写成 $\alpha$：
+
+$$
+\mathcal L_{\mathrm{CPO}}
+=
+\mathcal L_{\mathrm{prefer}}
++
+\alpha\mathcal L_{\mathrm{NLL}}
+$$
+
+其中原论文对应的基本形式可视为 $\alpha=1$；例如 Hugging Face TRL 的 CPO Trainer 提供 `cpo_alpha` 调整 BC Regularizer 权重。参考：[TRL CPO Trainer](https://huggingface.co/docs/trl/cpo_trainer)。
+
+因此 CPO 可以压缩成：
+
+> **直接用当前 Policy 的 Chosen / Rejected Log-Likelihood 做 Contrastive Preference Learning，再用 Chosen NLL 把 Policy 拉向 Preferred Data Distribution。**
+
+---
+
+## CPO 与 ORPO、SimPO 的设计差异是什么？
+
+CPO、ORPO、SimPO 都可以做到 Reference-free，但“去掉 Reference 之后拿什么来定义偏好、又拿什么来稳定 Chosen”并不一样。
+
+### 1. CPO 与 ORPO：都包含正向 Chosen 学习，但 Preference Score 不同
+
+CPO 的 Preference Term 比较：
+
+$$
+\log\pi_\theta(y_w\mid x)
+-
+\log\pi_\theta(y_l\mid x)
+$$
+
+也就是 **Log-Probability Difference**。
+
+ORPO 则比较：
+
+$$
+\log\operatorname{odds}_\theta(y_w\mid x)
+-
+\log\operatorname{odds}_\theta(y_l\mid x)
+$$
+
+即 **Log-Odds Difference**。
+
+两者都显式包含 Chosen 的正向学习：CPO 把它解释为 Behavior Cloning Regularizer；ORPO 则从一开始就把 SFT 与 Preference Alignment 合并为 Monolithic Objective。
+
+因此两者虽然都可以概括成“Chosen NLL + Reference-free Preference Contrast”，但理论出发点不同：
+
+- **CPO**：从 DPO 的 Reference 开销出发，用 Uniform-reference Surrogate + BC Regularizer 近似理想 Preference Objective；
+- **ORPO**：从 SFT 不能充分区分 Preferred / Rejected 行为出发，用 Odds-Ratio Penalty 把 SFT 与 Preference Alignment 合为一个阶段。
+
+### 2. CPO 与 SimPO：Preference Contrast 接近，但 Anchor 不同
+
+CPO 的 Preference 部分是：
+
+$$
+-\log\sigma
+\left(
+\beta
+\left[
+\log\pi_\theta(y_w\mid x)
+-
+\log\pi_\theta(y_l\mid x)
+\right]
+\right)
+$$
+
+SimPO 则把 Score 明确定义为长度归一化的 Average Log Probability，并额外加入 Margin $\gamma$：
+
+$$
+-\log\sigma
+\left(
+\beta
+\left[
+\frac{1}{|y_w|}\log\pi_\theta(y_w\mid x)
+-
+\frac{1}{|y_l|}\log\pi_\theta(y_l\mid x)
+\right]
+-
+\gamma
+\right)
+$$
+
+SimPO 不使用 CPO 的 BC / NLL Regularizer；当前 TRL 文档也明确把 SimPO 描述为一种加入 Reward Margin、支持 Length Normalization、且不使用 BC Regularization 的 CPO-family alternative loss。参考：[TRL CPO Trainer](https://huggingface.co/docs/trl/cpo_trainer)。
+
+因此两者最核心的区别可以概括为：
+
+- **CPO**：用 Chosen NLL / BC 来确保 Policy 靠近 Preferred Distribution；
+- **SimPO**：不用 BC，而用 Average Log Probability + Target Margin 来强化 Preference Separation。
+
+### 3. 三者放在同一张设计表中
+
+| 维度 | CPO | ORPO | SimPO |
+| --- | --- | --- | --- |
+| Reference Model | 不需要 | 不需要 | 不需要 |
+| Preference Score | Chosen / Rejected Log Probability Difference | Chosen / Rejected Log-Odds Difference | Average Log-Probability Difference |
+| Chosen NLL / SFT | **有，BC Regularizer** | **有，Monolithic SFT 项** | 无 |
+| Length Normalization | 原始核心目标未专门加入 | 使用 Average Log-Likelihood | **核心设计** |
+| 显式 Margin | 无 | 无 | **有 $\gamma$** |
+| 主要设计动机 | Reference-free DPO surrogate + Preferred BC | SFT 与 Preference Alignment 单阶段合并 | Reference-free + Reward-Generation 对齐 + Length Normalization |
+
+所以 CPO、ORPO、SimPO 更适合视为 DPO Design Space 中不同组件的组合，而不是严格的“前代 → 后代”关系。
+
+---
+
+## CPO 的核心 Trade-off 与缺点是什么？
+
+CPO 最核心的交换关系来自它加入的 Behavior Cloning Regularizer：**它能保证 Preferred Response 获得直接正向 likelihood 信号，但也因此更依赖 Chosen 的绝对质量。**
+
+### 1. BC Anchor 能减少纯相对优化问题，但放大错误 Chosen 的伤害
+
+仅有 Pair-wise Contrast 时，Margin 变好并不意味着 Chosen 自身 likelihood 一定提高。CPO 增加：
+
+$$
+-\log\pi_\theta(y_w\mid x)
+$$
+
+可以直接把 Policy 拉向 Preferred Data Distribution，这是它相比纯 Preference-only Objective 的重要优点。
+
+但如果：
+
+$$
+y_w=\text{差},\qquad y_l=\text{更差}
+$$
+
+CPO 不仅会学习 $y_w\succ y_l$，还会直接模仿那个“只是相对较好”的 $y_w$。因此错误 Label 或低质量 Chosen 会同时污染 **Contrastive Ranking Signal** 和 **Behavior Cloning Signal**。
+
+### 2. Reference-free 提高效率，但失去显式 Reference / KL Anchor
+
+CPO 不需要 Frozen Reference Model，降低了显存与 Forward 成本；但同时也没有 DPO / IPO 中显式的 Reference-based 行为约束。
+
+BC 项提供的是“靠近 Preferred Data Distribution”的 Anchor，而不是“不要偏离原 Policy 太远”的 Reference / KL Anchor，两者含义不同。因此 Reference-free 不是无代价的简化。
+
+### 3. Uniform-reference Surrogate 有理论假设，不是与 DPO 无条件等价
+
+CPO 的理论解释依赖一个理想 Preferred Policy $\pi_w$，并证明 Uniform-reference Objective 在相应假设下可作为理想 Reference-based DPO Loss 的 Upper-bound Surrogate。
+
+现实训练中真正的 $\pi_w$ 并不可获得，所以这个结果应理解为**近似依据**，而不是证明“任意场景下直接删掉 Reference 都严格等价于 DPO”。参考：[CPO，Theorem 1](https://arxiv.org/abs/2401.08417)。
+
+### 4. 原始 CPO 的 Logistic Preference Term 仍没有 IPO 式有限最优 Margin
+
+CPO 的 Preference Loss：
+
+$$
+-\log\sigma
+\left(
+\beta
+\left[
+\log\pi_\theta(y_w\mid x)
+-
+\log\pi_\theta(y_l\mid x)
+\right]
+\right)
+$$
+
+和 DPO 一样，只要 Preference Gap 继续增大，Loss 仍会继续减小，只是梯度逐渐衰减。因此 CPO 没有 IPO 那种：
+
+$$
+h^*=\frac{1}{2\beta}
+$$
+
+的有限最优点。
+
+### 5. 原始 CPO 没有把 Length Normalization 作为核心修正
+
+原论文的 Preference Term 直接使用完整 Response 的 $\log\pi_\theta(y\mid x)$；不同长度 Response 的 Sequence Log Probability 仍可能存在尺度耦合。
+
+后来的 SimPO 明确把 Average Token Log Probability 与 Length Normalization 纳入核心 Reward 定义。TRL 当前文档也把 Length Normalization 作为 SimPO 相对 CPO 的显式变化之一。参考：[TRL CPO Trainer](https://huggingface.co/docs/trl/cpo_trainer)。
+
+### 6. 仍然是 Offline Pair-wise Preference Optimization
+
+CPO 仍基于固定的 $(x,y_w,y_l)$ 数据。它没有自动解决 Human / AI Judge Bias、Preference Label Noise、Policy 更新后的 Distribution Shift，以及当前 Policy 新产生的 Hard Negative / Failure Mode。
+
+原始机器翻译实验实际上特别强调高质量但“不完美”的 Dis-preferred Translation：这些 Hard Negative 能提供更细粒度的对比信号。说明 CPO 的有效性同样高度依赖 Preference Pair 的构造质量。参考：[CPO，Sec. 3.1](https://arxiv.org/abs/2401.08417)。
+
+### 7. 原论文的主要证据来自机器翻译
+
+CPO 最初是在机器翻译场景提出和验证的。其 Loss 可以推广到 Chat 等一般 Preference Dataset，当前 TRL 也支持这一用途；但“原论文在 MT 上有效”不能直接等价为“在所有 LLM Alignment 场景都优于 DPO / SimPO / ORPO”。参考：[CPO](https://arxiv.org/abs/2401.08417)、[TRL CPO Trainer](https://huggingface.co/docs/trl/cpo_trainer)。
+
+### 8. 仍然存在 Preference Proxy 的一般失效模式
+
+只要 Chosen / Rejected 的标注机制不能完整表达真实目标，CPO 仍可能学习 Length / Style / Judge Bias，或在强优化下出现更一般的 [[LLM/后训练/Reward Hacking/Reward Hacking|Preference Overoptimization / Reward Hacking]]。
+
+综合来看，CPO 可以概括为：
+
+> **用 Uniform-reference Surrogate 把 DPO 的 Reference-dependent Preference Loss 化成当前 Policy 的 Chosen / Rejected Log-Likelihood Contrast，再加入 Preferred Response 的 Behavior Cloning / NLL Regularizer，使模型既“拉开 Winner 与 Loser”，又“真正靠近 Winner”。**
+
+它的核心 trade-off 也来自后半句：**BC 能稳定 Preferred likelihood，却让训练更加依赖 Chosen 的绝对质量；Reference-free 降低了成本，却失去了显式 Reference / KL Anchor。**
