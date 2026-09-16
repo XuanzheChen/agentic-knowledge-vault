@@ -32,7 +32,7 @@ $$
 \right)
 $$
 
-其中 $\beta$ 控制“追求更高 Reward”和“保持接近 Reference Policy”之间的权衡。
+其中 **β（beta）** 控制“追求更高 Reward”和“保持接近 Reference Policy”之间的权衡。
 
 这个目标的最优策略可以写成：
 
@@ -320,7 +320,7 @@ h_\theta(y_w,y_l)
 \log\frac{\pi_\theta(y_l\mid x)}{\pi_{\mathrm{ref}}(y_l\mid x)}
 $$
 
-许多工程实现把论文中的 $\tau$ 记为 $\beta$，此时目标 Margin 写成：
+许多工程实现把论文中的 $\tau$ 记为 **β（beta）**，此时目标 Margin 写成：
 
 $$
 \boxed{
@@ -328,7 +328,7 @@ h_\theta^*=\frac{1}{2\beta}
 }
 $$
 
-Hugging Face TRL 也明确说明：IPO Loss 中的 $\beta$ 对应原论文中的 $\tau$。参考：[TRL DPO Trainer](https://huggingface.co/docs/trl/main/trainer)。
+Hugging Face TRL 也明确说明：IPO Loss 中的 **β（beta）** 对应原论文中的 $\tau$。参考：[TRL DPO Trainer](https://huggingface.co/docs/trl/main/trainer)。
 
 ### 4. 为什么平方 Loss 很关键？
 
@@ -458,9 +458,9 @@ $$
 h^*=\frac{1}{2\beta}
 $$
 
-这提供了稳定的有限最优点，但也意味着目标 Margin 很依赖 $\beta$ 的选择。
+这提供了稳定的有限最优点，但也意味着目标 Margin 很依赖 **β（beta）** 的选择。
 
-不同 Pair 的真实 Preference Strength 可能差异很大：某些只是“略好”，另一些可能是“明显错误 vs 完全正确”。标准 IPO 的 Sampled Loss 并不会直接从单次 Binary Pair 标签中恢复这种细粒度强度，因此 $\beta$ 的选择会影响整体 Regularization 与区分强度。
+不同 Pair 的真实 Preference Strength 可能差异很大：某些只是“略好”，另一些可能是“明显错误 vs 完全正确”。标准 IPO 的 Sampled Loss 并不会直接从单次 Binary Pair 标签中恢复这种细粒度强度，因此 **β（beta）** 的选择会影响整体 Regularization 与区分强度。
 
 ### 3. 仍依赖 Pair-wise Preference 数据质量
 
