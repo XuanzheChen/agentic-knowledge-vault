@@ -2,7 +2,7 @@
 
 [[LLM/后训练/偏好学习/偏好学习|返回上级：偏好学习]] · [[main|返回知识主干]]
 
-围绕 DPO（Direct Preference Optimization）及其后续变体整理直接偏好优化方法。当前重点记录 DPO、IPO 与 SimPO 的数学原理、改进关系和仍然存在的局限，后续再逐步扩展 ORPO、KTO 等方法。
+围绕 DPO（Direct Preference Optimization）及其后续变体整理直接偏好优化方法。当前重点记录 DPO、IPO、SimPO 与 ORPO 的数学原理、改进关系、工程取舍和仍然存在的局限，后续再逐步扩展 KTO 等方法。
 
 ## 问题目录
 
@@ -14,6 +14,9 @@
 - [[DPO Family（直接偏好优化）#SimPO 的数学原理是什么？|SimPO 的数学原理是什么？]]
 - [[DPO Family（直接偏好优化）#SimPO 相对 IPO 做了哪些改进？|SimPO 相对 IPO 做了哪些改进？]]
 - [[DPO Family（直接偏好优化）#SimPO 仍然存在哪些缺点？|SimPO 仍然存在哪些缺点？]]
+- [[DPO Family（直接偏好优化）#ORPO 的基本原理是什么？|ORPO 的基本原理是什么？]]
+- [[DPO Family（直接偏好优化）#ORPO 的核心 Trade-off 是什么？|ORPO 的核心 Trade-off 是什么？]]
+- [[DPO Family（直接偏好优化）#ORPO 仍然存在哪些缺点？|ORPO 仍然存在哪些缺点？]]
 
 ---
 
@@ -721,3 +724,252 @@ SimPO 仍然是在优化一个 Preference Proxy。只要 Preference Dataset 或 
 > **把 DPO / IPO 的 Reference-based Log-Ratio Score 改成当前 Policy 的长度归一化 Average Log Probability，并用 Target Reward Margin 强化 Preferred / Rejected 的分离，从而实现 Reference-free Preference Optimization。**
 
 但它并没有解决 Preference Data 噪声、Offline Distribution Shift、绝对质量缺失以及过优化等更一般的问题。
+
+---
+
+## ORPO 的基本原理是什么？
+
+ORPO（Odds Ratio Preference Optimization）的核心不是单独再设计一个 Preference-only Loss，而是把 **监督微调（SFT）与 Preference Alignment 合并进同一个训练目标**。因此它被称为 **Monolithic Preference Optimization**：不再默认采用“先 SFT，再额外做 DPO”这样的两阶段 Pipeline，也不需要 Frozen Reference Model。参考：[ORPO: Monolithic Preference Optimization without Reference Model](https://arxiv.org/abs/2403.07691)。
+
+### 1. ORPO 从 SFT 本身的局限出发
+
+对 Preference Pair $(x,y_w,y_l)$，如果只使用 Chosen Response $y_w$ 做 SFT，则典型的 Causal Language Modeling Loss 为：
+
+$$
+\mathcal L_{\mathrm{SFT}}
+=
+-
+\frac{1}{|y_w|}
+\sum_{t=1}^{|y_w|}
+\log\pi_\theta(y_{w,t}\mid x,y_{w,<t})
+$$
+
+它会明确提高 Chosen 的 likelihood，但没有显式机制压低 Rejected。ORPO 原论文的实验观察到，仅使用 Chosen 做 SFT 时，Chosen 与 Rejected 的 log probability 可能同时上升：SFT 能把模型带入目标 Domain / Style，却不一定能区分同一 Domain 中的 Preferred 与 Disfavored 行为。参考：[ORPO](https://arxiv.org/abs/2403.07691)。
+
+因此 ORPO 希望在保留 SFT 强适应信号的同时，再对 Rejected Response 施加一个较弱的相对惩罚。
+
+### 2. 用 Average Log-Likelihood 定义 Response Score
+
+ORPO 对完整 Response 使用长度归一化后的平均 Token Log-Likelihood：
+
+$$
+\log P_\theta(y\mid x)
+=
+\frac{1}{|y|}
+\sum_{t=1}^{|y|}
+\log P_\theta(y_t\mid x,y_{<t})
+$$
+
+再用这个 Sequence Score 对应的 $P_\theta(y\mid x)$ 构造 Odds：
+
+$$
+\operatorname{odds}_\theta(y\mid x)
+=
+\frac{P_\theta(y\mid x)}{1-P_\theta(y\mid x)}
+$$
+
+Chosen 相对于 Rejected 的 Odds Ratio 为：
+
+$$
+\operatorname{OR}_\theta(y_w,y_l)
+=
+\frac{
+\operatorname{odds}_\theta(y_w\mid x)
+}{
+\operatorname{odds}_\theta(y_l\mid x)
+}
+$$
+
+因此 ORPO 比较的不是 Policy / Reference Ratio，而是**当前 Policy 对 Chosen 与 Rejected 的 Log-Odds Difference**。参考：[ORPO](https://arxiv.org/abs/2403.07691)。
+
+### 3. Odds-Ratio Preference Loss
+
+ORPO 把 Log Odds Ratio 放进 Logistic Loss：
+
+$$
+\mathcal L_{\mathrm{OR}}
+=
+-
+\log\sigma
+\left(
+\log
+\frac{
+\operatorname{odds}_\theta(y_w\mid x)
+}{
+\operatorname{odds}_\theta(y_l\mid x)
+}
+\right)
+$$
+
+最小化该 Loss 会推动：
+
+$$
+\operatorname{odds}_\theta(y_w\mid x)
+>
+\operatorname{odds}_\theta(y_l\mid x)
+$$
+
+也就是让当前模型更倾向于 Chosen，而不是 Rejected。
+
+ORPO 的梯度还包含一个随当前 Odds Ratio 变化的权重：如果模型当前反而更倾向 Rejected，则 Preference Penalty 更强；当 Chosen 已明显占优时，该项更新逐渐减弱。原论文把它解释为一种动态的、较弱的 Rejected Penalty。参考：[ORPO](https://arxiv.org/abs/2403.07691)。
+
+### 4. 最终目标：SFT + Preference 在同一步训练
+
+ORPO 最终写成：
+
+$$
+\boxed{
+\mathcal L_{\mathrm{ORPO}}
+=
+\mathbb E_{(x,y_w,y_l)}
+\left[
+\mathcal L_{\mathrm{SFT}}
++
+\lambda\mathcal L_{\mathrm{OR}}
+\right]
+}
+$$
+
+其中：
+
+- $\mathcal L_{\mathrm{SFT}}$：提供强的 Chosen / Domain Adaptation Signal，直接学习“应该生成什么”；
+- $\mathcal L_{\mathrm{OR}}$：提供 Chosen-vs-Rejected 的相对区分信号，学习“哪些相似行为应该避免”；
+- $\lambda$：控制 SFT 与 Preference Discrimination 的相对强度。
+
+因此一条 Preference Pair 同时被用于两类监督：
+
+> **$y_w$ 提供正向 SFT Signal；$(y_w,y_l)$ 提供 Relative Preference Signal。**
+
+这也是 ORPO 与 SimPO 最关键的差别：SimPO 主要重构 Preference-only Objective；ORPO 则把 **Instruction / Domain Adaptation 与 Preference Alignment 合并成一个 Objective**。参考：[ORPO](https://arxiv.org/abs/2403.07691)。
+
+---
+
+## ORPO 的核心 Trade-off 是什么？
+
+ORPO 的设计优势和代价来自同一个决定：**把 Chosen 当作 SFT Target，同时把 Chosen / Rejected 当作 Preference Pair。**
+
+### 1. 单阶段、Reference-free，换来更强的 Chosen 依赖
+
+相比经典“$\text{SFT}\rightarrow\text{DPO}$”，ORPO 可以在同一个目标里完成 Domain / Instruction Adaptation 与 Preference Alignment，并且不需要额外 Reference Model，因此训练 Pipeline 更简单、显存与计算成本更低。原论文将其明确定位为无需额外 preference-alignment stage 与 Reference Model 的 Monolithic 方法。参考：[ORPO](https://arxiv.org/abs/2403.07691)。
+
+但代价是：ORPO 不只是学习
+
+$$
+y_w\succ y_l
+$$
+
+还通过 $\mathcal L_{\mathrm{SFT}}$ **直接模仿 $y_w$**。
+
+如果 Chosen 是“很好 vs 很差”中的好答案，这种强正向学习很有价值；但如果是“差 vs 更差”，ORPO 仍会把那个只是相对较好的 Chosen 当成 Demonstration 来提高 likelihood。
+
+因此可以概括为：
+
+> **DPO / IPO / SimPO 更强调 Relative Preference；ORPO 在 Relative Preference 之外，再显式加入 Chosen 的 Absolute Imitation Signal。**
+
+这能减少只改善 Pair-wise Margin、却不提高 Chosen likelihood 的问题，但也使 ORPO 对 Chosen Response 的绝对质量和数据清洗更加敏感。
+
+### 2. SFT Anchor 换掉了 Reference / KL Anchor
+
+DPO / IPO 通过 $\pi_{\mathrm{ref}}$ 表达“不要离原策略太远”；ORPO 不再使用 Reference Model，而是依靠 SFT 项持续把模型拉向 Chosen Data Distribution。
+
+这使训练更轻量，但两种 Anchor 的含义并不等价：
+
+- Reference / KL Anchor：限制 Policy 相对原模型的整体漂移；
+- SFT Anchor：推动 Policy 靠近 Chosen Demonstration Distribution。
+
+所以 ORPO 的 Reference-free 并不意味着“约束不再需要”，而是**把稳定训练和行为锚定更多交给 SFT Data 与 SFT Loss**。
+
+### 3. $\lambda$ 控制“模仿”与“区分”的权衡
+
+ORPO：
+
+$$
+\mathcal L
+=
+\mathcal L_{\mathrm{SFT}}
++
+\lambda\mathcal L_{\mathrm{OR}}
+$$
+
+当 $\lambda$ 较小时，训练更接近只对 Chosen 做 SFT；当 $\lambda$ 增大时，Chosen / Rejected 的 Preference Separation 获得更强权重。
+
+因此 $\lambda$ 本质上控制：
+
+> **“把 Chosen 学好”与“把 Chosen / Rejected 拉开”之间的 trade-off。**
+
+它并不是 DPO 中 $\beta$ 那种 Reference / KL 强度参数，也不是 SimPO 的 Margin 参数。ORPO 原论文也专门对 $\lambda$ 做了消融，说明该权重是方法的重要训练超参数。参考：[ORPO](https://arxiv.org/abs/2403.07691)。
+
+---
+
+## ORPO 仍然存在哪些缺点？
+
+ORPO 主要解决了 **SFT 与 Preference Alignment 分阶段、Reference Model 开销，以及 SFT 缺乏显式 Rejected Penalty** 的问题，但它没有解决 Preference Learning 的全部困难。
+
+### 1. 对 Chosen 的绝对质量要求更高
+
+这是 ORPO 相比纯 Pair-wise Preference Objective 最需要注意的地方。
+
+因为它显式最小化：
+
+$$
+\mathcal L_{\mathrm{SFT}}(y_w)
+$$
+
+所以 Chosen 不只是“比 Rejected 好”，还会被直接当成语言建模目标。如果 Pair 中两个 Response 都较差，只是 $y_w$ 相对更好，ORPO 仍会把 $y_w$ 的具体内容、Style 和潜在缺陷一起模仿。
+
+因此 ORPO 很依赖高质量的 Chosen Candidate、数据清洗和 Preference Pair Construction。
+
+### 2. 没有显式 Reference / KL Constraint
+
+ORPO 的 Reference-free 设计降低了成本，但也意味着没有类似：
+
+$$
+D_{\mathrm{KL}}
+\left(
+\pi_\theta\Vert\pi_{\mathrm{ref}}
+\right)
+$$
+
+这样的显式 Policy Drift 约束。
+
+SFT 项提供了另一种训练 Anchor，但它不能严格替代 Reference Policy 对整体分布漂移的约束。因此训练稳定性、Learning Rate、数据覆盖与 $\lambda$ 选择仍然重要。
+
+### 3. 仍依赖 Pair-wise Preference Label 的正确性
+
+ORPO 的 Preference 部分仍建立在：
+
+$$
+(x,y_w,y_l)
+$$
+
+之上。如果 Human / AI Judge 把 Preference 标反，Odds-Ratio Loss 会沿错误方向训练；同时 SFT 项还会进一步直接模仿被错误标成 Chosen 的 Response。
+
+因此在 Label Noise 较强时，错误 Chosen 对 ORPO 可能同时污染“模仿”和“排序”两条训练信号。
+
+### 4. $\lambda$ 是全局权衡，不能直接表达每个 Pair 的 Preference Strength
+
+标准 ORPO 用一个全局 $\lambda$ 控制 Odds-Ratio Penalty。现实中有些 Pair 只是轻微偏好，有些则是“正确 vs 明显错误”，但普通 Binary Preference Pair 并没有直接提供这种细粒度强度。
+
+因此固定 $\lambda$ 解决的是整体 SFT / Preference 权重，而不是对每个样本自适应地表达“这个 Pair 应该拉多开”。
+
+### 5. Average Log-Likelihood 不能消除所有长度与 Style Bias
+
+ORPO 使用长度归一化 Average Log-Likelihood，减少了总 Sequence Log Probability 随长度累加的尺度问题，但 Preference Dataset 本身仍可能偏好更长、更正式、更自信或特定格式的回答。
+
+因此 Length Normalization 不能自动解决 Judge Bias、Style Bias 或 Sycophancy 等数据层偏差。
+
+### 6. 经典 ORPO 仍然是 Offline Preference Optimization
+
+原始 ORPO 使用固定 Pair-wise Preference Dataset，并没有自动让当前 Policy 重新生成候选、收集新 Preference、再更新模型。
+
+随着 Policy 变化，仍可能出现 Distribution Shift，新模型产生的 Failure Mode 与 Hard Negative 也可能没有被旧数据覆盖。持续更新这类问题仍需要 Online / Iterative Preference Learning。参考：[Human Alignment of Large Language Models through Online Preference Optimisation](https://arxiv.org/abs/2403.08635)。
+
+### 7. Reference-free、Monolithic 也不等于不会 Preference Overoptimization
+
+ORPO 仍然优化的是由 Preference Pair 与 SFT Demonstration 共同定义的 Proxy Objective。如果 Chosen / Rejected 的构造、Judge 或数据分布与真正目标存在偏差，模型仍可能学习表面 Style、数据偏见，甚至出现更一般的 [[LLM/后训练/Reward Hacking/Reward Hacking|Reward Hacking / Specification Gaming]] 问题。
+
+综合来看，ORPO 可以压缩成：
+
+> **在 Chosen 上做 SFT，用强正向信号学习期望分布；同时用 Odds-Ratio Loss 对 Rejected 施加较弱的相对惩罚，从而把 Instruction / Domain Adaptation 与 Preference Alignment 合并成一个 Reference-free 的训练阶段。**
+
+它的核心 trade-off 也来自这里：**训练更简单、Chosen likelihood 有明确正向监督，但模型因此更依赖 Chosen 的绝对质量，并失去显式 Reference / KL Anchor。**
