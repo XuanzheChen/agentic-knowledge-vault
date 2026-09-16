@@ -2,7 +2,7 @@
 
 [[LLM/后训练/偏好学习/偏好学习|返回上级：偏好学习]] · [[main|返回知识主干]]
 
-围绕 DPO（Direct Preference Optimization）及其后续变体整理直接偏好优化方法。当前重点记录 DPO、IPO、SimPO、ORPO 与 CPO 的数学原理、改进关系、工程取舍和仍然存在的局限，后续再逐步扩展 KTO 等方法。
+围绕 DPO（Direct Preference Optimization）及其后续变体整理直接偏好优化方法。当前重点记录 DPO、IPO、SimPO、ORPO、CPO 与 KTO 的数学原理、改进关系、工程取舍和仍然存在的局限。
 
 ## 问题目录
 
@@ -20,6 +20,9 @@
 - [[DPO Family（直接偏好优化）#CPO 的基本原理是什么？|CPO 的基本原理是什么？]]
 - [[DPO Family（直接偏好优化）#CPO 与 ORPO、SimPO 的设计差异是什么？|CPO 与 ORPO、SimPO 的设计差异是什么？]]
 - [[DPO Family（直接偏好优化）#CPO 的核心 Trade-off 与缺点是什么？|CPO 的核心 Trade-off 与缺点是什么？]]
+- [[DPO Family（直接偏好优化）#KTO 的基本原理是什么？|KTO 的基本原理是什么？]]
+- [[DPO Family（直接偏好优化）#KTO 相对 Pair-wise Preference 方法的核心 Trade-off 是什么？|KTO 相对 Pair-wise Preference 方法的核心 Trade-off 是什么？]]
+- [[DPO Family（直接偏好优化）#KTO 仍然存在哪些缺点？|KTO 仍然存在哪些缺点？]]
 
 ---
 
@@ -1277,3 +1280,329 @@ CPO 最初是在机器翻译场景提出和验证的。其 Loss 可以推广到 
 > **用 Uniform-reference Surrogate 把 DPO 的 Reference-dependent Preference Loss 化成当前 Policy 的 Chosen / Rejected Log-Likelihood Contrast，再加入 Preferred Response 的 Behavior Cloning / NLL Regularizer，使模型既“拉开 Winner 与 Loser”，又“真正靠近 Winner”。**
 
 它的核心 trade-off 也来自后半句：**BC 能稳定 Preferred likelihood，却让训练更加依赖 Chosen 的绝对质量；Reference-free 降低了成本，却失去了显式 Reference / KL Anchor。**
+
+---
+
+## KTO 的基本原理是什么？
+
+KTO（Kahneman-Tversky Optimization）与前面的 DPO、IPO、SimPO、ORPO、CPO 最大的区别，是它首先改变了 **Feedback Data 的基本单位**。DPO 等方法通常要求 Pair-wise Preference：
+
+$$
+(x,y_w,y_l),\qquad y_w\succ y_l
+$$
+
+KTO 只要求单条 Response 的二元反馈：
+
+$$
+(x,y,c),\qquad c\in\{\text{desirable},\text{undesirable}\}
+$$
+
+因此它天然适合 👍 / 👎、Accept / Reject、Good / Bad 这类现实产品反馈。论文把 KTO 构造为一种 Human-Aware Loss（HALO），其目标不是最大化某个 Preference Pair 的 likelihood，而是基于前景理论（Prospect Theory）的 Reference Point、Gain / Loss 和饱和 Value Function，直接最大化 generation 的主观 Utility。参考：[KTO: Model Alignment as Prospect Theoretic Optimization](https://arxiv.org/abs/2402.01306)。
+
+### 1. KTO 仍然使用 Reference Policy 与隐式 Reward
+
+标准 KTO 并不是 Reference-free。它定义：
+
+$$
+\boxed{
+r_\theta(x,y)
+=
+\log\frac{\pi_\theta(y\mid x)}{\pi_{\mathrm{ref}}(y\mid x)}
+}
+$$
+
+$r_\theta(x,y)$ 表示当前 Policy 相对于 Reference Policy 对某个 Response 的偏移：如果该值增大，说明当前模型相对 Reference 更愿意生成这个 Response。
+
+这和 DPO 的 Policy / Reference Log-Ratio 有相同基础，但 KTO 不再用另一个 Response 的 Reward 作为比较对象。参考：[KTO，Sec. 4.1](https://arxiv.org/abs/2402.01306)。
+
+### 2. 从“Response vs Response”改成“Response vs Reference Point”
+
+DPO 比较：
+
+$$
+r_\theta(x,y_w)-r_\theta(x,y_l)
+$$
+
+KTO 则定义一个 Policy-level Reference Point：
+
+$$
+\boxed{
+z_0
+=
+D_{\mathrm{KL}}
+\left(
+\pi_\theta(\cdot\mid x)
+\Vert
+\pi_{\mathrm{ref}}(\cdot\mid x)
+\right)
+}
+$$
+
+由于：
+
+$$
+D_{\mathrm{KL}}
+\left(
+\pi_\theta\Vert\pi_{\mathrm{ref}}
+\right)
+=
+\mathbb E_{y'\sim\pi_\theta}
+\left[
+\log\frac{\pi_\theta(y'\mid x)}{\pi_{\mathrm{ref}}(y'\mid x)}
+\right]
+$$
+
+因此 $z_0$ 可以理解为：**当前 Policy 相对 Reference 的平均隐式 Reward / 平均漂移水平。**
+
+KTO 判断一个单独 Response 时，不再问“它是否比另一条 Response 更好”，而是问：
+
+$$
+r_\theta(x,y)-z_0
+$$
+
+相对于当前 Reference Point 是 Gain 还是 Loss。参考：[KTO，Eq. 8](https://arxiv.org/abs/2402.01306)。
+
+### 3. 用前景理论式 Value Function 处理 Desirable / Undesirable
+
+KTO 用 Logistic Function 替代经典 Kahneman-Tversky Value Function 中数值上更难优化的幂函数，并定义：
+
+$$
+v(x,y)
+=
+\begin{cases}
+\lambda_D\sigma\left(\beta[r_\theta(x,y)-z_0]\right),
+& y\sim y_{\mathrm{desirable}}\mid x
+\\
+\lambda_U\sigma\left(\beta[z_0-r_\theta(x,y)]\right),
+& y\sim y_{\mathrm{undesirable}}\mid x
+\end{cases}
+$$
+
+最终：
+
+$$
+\boxed{
+\mathcal L_{\mathrm{KTO}}
+=
+\mathbb E_{(x,y)\sim\mathcal D}
+\left[
+\lambda_y-v(x,y)
+\right]
+}
+$$
+
+其中 $\lambda_y$ 根据样本标签取 $\lambda_D$ 或 $\lambda_U$。参考：[KTO，Eq. 8](https://arxiv.org/abs/2402.01306)。
+
+直观上：
+
+- Desirable：希望 $r_\theta(x,y)>z_0$，即把该 Response 推到 Reference Point 上方；
+- Undesirable：希望 $r_\theta(x,y)<z_0$，即把该 Response 推到 Reference Point 下方。
+
+因此 KTO 的核心关系可以压缩为：
+
+> **DPO：Response vs Response；KTO：Response vs KL Reference Point。**
+
+### 4. Sigmoid 饱和对应 Diminishing Sensitivity
+
+KTO 的 Value Function 使用：
+
+$$
+\sigma(\beta\Delta)
+$$
+
+其中 $\Delta$ 是 Response 相对 Reference Point 的 Gain / Loss。当 $\Delta$ 接近 $0$ 时，Value Function 对变化最敏感；当 Response 已经远离 Reference Point 时，Sigmoid 逐渐饱和，额外改变 Reward 的收益越来越小。
+
+这体现了前景理论中的 **Diminishing Sensitivity**：离 Reference Point 越远，对额外 Gain / Loss 的主观敏感度越低。
+
+这与 IPO 的有限目标 Margin 不同。IPO 在超过目标 Margin 后会主动产生反向梯度把 Margin 拉回；KTO 只是逐渐饱和、让梯度趋近于 $0$，不会把一个“过于 desirable”的样本主动拉回。参考：[KTO，Sec. 4.1](https://arxiv.org/abs/2402.01306)。
+
+### 5. $\lambda_D$、$\lambda_U$ 与 $\beta$ 控制什么？
+
+$\lambda_D$ 与 $\lambda_U$ 分别控制 Desirable / Undesirable 样本的相对权重，因此可以表达 Gain / Loss 的非对称敏感度，也可以用于缓解类别不平衡。
+
+$\beta$ 控制 Value Function 饱和速度：$\beta$ 越大，Sigmoid 越快饱和，Reference Point 附近获得高梯度的区域越窄。KTO 论文把它解释为风险厌恶 / 风险偏好的形状参数，并指出其作用虽然与 DPO 中 $\beta$ 在训练表现上有相似性，但理论来源不同。参考：[KTO，Sec. 4.1–4.2](https://arxiv.org/abs/2402.01306)。
+
+需要注意，KTO 并不规定“Undesirable 永远必须权重更大”。论文允许根据任务和 Desirable / Undesirable 数量选择 $\lambda_D,\lambda_U$，其推荐比例来自具体实验，不应视为普遍规律。
+
+### 6. 实际的 $z_0$ 使用近似估计，并且不对它反向传播
+
+理论上的：
+
+$$
+z_0
+=
+D_{\mathrm{KL}}
+\left(
+\pi_\theta\Vert\pi_{\mathrm{ref}}
+\right)
+$$
+
+如果每次都从当前 Policy 采样大量 Response 来精确估计，会非常昂贵。标准 KTO 实际在同一 microbatch 内把 Output 错位，构造 mismatched pairs，再估计共享 Reference Point：
+
+$$
+\hat z_0
+=
+\max\left(
+0,
+\frac{1}{m}
+\sum_{i=1}^{m}
+\log
+\frac{
+\pi_\theta(y_j\mid x_i)
+}{
+\pi_{\mathrm{ref}}(y_j\mid x_i)
+}
+\right)
+$$
+
+其中 $j=(i\bmod m)+1$。论文明确指出这是一个 **biased but convenient surrogate**；Clamping 进一步增加 upward bias，但可以降低方差。为提高稳定性，KTO **不通过 $z_0$ 反向传播**。该估计通常要求 microbatch size 至少为 $2$。参考：[KTO，KL Estimate](https://arxiv.org/abs/2402.01306)。
+
+---
+
+## KTO 相对 Pair-wise Preference 方法的核心 Trade-off 是什么？
+
+KTO 最大的工程价值来自数据格式：**用更弱但更容易获得的 Binary Feedback，换掉更丰富但更昂贵的 Pair-wise Preference。**
+
+### 1. 数据采集更自然、更便宜，但单条反馈信息更少
+
+DPO / IPO / SimPO / ORPO / CPO 通常需要：
+
+$$
+(x,y_w,y_l)
+$$
+
+意味着同一 Prompt 下至少要准备两个候选，并由 Human / AI Judge 比较：
+
+$$
+y_w\succ y_l
+$$
+
+KTO 只要求：
+
+$$
+(x,y,\text{desirable/undesirable})
+$$
+
+因此实际产品中的 👍 / 👎 可以直接成为训练信号，不必重新组织成 Pair。KTO 原论文的动机之一正是 Binary Feedback 更丰富、更便宜、更快收集。参考：[KTO](https://arxiv.org/abs/2402.01306)。
+
+代价是 Binary Label 不再告诉模型“这个回答相对于哪个具体候选更好”。KTO 因此用 Policy-level KL Reference Point $z_0$ 来替代 Pair-wise Baseline：
+
+$$
+\boxed{
+\text{Pair-wise baseline}
+\rightarrow
+\text{Policy-level reference point}
+}
+$$
+
+这就是 KTO 最核心的结构交换。
+
+### 2. 不要把 Pair-wise Preference 机械拆成两个 Binary Labels
+
+如果真实数据只有：
+
+$$
+y_w\succ y_l
+$$
+
+并不能推出：
+
+$$
+y_w=\text{desirable},\qquad y_l=\text{undesirable}
+$$
+
+因为 Pair 可能是“优秀 vs 尚可”，也可能是“差 vs 更差”。
+
+KTO 论文为了与 Preference Dataset 做实验比较，会把 Chosen 视为 Desirable、Rejected 视为 Undesirable，但论文明确称这种转换是 **naive assumption**。因此 KTO 最自然的场景是原始反馈本身就是 Binary，而不是为了使用 KTO 强行把高质量 Pair-wise 信息降维。参考：[KTO，Data](https://arxiv.org/abs/2402.01306)。
+
+### 3. KTO 的弱信号可以靠规模弥补，但不是无条件优于 Pairwise 方法
+
+原论文在其 1B–30B 实验设置中发现，KTO 只用 Desirable / Undesirable Binary Signal 也可以匹配或超过一些 Preference-based 方法，并展示了强类别不平衡下的可用性。论文同时强调：**不存在一种 HALO 在所有场景中普遍最优**，最合适的 Loss 取决于任务需要的 inductive bias。参考：[Model Alignment as Prospect Theoretic Optimization，ICML 2024](https://proceedings.mlr.press/v235/ethayarajh24a.html)。
+
+因此更准确的选择逻辑是：
+
+- 已经天然拥有大量 👍 / 👎、Accept / Reject：KTO 的数据优势很明显；
+- 已经拥有高质量、细粒度 Pair-wise Preference：Pair-wise 方法保留了更多相对信息，不能仅因为 KTO 不需要 Pair 就认为一定更合适。
+
+---
+
+## KTO 仍然存在哪些缺点？
+
+KTO 解决的是“反馈是否必须成 Pair”这个问题，但并没有消除 Reference、数据质量和 Offline Alignment 的其他困难。
+
+### 1. 标准 KTO 仍然需要 Reference Model
+
+标准 KTO 同时使用：
+
+$$
+r_\theta(x,y)
+=
+\log\frac{\pi_\theta(y\mid x)}{\pi_{\mathrm{ref}}(y\mid x)}
+$$
+
+和：
+
+$$
+z_0
+=
+D_{\mathrm{KL}}
+\left(
+\pi_\theta\Vert\pi_{\mathrm{ref}}
+\right)
+$$
+
+所以它不像 SimPO、ORPO、CPO 那样 Reference-free，仍有 Reference Model 的存储与 Forward 成本。KTO 论文也测试过 No-reference Variant，但其标准设计仍保留 Reference Model。参考：[KTO，Sec. 4.3](https://arxiv.org/abs/2402.01306)。
+
+### 2. Reference Point 的估计本身是近似且有额外计算
+
+理论上的 $z_0$ 需要对当前 Policy 分布求期望，精确计算很昂贵。标准实现通过 microbatch 错位 Response 得到 biased surrogate，还需要额外 Forward。Clamping 虽能降低方差，但进一步引入偏差。
+
+因此 KTO 虽然降低了 Feedback Collection 的成本，却引入了一个比普通 Binary Classification 更复杂的 Policy-level Reference Point 估计机制。参考：[KTO，KL Estimate](https://arxiv.org/abs/2402.01306)。
+
+### 3. Binary Feedback 丢失 Pair-wise Relation 的细粒度信息
+
+单个 Label 只表达：
+
+$$
+y\in\{D,U\}
+$$
+
+并不表达两个具体候选之间谁更好、差多少、在哪个局部维度更好。因此如果数据原本就是高质量 Preference Pair，把它降成两个 Binary Label 可能损失有价值的信息。
+
+### 4. Sigmoid Saturation 是 Regularization，也是潜在局限
+
+KTO 的梯度随着 Response 远离 Reference Point 而趋近于 $0$，这可以避免对已经明显 Desirable / Undesirable 的样本持续强推。
+
+但饱和也意味着：极端区域中的样本获得的训练信号会变弱。这个机制本质上是一种 inductive bias，并不保证对所有任务都最合适。原论文也明确强调不同 HALO 的优劣取决于任务的 inductive bias。参考：[KTO](https://arxiv.org/abs/2402.01306)。
+
+### 5. 对超参数与类别构成仍然敏感
+
+KTO 至少需要处理 $\beta$、$\lambda_D$、$\lambda_U$，而且合适的权重与 Desirable / Undesirable 比例、模型规模、Reference Model 质量和具体任务相关。
+
+论文给出的 $\lambda_D n_D/(\lambda_U n_U)$ 区间等都是实验经验，而不是通用理论定律；对于 Toxicity Prevention 等“避免坏行为”比“产生好行为”更重要的任务，合适的权重方向也可能不同。参考：[KTO，Sec. 4.2](https://arxiv.org/abs/2402.01306)。
+
+### 6. 经典 KTO 仍然是 Offline Alignment
+
+标准 KTO 使用固定的 Binary Feedback Dataset。随着 Policy 改变，旧数据仍可能出现 Distribution Shift，也不能自动覆盖当前 Policy 新产生的 Failure Mode。
+
+因此 Binary Feedback 更容易收集，不等于 KTO 自身已经解决 Online / Iterative Data Collection。
+
+### 7. Binary Label 仍然是 Proxy，仍可能出现一般 Alignment Failure
+
+Desirable / Undesirable 的定义依然来自 Human、AI Judge、规则或业务反馈。Label Noise、Style Bias、Sycophancy、Reward Hacking / Specification Gaming 等问题仍然可能存在。
+
+KTO 改变的是 Feedback Granularity 与 Loss 的 inductive bias，而不是把 Alignment Objective 变成了真实 Utility。可以继续参见 [[LLM/后训练/Reward Hacking/Reward Hacking|Reward Hacking]]。
+
+综合来看，KTO 可以压缩成：
+
+> **KTO 保留 Policy / Reference Log-Ratio 作为隐式 Reward，但用当前 Policy 相对 Reference 的 KL 作为 Reference Point，把单条 Response 判断为相对 Gain 或 Loss，再通过前景理论式的饱和 Value Function 优化 Desirable / Undesirable Binary Feedback。**
+
+它最大的工程价值是：
+
+$$
+(x,y_w,y_l)
+\rightarrow
+(x,y,\text{desirable/undesirable})
+$$
+
+但对应的 trade-off 也很明确：**数据更便宜、更自然，却失去了 Pair-wise Relation 的细粒度信息，并仍然需要 Reference Model 与 KL Reference Point。**
