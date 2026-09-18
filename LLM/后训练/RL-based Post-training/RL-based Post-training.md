@@ -12,6 +12,7 @@
 | [[GRPO]] | Group Relative Policy Optimization、组内相对 Advantage、完整训练迭代与 Dr.GRPO 等改进 |
 | [[GSPO]] | Group Sequence Policy Optimization、Sequence-level Ratio / Clipping 与 MoE 稳定性 |
 | [[DAPO]] | 面向 Long-CoT Reasoning RL 的 Clip-Higher、Dynamic Sampling、Token-level PG Loss 与 Overlong Reward Shaping |
+| [[DHPO]] | Dynamic Hybrid Policy Optimization，混合 Token-level 与 Sequence-level Importance Correction |
 
 ## 问题目录
 
@@ -148,7 +149,7 @@ Advantage 可以先直观理解为：
 2. 如何更新当前 Policy；
 3. 如何限制更新幅度、保证训练稳定。
 
-[[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]]、[[LLM/后训练/RL-based Post-training/GRPO/GRPO|GRPO]]、[[LLM/后训练/RL-based Post-training/GSPO/GSPO|GSPO]] 与 [[LLM/后训练/RL-based Post-training/DAPO/DAPO|DAPO]] 都属于这一层的重要方法或训练 Recipe，但它们分别从 Advantage、更新粒度、Sampling、Loss Aggregation 与 Reward Shaping 等不同位置改造 RL 后训练系统。
+[[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]]、[[LLM/后训练/RL-based Post-training/GRPO/GRPO|GRPO]]、[[LLM/后训练/RL-based Post-training/GSPO/GSPO|GSPO]]、[[LLM/后训练/RL-based Post-training/DAPO/DAPO|DAPO]] 与 [[LLM/后训练/RL-based Post-training/DHPO/DHPO|DHPO]] 都属于这一层的重要方法或训练 Recipe，但它们分别从 Advantage、Importance Correction 粒度、Sampling、Clipping、Loss Aggregation 与 Reward Shaping 等不同位置改造 RL 后训练系统。
 
 ---
 
@@ -234,4 +235,4 @@ Agent RL 则更接近传统 Environment Interaction：模型进行 Tool Call、�
 
 ---
 
-相关主题：[[后训练]] · [[SFT]] · [[偏好学习]] · [[Reward Model（RM）]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[LLM/后训练/RL-based Post-training/GRPO/GRPO|GRPO]] · [[LLM/后训练/RL-based Post-training/GSPO/GSPO|GSPO]] · [[LLM/后训练/RL-based Post-training/DAPO/DAPO|DAPO]] · [[Reward Hacking]] · [[推理能力]] · [[Agent]] · [[评估]]
+相关主题：[[后训练]] · [[SFT]] · [[偏好学习]] · [[Reward Model（RM）]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[LLM/后训练/RL-based Post-training/GRPO/GRPO|GRPO]] · [[LLM/后训练/RL-based Post-training/GSPO/GSPO|GSPO]] · [[LLM/后训练/RL-based Post-training/DAPO/DAPO|DAPO]] · [[LLM/后训练/RL-based Post-training/DHPO/DHPO|DHPO]] · [[Reward Hacking]] · [[推理能力]] · [[Agent]] · [[评估]]
