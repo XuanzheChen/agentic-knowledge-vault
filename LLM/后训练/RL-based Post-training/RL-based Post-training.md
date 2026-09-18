@@ -6,9 +6,9 @@
 
 ## 子树
 
-| 子树 | 内容 |
-| --- | --- |
-| [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] | Proximal Policy Optimization 的 Clipping、Critic / GAE 与一次完整 LLM PPO 工程迭代 |
+| 子树      | 内容                                                                      |
+| ------- | ----------------------------------------------------------------------- |
+| [[PPO]] | Proximal Policy Optimization 的 Clipping、Critic / GAE 与一次完整 LLM PPO 工程迭代 |
 
 ## 问题目录
 
