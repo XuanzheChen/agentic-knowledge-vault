@@ -4,6 +4,12 @@
 
 围绕基于强化学习的后训练（RL-based Post-training）的基本框架、Rollout、Reward、Credit Assignment、策略优化与典型反馈来源整理 Q&A。
 
+## 子树
+
+| 子树 | 内容 |
+| --- | --- |
+| [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] | Proximal Policy Optimization 的 Clipping、Critic / GAE 与一次完整 LLM PPO 工程迭代 |
+
 ## 问题目录
 
 - [[RL-based Post-training#什么是 RL-based Post-training？|什么是 RL-based Post-training？]]
@@ -139,7 +145,7 @@ Advantage 可以先直观理解为：
 2. 如何更新当前 Policy；
 3. 如何限制更新幅度、保证训练稳定。
 
-PPO、GRPO、GSPO 都属于这一层的具体方法，但它们在 Advantage 估计、更新粒度、参考约束和系统开销等方面采用了不同设计。具体算法后续分别整理。
+[[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]]、GRPO、GSPO 都属于这一层的具体方法，但它们在 Advantage 估计、更新粒度、参考约束和系统开销等方面采用了不同设计。PPO 已单独整理；GRPO、GSPO 后续分别展开。
 
 ---
 
@@ -225,4 +231,4 @@ Agent RL 则更接近传统 Environment Interaction：模型进行 Tool Call、�
 
 ---
 
-相关主题：[[后训练]] · [[SFT]] · [[偏好学习]] · [[Reward Model（RM）]] · [[Reward Hacking]] · [[推理能力]] · [[Agent]] · [[评估]]
+相关主题：[[后训练]] · [[SFT]] · [[偏好学习]] · [[Reward Model（RM）]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[Reward Hacking]] · [[推理能力]] · [[Agent]] · [[评估]]
