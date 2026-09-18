@@ -9,6 +9,7 @@
 | 子树      | 内容                                                                      |
 | ------- | ----------------------------------------------------------------------- |
 | [[PPO]] | Proximal Policy Optimization 的 Clipping、Critic / GAE 与一次完整 LLM PPO 工程迭代 |
+| [[GRPO]] | Group Relative Policy Optimization、组内相对 Advantage、完整训练迭代与 Dr.GRPO 等改进 |
 
 ## 问题目录
 
@@ -145,7 +146,7 @@ Advantage 可以先直观理解为：
 2. 如何更新当前 Policy；
 3. 如何限制更新幅度、保证训练稳定。
 
-[[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]]、GRPO、GSPO 都属于这一层的具体方法，但它们在 Advantage 估计、更新粒度、参考约束和系统开销等方面采用了不同设计。PPO 已单独整理；GRPO、GSPO 后续分别展开。
+[[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]]、[[LLM/后训练/RL-based Post-training/GRPO/GRPO|GRPO]]、GSPO 都属于这一层的具体方法，但它们在 Advantage 估计、更新粒度、参考约束和系统开销等方面采用了不同设计。PPO 与 GRPO 已单独整理；GSPO 后续展开。
 
 ---
 
@@ -231,4 +232,4 @@ Agent RL 则更接近传统 Environment Interaction：模型进行 Tool Call、�
 
 ---
 
-相关主题：[[后训练]] · [[SFT]] · [[偏好学习]] · [[Reward Model（RM）]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[Reward Hacking]] · [[推理能力]] · [[Agent]] · [[评估]]
+相关主题：[[后训练]] · [[SFT]] · [[偏好学习]] · [[Reward Model（RM）]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[LLM/后训练/RL-based Post-training/GRPO/GRPO|GRPO]] · [[Reward Hacking]] · [[推理能力]] · [[Agent]] · [[评估]]
