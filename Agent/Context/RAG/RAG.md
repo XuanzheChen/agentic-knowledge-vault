@@ -84,7 +84,7 @@ Chunk Size 应因业务而定。无法开展实验时，可参照相近业务和
 
 这里仅保留 HelloAgents 第 8 章中有启发性的高级检索策略，不整理其完整 RAGTool 实现。
 
-参考：[HelloAgents 第八章：记忆与检索](https://hello-agents.datawhale.cc/#/./chapter8/%E7%AC%AC%E5%85%AB%E7%AB%A0%20%E8%AE%B0%E5%BF%86%E4%B8%8E%E6%A3%80%E7%B4%A2)
+参考：[HelloAgents 第八章：记忆与检索](https://github.com/datawhalechina/hello-agents/blob/6d9506ba269e385a844aa9c479fb98cefcfc8f3c/docs/chapter8/Chapter8-Memory-and-Retrieval.md)
 
 ### Multi-Query Expansion（MQE）：从不同表达角度扩大召回
 
@@ -543,7 +543,7 @@ Cross-Encoder 的主要优点是：
 
 LLM Reranker 不一定依赖专门训练的 Cross-Encoder，而是把 Query、候选文档以及任务要求交给通用 LLM，让模型判断相关性或直接给出新的排序。LlamaIndex 等框架提供过 `LLMRerank` 和 RankGPT 一类实现，用较大的初始 Top-K 保持 Recall，再由 LLM 选择真正相关的 Node。
 
-参考：[LlamaIndex：LLM Reranker](https://docs.llamaindex.ai/en/v0.10.20/module_guides/querying/node_postprocessors/node_postprocessors.html) · [RankGPT Reranker](https://docs.llamaindex.ai/en/v0.9.48/examples/node_postprocessor/rankGPT.html)
+参考：[LlamaIndex：LLM Reranker](https://github.com/run-llama/llama_index/blob/c60937d3099b89e66ff9040f1c45030bc4e407e9/docs/src/content/docs/framework/module_guides/querying/node_postprocessors/node_postprocessors.md) · [RankGPT Reranker](https://github.com/run-llama/llama_index/blob/c60937d3099b89e66ff9040f1c45030bc4e407e9/docs/examples/node_postprocessor/rankGPT.ipynb)
 
 常见的 LLM Ranking 形式可以分成：
 
@@ -726,4 +726,4 @@ Agent 可以决定：
 
 ---
 
-相关主题：[[Agent]] · [[Memory]] · [[微调]]；方案选择见 [[对比问题#微调、RAG 与规则增强分别适合解决什么问题？|微调、RAG 与规则增强分别适合解决什么问题？]]。
+相关主题：[[Agent]] · [[Memory]] · [[LLM/后训练/SFT/SFT|SFT]] · [[LLM/后训练/参数高效微调（PEFT）/参数高效微调（PEFT）|PEFT]]；方案选择见 [[对比问题#微调、RAG 与规则增强分别适合解决什么问题？|微调、RAG 与规则增强分别适合解决什么问题？]]。
