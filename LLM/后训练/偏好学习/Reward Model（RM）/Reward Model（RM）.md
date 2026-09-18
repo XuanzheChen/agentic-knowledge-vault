@@ -4,6 +4,12 @@
 
 围绕现代 Reward Model 的分类维度、Process Reward Model、多目标与生成式评价、Verifier 以及 Online / Policy-aware Reward Modeling 整理 Q&A。
 
+## 子树
+
+| 子树 | 内容 |
+| --- | --- |
+| [[LLM/后训练/偏好学习/Reward Model（RM）/RM 与 RL-based Post-training/RM 与 RL-based Post-training|RM 与 RL-based Post-training]] | 不同 RM 如何通过 Reward 改变 Advantage、Credit Assignment 与 Policy Optimization |
+
 ## 问题目录
 
 - [[Reward Model（RM）#Reward Model 现在的主要分类维度是什么样的？|Reward Model 现在的主要分类维度是什么样的？]]
@@ -290,4 +296,4 @@ Online / Policy-aware 的价值不只是“数据更新得更快”，而是让 
 
 ---
 
-相关主题：[[LLM/后训练/偏好学习/偏好学习|偏好学习]] · [[推理能力]] · [[Agent]]
+相关主题：[[LLM/后训练/偏好学习/偏好学习|偏好学习]] · [[LLM/后训练/偏好学习/Reward Model（RM）/RM 与 RL-based Post-training/RM 与 RL-based Post-training|RM 与 RL-based Post-training]] · [[LLM/后训练/RL-based Post-training/RL-based Post-training|RL-based Post-training]] · [[推理能力]] · [[Agent]]
