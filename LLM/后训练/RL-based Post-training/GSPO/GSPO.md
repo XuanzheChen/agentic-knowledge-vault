@@ -13,6 +13,9 @@
 - [[GSPO#一次完整 GSPO iteration 如何执行？|一次完整 GSPO iteration 如何执行？]]
 - [[GSPO#GSPO 为什么对长 CoT 与训推分离更稳定？|GSPO 为什么对长 CoT 与训推分离更稳定？]]
 - [[GSPO#GSPO 为什么能消除 MoE 中这类 token-level routing 噪声对训练的影响？|GSPO 为什么能消除 MoE 中这类 token-level routing 噪声对训练的影响？]]
+- [[GSPO#GSPO-token 是什么，它想恢复 GSPO 丢失的什么信息？|GSPO-token 是什么，它想恢复 GSPO 丢失的什么信息？]]
+- [[GSPO#为什么 GSPO-token 必须有真正随 Token 变化的 Advantage？|为什么 GSPO-token 必须有真正随 Token 变化的 Advantage？]]
+- [[GSPO#GSPO-token 如何结合 Sequence-level Importance Correction 与 Token-level Advantage？|GSPO-token 如何结合 Sequence-level Importance Correction 与 Token-level Advantage？]]
 - [[GSPO#GSPO 相比 GRPO 做了什么取舍？|GSPO 相比 GRPO 做了什么取舍？]]
 - [[GSPO#PPO、GRPO 与 GSPO 的核心演化关系是什么？|PPO、GRPO 与 GSPO 的核心演化关系是什么？]]
 
@@ -247,6 +250,76 @@ GSPO 改用**整条 Sequence 的长度归一化 likelihood ratio**。单个 Toke
 
 ---
 
+## GSPO-token 是什么，它想恢复 GSPO 丢失的什么信息？
+
+GSPO 为了稳定训练，把 Importance Ratio 与 Clipping 提升到 Sequence level，但标准形式仍然让整条 Response 共用一个 Sequence-level Advantage：
+
+$
+\hat A_i
+$
+
+这会弱化 Sequence 内部不同 Token / Step 的 Credit Assignment。
+
+GSPO-token 是 GSPO 论文提出的 token-level objective 扩展：**保留 GSPO 的 Sequence-level Importance Correction，同时允许使用真正随 Token 变化的 Advantage $\hat A_{i,t}$。**
+
+因此它希望同时获得：
+
+> **GSPO 的 Sequence-level 稳定性 + 更细粒度的 Token / Step Credit Assignment。**
+
+当前 TRL 将 GSPO-token 放在实验性模块中，可通过 `importance_sampling_level="sequence_token"` 使用；实验 API 可能随版本变化，不应视为稳定生产接口。参考：[TRL Experimental - GSPO-token](https://huggingface.co/docs/trl/main/experimental)。
+
+---
+
+## 为什么 GSPO-token 必须有真正随 Token 变化的 Advantage？
+
+GSPO-token 真正增加的信息来自：
+
+$
+\hat A_{i,t}
+$
+
+随 $t$ 改变。
+
+如果仍然把同一条 Response 的 Sequence Advantage 广播到所有 Token：
+
+$
+\hat A_{i,t}
+=
+\hat A_i
+$
+
+那么 GSPO-token 的梯度与普通 GSPO 等价，并没有获得更细粒度的 Credit Assignment。
+
+因此 GSPO-token 本身**不会自动解决 Credit Assignment**。真正的 Token / Step Advantage 还需要来自 Process Reward、Step Verifier、Turn-level Reward、Environment Feedback、Value Estimation 或 Reward Redistribution 等更细粒度反馈机制。TRL 当前文档也明确说明，只有提供随 Token 变化的 $\hat A_{i,t}$ 时 GSPO-token 才有实际区别。参考：[TRL Experimental - GSPO-token](https://huggingface.co/docs/trl/main/experimental)。
+
+---
+
+## GSPO-token 如何结合 Sequence-level Importance Correction 与 Token-level Advantage？
+
+GSPO-token 仍以 GSPO 的 Sequence-level Ratio：
+
+$
+s_i(\theta)
+$
+
+作为整条 Response 的 Importance Correction，但通过 stop-gradient 技巧，让梯度能够按 Token 与对应的 $\hat A_{i,t}$ 结合。
+
+可以把其设计直观理解为：
+
+> **Sequence level 决定“这整条轨迹的 Policy Shift 应被整体放大或限制多少”；Token level 决定“轨迹内部每个 Token / Step 应承担多少 Credit”。**
+
+因此它并不是重新回到 GRPO 的 Token-level Ratio，而是把两个粒度拆开：
+
+| 维度 | GSPO | GSPO-token |
+| --- | --- | --- |
+| Importance Correction | Sequence-level | Sequence-level |
+| Advantage | Sequence-level $\hat A_i$ | Token-level $\hat A_{i,t}$ |
+| 主要目标 | 稳定 Policy Update | 稳定性 + 细粒度 Credit Assignment |
+
+参考：[GSPO 论文](https://arxiv.org/abs/2507.18071)、[TRL Experimental - GSPO-token](https://huggingface.co/docs/trl/main/experimental)。
+
+---
+
 ## GSPO 相比 GRPO 做了什么取舍？
 
 GSPO 用更粗粒度的 Sequence-level Policy Constraint 换取稳定性。
@@ -300,4 +373,4 @@ $$
 
 ---
 
-相关主题：[[LLM/后训练/RL-based Post-training/RL-based Post-training|RL-based Post-training]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[LLM/后训练/RL-based Post-training/GRPO/GRPO|GRPO]] · [[推理能力]]
+相关主题：[[LLM/后训练/RL-based Post-training/RL-based Post-training|RL-based Post-training]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[LLM/后训练/RL-based Post-training/GRPO/GRPO|GRPO]] · [[LLM/后训练/RL-based Post-training/DHPO/DHPO|DHPO]] · [[推理能力]]
