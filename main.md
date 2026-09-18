@@ -25,7 +25,11 @@
   - [推理能力](LLM/推理能力/推理能力.md)
   - [中训练](LLM/中训练/中训练.md)
   - [后训练](LLM/后训练/后训练.md)
-    - [微调](LLM/后训练/微调/微调.md)
+    - [SFT](LLM/后训练/SFT/SFT.md)
+    - [偏好学习](LLM/后训练/偏好学习/偏好学习.md)
+    - [RL-based Post-training](LLM/后训练/RL-based Post-training/RL-based Post-training.md)
+    - [Reward Hacking](LLM/后训练/Reward Hacking/Reward Hacking.md)
+    - [参数高效微调（PEFT）](LLM/后训练/参数高效微调（PEFT）/参数高效微调（PEFT）.md)
   - [部署](LLM/部署/部署.md)
 
 ## Agent
