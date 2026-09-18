@@ -17,6 +17,7 @@
 - [[GRPO#原始 GRPO 的 Sequence Length Normalization 为什么会产生 Length Bias？|原始 GRPO 的 Sequence Length Normalization 为什么会产生 Length Bias？]]
 - [[GRPO#DAPO 与 Dr.GRPO 如何改进序列长度归一化？|DAPO 与 Dr.GRPO 如何改进序列长度归一化？]]
 - [[GRPO#现代 GRPO 可以把哪些 Normalization 设计看成独立旋钮？|现代 GRPO 可以把哪些 Normalization 设计看成独立旋钮？]]
+- [[GRPO#为什么 GRPO 的 Token-level Ratio 会导致 MoE Training Collapse？|为什么 GRPO 的 Token-level Ratio 会导致 MoE Training Collapse？]]
 - [[GRPO#GRPO 还留下了什么结构性问题？|GRPO 还留下了什么结构性问题？]]
 
 ---
@@ -623,6 +624,16 @@ $$
 
 ---
 
+## 为什么 GRPO 的 Token-level Ratio 会导致 MoE Training Collapse？
+
+MoE 的 Expert Routing 具有离散性和波动性。Rollout 与训练重新 Forward 时，如果个别 Token 激活了不同 Expert，其 Token likelihood 可能明显变化；GRPO 又直接使用每个 Token 的 Importance Ratio 做 Clipping，因此这些局部 Routing 差异会被放大为异常 Ratio、过度 Clipping 和噪声梯度。
+
+当这种 train-inference routing mismatch 在大量 Token 上持续累积时，有效 Policy Update 会被严重干扰，训练可能无法正常收敛甚至发生 collapse。Qwen 团队因此在 GRPO 训练 MoE 时曾使用 Routing Replay 缓解该问题。参考：[Qwen GSPO](https://qwenlm.github.io/zh/blog/gspo/)。
+
+相关改进：[[LLM/后训练/RL-based Post-training/GSPO/GSPO#GSPO 为什么能消除 MoE 中这类 token-level routing 噪声对训练的影响？|GSPO 为什么能消除这种噪声的影响？]]
+
+---
+
 ## GRPO 还留下了什么结构性问题？
 
 即使修正 Difficulty Bias 与 Length Bias，经典 GRPO 仍保留一个更结构性的张力：
@@ -645,8 +656,8 @@ $$
 
 对于很长的 CoT、MoE 模型以及 Long-horizon Agent Trajectory，这种“Sequence-level Evaluation + Token-level Optimization”是否最合适，会进一步影响训练稳定性和优化语义。
 
-这个问题已经超出了单纯修改 Normalization 的范围，后续讨论 GSPO 时再继续展开。
+这个问题已经超出了单纯修改 Normalization 的范围，详见 [[LLM/后训练/RL-based Post-training/GSPO/GSPO|GSPO]]。
 
 ---
 
-相关主题：[[LLM/后训练/RL-based Post-training/RL-based Post-training|RL-based Post-training]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[Reward Hacking]] · [[推理能力]]
+相关主题：[[LLM/后训练/RL-based Post-training/RL-based Post-training|RL-based Post-training]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[LLM/后训练/RL-based Post-training/GSPO/GSPO|GSPO]] · [[Reward Hacking]] · [[推理能力]]
