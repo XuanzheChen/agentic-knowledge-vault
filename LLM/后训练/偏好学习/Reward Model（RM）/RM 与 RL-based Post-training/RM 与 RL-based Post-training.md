@@ -49,6 +49,40 @@ $$
 
 ---
 
+## 为什么 ORM / PRM 是与 RL-based Post-training 交织最深的一条 RM 轴？
+
+现代 RM 可以从多个正交维度分类，但 **Outcome / Process** 这一轴回答的是：
+
+> **Reward 在 trajectory 的哪个粒度上出现？**
+
+ORM 更接近：
+
+$
+R(\tau)
+$
+
+即整条 Response / Trajectory 一个 Reward；PRM 则进一步提供：
+
+$
+r_1,r_2,\ldots,r_T
+$
+
+或 Step-level / Turn-level Reward。
+
+这个区别会直接改变 Advantage Estimation 能获得多少局部信息，因此会进一步影响 Credit Assignment：
+
+- Sequence-level Reward 更自然地产生 Sequence / Group Advantage；
+- Process-level Reward 可以支持 Dense、Step-level 或 Token-level Advantage；
+- 后续 PPO、GRPO、GSPO、GSPO-token 等方法能否利用这些局部信息，取决于各自的 Advantage Estimation 与 Policy Objective。
+
+因此 ORM / PRM 不只是“哪种 RM 评价得更好”，而是直接改变：
+
+> **Reward Granularity → Advantage Granularity → Credit Assignment**
+
+相比之下，Multi-objective、Generative、Conditional、Online、Ensemble 等维度通常仍可以同时作用于 ORM 或 PRM。例如一个 RM 完全可以同时是 **Process-level + Generative + Multi-objective + Online**。
+
+---
+
 ## Outcome RM 如何影响 RL-based Post-training？
 
 Outcome Reward Model（ORM）主要对完整 Response 或最终 Trajectory 给一个 Reward：
