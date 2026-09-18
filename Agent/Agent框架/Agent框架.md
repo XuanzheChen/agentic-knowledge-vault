@@ -15,7 +15,7 @@
 
 ## AutoGen、AgentScope、CAMEL 与 LangGraph 的核心差异是什么？
 
-这四个框架并不是简单的“同类产品四选一”，而是在解决 Agent 系统的不同核心矛盾。按照 [Hello-Agents 第六章](https://hello-agents.datawhale.cc/#/./chapter6/%E7%AC%AC%E5%85%AD%E7%AB%A0%20%E6%A1%86%E6%9E%B6%E5%BC%80%E5%8F%91%E5%AE%9E%E8%B7%B5) 的划分，可以先抓住两个坐标轴：**AutoGen / CAMEL 更偏涌现式协作，LangGraph 更偏显式控制；AgentScope 则额外强调从原型走向生产时的工程化能力。**
+这四个框架并不是简单的“同类产品四选一”，而是在解决 Agent 系统的不同核心矛盾。按照 [Hello-Agents 第六章](https://github.com/datawhalechina/hello-agents/blob/6d9506ba269e385a844aa9c479fb98cefcfc8f3c/docs/chapter6/Chapter6-Framework-Development-Practice.md) 的划分，可以先抓住两个坐标轴：**AutoGen / CAMEL 更偏涌现式协作，LangGraph 更偏显式控制；AgentScope 则额外强调从原型走向生产时的工程化能力。**
 
 ### AutoGen
 
