@@ -105,7 +105,7 @@ $$
 
 ### 阅读背景
 
-参考：[Hello-Agents 第三章：大语言模型基础](https://hello-agents.datawhale.cc/#/./chapter3/%E7%AC%AC%E4%B8%89%E7%AB%A0%20%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%9F%BA%E7%A1%80)
+参考：[Hello-Agents 第三章：大语言模型基础](https://github.com/datawhalechina/hello-agents/blob/6d9506ba269e385a844aa9c479fb98cefcfc8f3c/docs/chapter3/Chapter3-Fundamentals-of-Large-Language-Models.md)
 
 ### 参考回答（已本地化）
 
@@ -170,7 +170,7 @@ h_t → h_{t+1} → ... → h_T
 
 ### 阅读背景
 
-参考：[Hello-Agents 第三章：大语言模型基础](https://hello-agents.datawhale.cc/#/./chapter3/%E7%AC%AC%E4%B8%89%E7%AB%A0%20%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%9F%BA%E7%A1%80)
+参考：[Hello-Agents 第三章：大语言模型基础](https://github.com/datawhalechina/hello-agents/blob/6d9506ba269e385a844aa9c479fb98cefcfc8f3c/docs/chapter3/Chapter3-Fundamentals-of-Large-Language-Models.md)
 
 ### 参考回答（已本地化）
 
@@ -332,7 +332,7 @@ $$
 
 ### 阅读背景
 
-参考：[Hello-Agents 第三章：大语言模型基础](https://hello-agents.datawhale.cc/#/./chapter3/%E7%AC%AC%E4%B8%89%E7%AB%A0%20%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%9F%BA%E7%A1%80)
+参考：[Hello-Agents 第三章：大语言模型基础](https://github.com/datawhalechina/hello-agents/blob/6d9506ba269e385a844aa9c479fb98cefcfc8f3c/docs/chapter3/Chapter3-Fundamentals-of-Large-Language-Models.md)
 
 ### 参考回答（已本地化）
 
