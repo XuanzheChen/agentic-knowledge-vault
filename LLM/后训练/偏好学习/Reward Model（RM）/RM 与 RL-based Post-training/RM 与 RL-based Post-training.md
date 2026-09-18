@@ -2,16 +2,18 @@
 
 [[LLM/后训练/偏好学习/Reward Model（RM）/Reward Model（RM）|返回上级：Reward Model（RM）]] · [[main|返回知识主干]] · [[LLM/后训练/RL-based Post-training/RL-based Post-training|相关：RL-based Post-training]]
 
-围绕不同类型 Reward Model 如何通过 Reward 改变 Advantage、Credit Assignment 与 Policy Optimization 整理 Q&A。
+围绕不同类型 Reward Model 如何影响 RL-based Post-training 整理 Q&A。主线仍是 **Outcome RM（ORM）与 Process RM（PRM）对应的 Reward Granularity**：这一轴会直接影响 Reward 在 trajectory 中出现的位置与粒度，因此与 Advantage / Credit Assignment 深度交织。Multi-objective、Generative、Conditional、Online、Ensemble 等其他 RM 维度与这条轴大体正交，主要改变 Reward 的目标、质量、可靠性、条件或生命周期，而通常不改变 RL 方法消费 Reward 的基本机制。
 
 ## 问题目录
 
 - [[RM 与 RL-based Post-training#RM 在 RL-based Post-training 中如何影响 Advantage？|RM 在 RL-based Post-training 中如何影响 Advantage？]]
+- [[RM 与 RL-based Post-training#为什么 ORM / PRM 是与 RL-based Post-training 交织最深的一条 RM 轴？|为什么 ORM / PRM 是与 RL-based Post-training 交织最深的一条 RM 轴？]]
 - [[RM 与 RL-based Post-training#Outcome RM 如何影响 RL-based Post-training？|Outcome RM 如何影响 RL-based Post-training？]]
 - [[RM 与 RL-based Post-training#Process RM 如何改变 Advantage 与 Credit Assignment？|Process RM 如何改变 Advantage 与 Credit Assignment？]]
 - [[RM 与 RL-based Post-training#有 Process RM 是否就等于有 Token-level Advantage？|有 Process RM 是否就等于有 Token-level Advantage？]]
 - [[RM 与 RL-based Post-training#不同 RM 的 Reward Scale 与 Reward Ranking 会怎样影响 Advantage？|不同 RM 的 Reward Scale 与 Reward Ranking 会怎样影响 Advantage？]]
-- [[RM 与 RL-based Post-training#Multi-objective RM、Generative RM 与 Online RM 分别会怎样影响 RL？|Multi-objective RM、Generative RM 与 Online RM 分别会怎样影响 RL？]]
+- [[RM 与 RL-based Post-training#除 ORM / PRM 外，其他主流 RM 类型如何影响 RL-based Post-training？|除 ORM / PRM 外，其他主流 RM 类型如何影响 RL-based Post-training？]]
+- [[RM 与 RL-based Post-training#为什么这些正交 RM 维度通常不会改变 RL 方法如何利用 Reward？|为什么这些正交 RM 维度通常不会改变 RL 方法如何利用 Reward？]]
 - [[RM 与 RL-based Post-training#不同 Reward Granularity 与哪些 Policy Optimization 形式更自然匹配？|不同 Reward Granularity 与哪些 Policy Optimization 形式更自然匹配？]]
 - [[RM 与 RL-based Post-training#ORM 与 PRM 在 RL 中的核心取舍是什么？|ORM 与 PRM 在 RL 中的核心取舍是什么？]]
 
@@ -245,9 +247,29 @@ Reward Model 与 Policy Optimization 并不是完全独立的两个模块。
 
 ---
 
-## Multi-objective RM、Generative RM 与 Online RM 分别会怎样影响 RL？
+## 除 ORM / PRM 外，其他主流 RM 类型如何影响 RL-based Post-training？
 
-不同 RM 设计不仅改变 Reward 粒度，也会改变 Reward 所表达的目标与可靠性。
+这些 RM 类型主要改变的是 **Reward 本身是什么、是否可靠、是否适配当前任务与 Policy**，而不是像 ORM / PRM 一样直接改变 Reward 的时序粒度。
+
+| RM / Reward 设计 | 主要改变 Reward 的什么属性 | 对 RL-based Post-training 的主要影响 |
+| --- | --- | --- |
+| **Scalar / Pair-wise RM** | Ranking、Margin、Calibration | 决定哪些 Rollout 被排得更高，以及 Reward 差距有多大 |
+| **Multi-objective RM** | Objective / Trade-off | 决定 Correctness、Safety、Helpfulness、Efficiency 等目标如何组合成训练方向 |
+| **Conditional / Rubric-conditioned RM** | Context-dependent Objective | 同一行为在不同任务、Rubric 或约束下可以获得不同 Reward |
+| **Generative / Reasoning RM** | Evaluation Quality / Inference Compute | 通过 Critique、Verification、Reasoning 提高 Reward 判断质量；若输出 Process Signal，也可以进一步与 PRM 轴组合 |
+| **Online / Policy-aware RM** | Lifecycle / Distribution Adaptation | 让 Reward Function 跟随当前 Policy 分布更新，减少固定 RM 的 Distribution Shift |
+| **Ensemble / Uncertainty-aware RM** | Confidence / Robustness | 对 RM 分歧较大的样本降低有效 Reward 或采用保守目标，减少 Reward Overoptimization |
+| **Verifier / Rule-based Reward** | External Grounding | 用数学答案、测试、环境结果等提高 Reward 的客观性与可靠性；严格来说属于更广义 Reward System，而不一定是 learned RM |
+
+### Scalar / Pair-wise RM
+
+经典 Pair-wise RM 主要学习：
+
+$$
+R(y_w)>R(y_l)
+$$
+
+它对 RL 最直接的影响是 **Reward Ordering 与 Margin**。如果两个 RM 对 Rollout 排序不同，后续得到的 Advantage 符号就可能不同；如果排序相同但分数间距不同，则 PPO、Dr.GRPO 等对 Reward Scale 更敏感的方法会感受到不同的优化强度。经典实现参考：[InstructGPT](https://arxiv.org/abs/2203.02155)。
 
 ### Multi-objective RM
 
@@ -259,30 +281,105 @@ $$
 [r_1,r_2,\ldots,r_K]
 $$
 
-例如 Correctness、Safety、Helpfulness、Efficiency 等。
+例如 Correctness、Safety、Helpfulness、Efficiency。进入普通 Policy Optimization 前，通常还需要加权、Gating、约束或其他聚合方式得到可使用的 Reward。它改变的是 **“什么叫好”以及多个目标如何权衡**，而不是 Policy Gradient 如何利用 Reward。参考：[ArmoRM](https://arxiv.org/abs/2406.12845)。
 
-Policy Optimization 最终必须决定：
+### Conditional / Rubric-conditioned RM
 
-- 怎样加权；
-- 哪些目标可以互相补偿；
-- 哪些目标应作为硬约束；
-- 是否需要 Context-dependent 权重。
+条件式 RM 写成：
 
-因此 Multi-objective RM 实际改变的是 **Reward Landscape 本身的多目标结构**。参考：[ArmoRM](https://arxiv.org/abs/2406.12845)。
+$$
+R(x,y,c)
+$$
+
+其中 $c$ 是任务 Criteria、Rubric、用户要求或安全约束。它使 Reward Landscape 随 Context 改变：同一个 Response 在不同 Rubric 下可以得到不同 Reward，但后面的 PPO / GRPO / GSPO 仍然按照各自原有方式处理这个 Reward。相关设计见 [[LLM/后训练/偏好学习/Reward Model（RM）/Reward Model（RM）#什么是条件式评分 RM？|条件式评分 RM]]。
 
 ### Generative / Reasoning RM
 
-Generative RM 会先生成 Critique、Rubric 检查或 Verification，再给出 Reward。它可能提高复杂任务的评价质量，也能够产生比单一 Scalar 更丰富的过程反馈。
-
-如果这些 Critique 进一步被转化为 Process Reward 或 Step Credit，就可能影响更细粒度的 Advantage；如果最终仍然只压缩成一个 Scalar，则主要改善的是 Sequence Reward 的质量。参考：[Critique-out-Loud Reward Models](https://arxiv.org/abs/2408.11791)、[ThinkPRM](https://arxiv.org/abs/2504.16828)。
+Generative RM 通过生成 Critique、Verification 或 Reasoning 后再给 Reward，主要改善复杂评价任务中的 **Reward Quality**。如果最后仍然压成一个 Sequence Scalar，则后续 RL 机制没有结构变化；只有当生成式评价进一步保留为 Step / Process Signal 时，它才会与 PRM 的 Reward Granularity 轴发生交互。参考：[Critique-out-Loud Reward Models](https://arxiv.org/abs/2408.11791)、[ThinkPRM](https://arxiv.org/abs/2504.16828)。
 
 ### Online / Policy-aware RM
 
-Online RM 随当前 Policy 的输出分布持续更新：
+Online RM 随 Policy 输出分布持续更新：
 
 > **Policy$_t$ → 新 Rollout → 新反馈 → RM$_{t+1}$ → Policy$_{t+1}$**
 
-它主要影响 Reward 的**分布适配性**：降低固定 RM 面对新型 Policy Behavior 时出现 Distribution Shift、被 Policy 持续找到漏洞的风险。参考：[RLHF Workflow: From Reward Modeling to Online RLHF](https://arxiv.org/abs/2405.07863)。
+它主要改善 Reward 对当前 Policy 分布的适配，降低固定 RM 被持续优化后出现 Distribution Shift 或漏洞暴露的问题。它使 Reward Function 本身随训练时间变化，但 PPO / GRPO / GSPO 如何消费当前 Reward 的基本机制仍保持不变。参考：[RLHF Workflow: From Reward Modeling to Online RLHF](https://arxiv.org/abs/2405.07863)。
+
+### Ensemble / Uncertainty-aware RM
+
+多个 RM 可以对同一 Response 给出一组 Reward：
+
+$$
+R_1,R_2,\ldots,R_M
+$$
+
+除了均值外，还可以利用模型间分歧估计不确定性，并构造更保守的 Effective Reward，例如对高方差样本降低奖励。其主要作用是避免 Policy 过度利用单个 RM 的错误高分区域，而不是改变 Advantage Estimator 的结构。Reward Model Ensemble 的研究表明，Worst-case 与 Uncertainty-weighted 等保守聚合可以降低 PPO 等方法中的 Reward Overoptimization。参考：[Reward Model Ensembles Help Mitigate Overoptimization](https://arxiv.org/abs/2310.02743)。
+
+### Verifier / Rule-based Reward
+
+数学答案、Code Test、Compiler、Schema、环境任务成败等 Verifier 可以提供更接近外部事实的 Reward。它们严格来说不一定属于 learned RM，但在现代 RLVR 中承担相同的 Reward 输入角色。
+
+它们主要提高：
+
+> **Reward 的 Grounding 与 Correctness。**
+
+如果只输出 Final Outcome，它们依旧是 Sequence-level Sparse Reward；只有进一步产生 Process / Step Signal 时，才会改变 Credit Assignment 的粒度。
+
+---
+
+## 为什么这些正交 RM 维度通常不会改变 RL 方法如何利用 Reward？
+
+可以把 RL-based Post-training 拆成两层：
+
+$$
+\boxed{
+\text{Reward System}
+\rightarrow
+R
+}
+$$
+
+以及：
+
+$$
+\boxed{
+R
+\rightarrow
+\text{Advantage Estimation}
+\rightarrow
+\text{Importance Correction / Clipping}
+\rightarrow
+\text{Policy Update}
+}
+$$
+
+Multi-objective、Generative、Conditional、Online、Ensemble 等 RM 主要作用在第一层：它们决定 Reward 的**语义、质量、可靠性、适用条件和生命周期**。
+
+只要这些设计最终仍然输出相同粒度的 Reward，例如每条 Sequence 一个 Scalar：
+
+$$
+R_i
+$$
+
+那么后面的 GRPO 仍然可以照常计算：
+
+$$
+\hat A_i
+=
+f(R_i,R_{group})
+$$
+
+GSPO 仍然可以使用 Sequence-level Importance Ratio，PPO 也仍然按自己的 Return / Critic / GAE 机制计算 Advantage。
+
+因此这些 RM 维度主要改变：
+
+> **“RL 收到的 Reward 好不好、代表什么、可信度多高。”**
+
+而不会自动改变：
+
+> **“RL 方法怎样把 Reward 转成 Advantage，再怎样更新 Policy。”**
+
+真正会跨过这层边界的是 **Reward Granularity**：当 ORM 的 Sequence Reward 变成 PRM 的 Step / Process Reward 时，后面的 Advantage / Credit Assignment 才有机会从 Sequence level 进一步细化。
 
 ---
 
