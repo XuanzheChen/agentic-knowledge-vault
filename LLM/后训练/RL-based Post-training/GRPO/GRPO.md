@@ -529,7 +529,7 @@ $$
 
 这样每个 Active Token 在当前 Batch 中拥有相同权重，减少了原始 GRPO 因“每条 Sequence 整体等权”导致的 Length Bias。
 
-这一机制在 DAPO 中被称为 Token-level Policy Gradient Loss。DAPO 本身还包含 Decoupled Clip、Dynamic Sampling、Overlong Reward Shaping 等其他设计，后续应单独讨论，不在 GRPO 笔记中展开。参考：[DAPO: An Open-Source LLM Reinforcement Learning System at Scale](https://arxiv.org/abs/2503.14476)。
+这一机制在 DAPO 中被称为 Token-level Policy Gradient Loss。DAPO 本身还包含 Decoupled Clip、Dynamic Sampling、Overlong Reward Shaping 等其他设计，后续应单独讨论，不在 GRPO 笔记中展开。参考：[DAPO: An Open-Source LLM Reinforcement Learning System at Scale](https://arxiv.org/abs/2503.14476)。完整 DAPO Recipe 见 [[LLM/后训练/RL-based Post-training/DAPO/DAPO|DAPO]]。
 
 ### Dr.GRPO：使用固定常数归一化
 
@@ -660,4 +660,4 @@ $$
 
 ---
 
-相关主题：[[LLM/后训练/RL-based Post-training/RL-based Post-training|RL-based Post-training]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[LLM/后训练/RL-based Post-training/GSPO/GSPO|GSPO]] · [[Reward Hacking]] · [[推理能力]]
+相关主题：[[LLM/后训练/RL-based Post-training/RL-based Post-training|RL-based Post-training]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[LLM/后训练/RL-based Post-training/GSPO/GSPO|GSPO]] · [[LLM/后训练/RL-based Post-training/DAPO/DAPO|DAPO]] · [[Reward Hacking]] · [[推理能力]]
