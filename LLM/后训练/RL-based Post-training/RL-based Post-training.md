@@ -111,7 +111,7 @@ Reward 可以只评价最终结果，也可以评价中间过程：
 - **Outcome Reward**：任务最终是否成功。
 - **Process Reward**：中间推理、工具调用或轨迹是否合理。
 
-Reward 的可靠性直接决定训练方向；如果代理 Reward 与真实目标存在偏差，Policy 可能出现 [[Reward Hacking]]。
+Reward 的可靠性直接决定训练方向；如果代理 Reward 与真实目标存在偏差，Policy 可能出现 [[Reward Hacking]]。不同类型 Reward Model 如何进一步改变 Reward Granularity、Advantage 与 Credit Assignment，见 [[LLM/后训练/偏好学习/Reward Model（RM）/RM 与 RL-based Post-training/RM 与 RL-based Post-training|RM 与 RL-based Post-training]]。
 
 ---
 
@@ -235,4 +235,4 @@ Agent RL 则更接近传统 Environment Interaction：模型进行 Tool Call、�
 
 ---
 
-相关主题：[[后训练]] · [[SFT]] · [[偏好学习]] · [[Reward Model（RM）]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[LLM/后训练/RL-based Post-training/GRPO/GRPO|GRPO]] · [[LLM/后训练/RL-based Post-training/GSPO/GSPO|GSPO]] · [[LLM/后训练/RL-based Post-training/DAPO/DAPO|DAPO]] · [[LLM/后训练/RL-based Post-training/DHPO/DHPO|DHPO]] · [[Reward Hacking]] · [[推理能力]] · [[Agent]] · [[评估]]
+相关主题：[[后训练]] · [[SFT]] · [[偏好学习]] · [[Reward Model（RM）]] · [[LLM/后训练/偏好学习/Reward Model（RM）/RM 与 RL-based Post-training/RM 与 RL-based Post-training|RM 与 RL-based Post-training]] · [[LLM/后训练/RL-based Post-training/PPO/PPO|PPO]] · [[LLM/后训练/RL-based Post-training/GRPO/GRPO|GRPO]] · [[LLM/后训练/RL-based Post-training/GSPO/GSPO|GSPO]] · [[LLM/后训练/RL-based Post-training/DAPO/DAPO|DAPO]] · [[LLM/后训练/RL-based Post-training/DHPO/DHPO|DHPO]] · [[Reward Hacking]] · [[推理能力]] · [[Agent]] · [[评估]]
