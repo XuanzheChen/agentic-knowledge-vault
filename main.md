@@ -8,6 +8,7 @@
 | --- | --- |
 | [LLM](LLM/LLM.md) | 大语言模型基础机制，以及预训练、中训练、后训练、模型架构与推理部署 |
 | [Agent](Agent/Agent.md) | Agent 状态与执行循环，并延伸到框架、通信、Context、Memory、RAG 与评估 |
+| [RSI](RSI/RSI.md) | 递归式自我改进、自动化 AI R&D 闭环，以及 AI 参与改进后继系统的机制与边界 |
 | [对比问题](对比问题/对比问题.md) | 难以可靠归入单一 Tree 的跨概念区别、联系与方案选择 |
 
 ## LLM
@@ -41,6 +42,10 @@
     - [Memory](Agent/Context/Memory/Memory.md)
     - [RAG](Agent/Context/RAG/RAG.md)
   - [评估](Agent/评估/评估.md)
+
+## RSI
+
+- [RSI](RSI/RSI.md)
 
 ## 待继续思考的问题
 
