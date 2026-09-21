@@ -24,6 +24,7 @@
 - [[RL-based Post-training#策略优化在 RL-based Post-training 中做什么？|策略优化在 RL-based Post-training 中做什么？]]
 - [[RL-based Post-training#为什么常常需要 Reference Policy 与 KL 约束？|为什么常常需要 Reference Policy 与 KL 约束？]]
 - [[RL-based Post-training#RLHF、RLAIF、RLVR 与 Agent RL 是什么关系？|RLHF、RLAIF、RLVR 与 Agent RL 是什么关系？]]
+- [[RL-based Post-training#Jev 和 RLCD 是什么？|Jev 和 RLCD 是什么？]]
 - [[RL-based Post-training#RL-based Post-training 与 SFT、偏好学习是什么关系？|RL-based Post-training 与 SFT、偏好学习是什么关系？]]
 - [[RL-based Post-training#RL-based Post-training 的主要风险与工程难点是什么？|RL-based Post-training 的主要风险与工程难点是什么？]]
 
@@ -194,6 +195,32 @@ $$
 RLAIF 的典型思路是用 AI Feedback 替代或扩展人工反馈，例如 Constitutional AI。参考：[Constitutional AI](https://arxiv.org/abs/2212.08073)。
 
 Agent RL 则更接近传统 Environment Interaction：模型进行 Tool Call、接收 Observation、继续行动，最终根据环境状态或任务成败得到 Reward。Qwen3-Coder 已公开采用 Long-horizon Agent RL，并强调 Environment Scaling 对 Agent RL 的重要性。参考：[Qwen3-Coder](https://qwenlm.github.io/blog/qwen3-coder/)。
+
+---
+
+## Jev 和 RLCD 是什么？
+
+**Jev** 是 TypeSafe AI 在 2026 年 9 月 15 日公开发布、当时处于 early access 的首个 **System One Model**。这里的 “System One Model” 是 TypeSafe 提出的模型类别名称，官方将它定义为面向软件自动化、用于快速产生结构化决策的一类模型，而不是传统的自由文本生成接口。参考：[TypeSafe 发布博客](https://typesafe.ai/blog/introducing-system-one-models-and-jev)、[TypeSafe 官方文档：Introduction](https://docs.typesafe.ai/introduction)。
+
+Jev 的公开接口可以概括为：给模型一个 **state** 和一组有明确类型的问题，模型直接返回可由程序使用的结构化答案与概率信息，而不是先生成一段自然语言再由程序解析。官方文档目前公开了三种问题原语：
+
+| 原语 | 作用 | 官方公开的返回形式 |
+| --- | --- | --- |
+| **Choice** | 从给定选项中选择 | choice、各选项 probabilities、confidence |
+| **Score** | 按给定 rubric 评分 | score、probabilities、confidence |
+| **Noul** | 判断一个陈述是否成立 | 0–1 的概率值 |
+
+同一次调用中的多个问题会针对同一个 state 进行评估。TypeSafe 在发布文章中用 “unstructured state in, typed probabilistic decisions out” 概括 Jev 的接口定位。参考：[TypeSafe 官方文档：Introduction](https://docs.typesafe.ai/introduction)、[TypeSafe 发布博客](https://typesafe.ai/blog/introducing-system-one-models-and-jev)。
+
+**RLCD** 是 **Reinforcement Learning for Calibrated Decisions** 的缩写，是 TypeSafe 公开称用于 Jev / System One Models 的训练方法。官方目前公开的核心定义是：RLCD 的目标不是让模型生成更受人偏好的文本，而是让模型返回**决策及经过校准的概率（calibrated probabilities）**。TypeSafe 对“校准”的解释是：在大量预测上，模型给出的概率应与对应事件实际发生或答案正确的频率相匹配；例如，一组被赋予约 0.8 概率的结果，理想情况下应大约有 80% 最终成立。这个统计含义针对一组预测，并不保证某一个单独的 0.8 判断一定正确。参考：[TypeSafe 官方文档：AI primer](https://docs.typesafe.ai/introduction/machine-learning-primer)。
+
+因此，目前可以可靠地把三者关系理解为：
+
+- **System One Model**：TypeSafe 提出的模型类别与产品方向；
+- **Jev**：TypeSafe 首个公开的 System One Model；
+- **RLCD**：TypeSafe 宣称用于训练这类模型、以 calibrated decisions 为目标的强化学习方法。
+
+**当前公开信息边界：**截至 2026 年 9 月 21 日，本笔记查阅到的 TypeSafe 官方发布文章与官方文档只公开到上述概念、接口和训练目标层级。官方发布文章还提到 Jev 使用了新的模型架构与 parallel sampler，但这些公开材料并没有给出足以复现 RLCD 的具体奖励函数、优化算法、训练数据配方或完整训练流程。因此，现阶段不应把社区对 RLCD 的实现方式、损失函数或与 PPO / GRPO 等算法的关系当作 Jev 官方训练方法。参考：[TypeSafe 发布博客](https://typesafe.ai/blog/introducing-system-one-models-and-jev)、[TypeSafe 官方文档：AI primer](https://docs.typesafe.ai/introduction/machine-learning-primer)。
 
 ---
 
