@@ -20,6 +20,7 @@
 - [[RAG#Reranker 为什么需要 Cross-Encoder，LLM Reranker 与 Late Interaction 又有什么取舍？|Reranker 为什么需要 Cross-Encoder，LLM Reranker 与 Late Interaction 又有什么取舍？]]
 - [[RAG#Hierarchical / Parent-Child RAG 在解决什么问题？|Hierarchical / Parent-Child RAG 在解决什么问题？]]
 - [[RAG#Agentic RAG 与固定 RAG Pipeline 有什么区别？|Agentic RAG 与固定 RAG Pipeline 有什么区别？]]
+- [[RAG#Agent 何时触发 RAG 检索，Query 改写与 Rerank 如何串联？|Agent 何时触发 RAG 检索，Query 改写与 Rerank 如何串联？]]
 
 ---
 
@@ -723,6 +724,42 @@ Agent 可以决定：
 所以 Agentic RAG 并不会淘汰固定 Pipeline。对于“一个知识库 + 一个明确 Query + 稳定 SLA”的在线问答，固定 **Hybrid Retrieve → Rerank** 往往更简单、便宜、可控；Agentic RAG 更适合检索路径本身需要推理的复杂任务。
 
 相关主题：[[Agent#ReAct 执行循环为什么需要运行时约束？|ReAct 执行循环为什么需要运行时约束？]] · [[Agent框架]]。
+
+---
+
+## Agent 何时触发 RAG 检索，Query 改写与 Rerank 如何串联？
+
+### 参考回答
+
+Agentic RAG 不必每轮都查询知识库，而应按任务需要触发：任务开始时缺少领域知识；当前 Context 证据不足；子任务阶段切换；执行出现未知错误；或压缩后需要恢复事实出处。触发方式可以是规则门控与模型自行调用检索工具的结合，并设置调用预算、查询去重和停止条件。
+
+Query Rewrite 先补全指代和当前任务背景，再按需要扩展别名/术语或拆成多个子查询。例如“为什么重启后又调用了一次工具”可改写为“Checkpoint 恢复后重复工具执行”“重试幂等键”“工具执行成功但响应丢失”。Multi-Query 能扩大覆盖范围，但要防止 Query Drift；HyDE 只能产生辅助检索的假设文本，不能将生成内容当作证据。
+
+一条常用的可组合链路如下：
+
+```text
+检索必要性判断
+    ↓
+Query Rewrite / Decompose
+    ↓
+BM25 + Dense Retrieval（各自粗召回）
+    ↓
+RRF 融合与去重
+    ↓
+Cross-Encoder 或其他 Reranker 精排
+    ↓
+Top-K 筛选 + Token Budget + 来源引用
+    ↓
+证据是否足够？ → 不足时有界二次检索
+    ↓
+回灌 Agent Context
+```
+
+BM25 补精确术语和错误码，Dense Retrieval 补语义相关性；Reranker 提高候选排序精度。示例配置可先召回约 30～50 个 Chunk、精排保留 5～10 个，但不应把这些数字视为通用最优值。Chunk 应保留 `document_id`、`chunk_id`、位置及来源，跨段问题可进一步读取 Parent Chunk / 相邻上下文。
+
+评估时同时看 `Recall@K`、`MRR / nDCG`、证据覆盖、最终答案忠实度、引用准确率、检索成本和延迟。若任务简单且查询路径稳定，固定检索流水线通常更低延迟；是否采用 Agentic 循环取决于多跳性和信息缺口。
+
+相关：[[Agent/Context/RAG/RAG#Agentic RAG 与固定 RAG Pipeline 有什么区别？|Agentic RAG 与固定 RAG 的区别]] · [[Agent/Context/RAG/RAG#Hybrid Retrieve → Rerank RAG 为什么可以作为稳健的工程 Baseline？|Hybrid + Rerank 基线]] · [[Agent/Context/context#长上下文超限时，短期记忆如何压缩、补回遗漏并维持跨块关联？|压缩后证据恢复]]。
 
 ---
 

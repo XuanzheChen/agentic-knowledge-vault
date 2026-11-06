@@ -18,6 +18,7 @@
 - [[Agent/Context/context#现代 Agent 应如何治理 Context？|现代 Agent 应如何治理 Context？]]
 - [[Agent/Context/context#LangChain 如何设计 Context Engineering？|LangChain 如何设计 Context Engineering？]]
 - [[Agent/Context/context#Deep Agents 如何管理长时程 Context？|Deep Agents 如何管理长时程 Context？]]
+- [[Agent/Context/context#长上下文超限时，短期记忆如何压缩、补回遗漏并维持跨块关联？|长上下文超限时，短期记忆如何压缩、补回遗漏并维持跨块关联？]]
 
 ---
 
@@ -404,6 +405,22 @@ Deep Agents 的默认工作文件可以只存在单个 thread 的 State 中；�
 **缺点**是更强的默认策略也意味着更强的框架假设。简单 Agent 可能不需要 Filesystem、Subagent 与自动压缩；而非常特殊的 Context Policy，例如自定义 Evidence Budget、复杂冲突仲裁或严格的信息流安全边界，仍可能需要自定义 Middleware 或直接下探 LangGraph。自动 Summarization 和 Subagent handoff 也存在有损压缩风险，因此仍需要 tracing、artifact provenance 和 eval。
 
 > **Deep Agents 的 Context Engineering 核心不是“更大的 Context Window”，而是让 Agent 拥有一个 Context Window 之外的 Workspace，并通过按需读取、自动卸载、压缩和隔离，使 active working set 始终保持可控。**
+
+---
+
+## 长上下文超限时，短期记忆如何压缩、补回遗漏并维持跨块关联？
+
+### 参考回答
+
+长任务的短期上下文不是长期 Memory；它更接近当前运行的 **Working Context**。可在 Context Window 接近预算阈值前主动 Compaction（如按可用窗口的 70%～80% 设置预警，实际阈值需测试），采用三层分工：最近对话和未结束的 Tool Call 保留原始内容；较早历史压缩为结构化 Summary；完整日志、文件、结果和证据继续保存在外部 Artifact / Store 中。
+
+**摘要应保留什么？** 当前任务目标和硬约束、已有决策及理由、完成/未完成步骤、失败原因、待执行事项，以及重要证据的原文引用。路径、精确错误、关键代码和数值等不适合模糊概括的信息应保留原文或精确位置。压缩最好发生在工具调用和结果都已落盘的安全边界，避免生成未闭合的 Tool Call 序列。
+
+**摘要丢信息怎么补？** 不把 Summary 当成唯一事实来源。为摘要保留 `source_id`、消息区间、Artifact ID 或 Checkpoint ID；执行关键操作前，必要时按索引回读原始材料，并对硬约束、未解决问题进行压缩前后的一致性检查。压缩可以有损，事实证据应可回取。
+
+**跨块关联怎么做？** 对 Task、Decision、Tool Call、Evidence 和 Checkpoint 分配稳定 ID、时间顺序及引用关系（如 `Task T-1 → Decision D-3 → Evidence E-8`）。检索时组合关键词、语义检索与 ID 关联扩展，必要时返回 Parent Chunk 和相邻片段，而不是只取孤立的高相似度 Chunk。跨块关联不能靠单次摘要“记住一切”。
+
+这是一套可选的 Context Runtime 设计，不意味着所有项目都需要复杂知识图谱；简化实现可以先用结构化摘要、原始记录及可定位引用。参见 [[Agent/Context/context#现代 Agent 应如何治理 Context？|Context 治理]]及 [[Agent/Harness/Harness#Agent 运行中服务重启，Checkpoint 存什么、放哪里、如何恢复？|Checkpoint 恢复]]。
 
 ---
 

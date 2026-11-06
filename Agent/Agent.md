@@ -8,6 +8,7 @@
 
 | 子树 | 内容 |
 | --- | --- |
+| [[Agent/Harness/Harness|Harness]] | Agent Loop、工具执行、运行时安全、Checkpoint 与故障恢复 |
 | [[Agent框架]] | Agent 开发框架的抽象层级、控制流与工程取舍 |
 | [[通信协议]] | MCP、A2A、ANP 等 Agent 互操作协议 |
 | [Context](Context/context.md) | Context Engineering，以及 Memory、RAG 等工作集来源与治理 |
@@ -192,8 +193,8 @@ Reflection 因此更像一种可以包在其他 Agent Loop 外面的“质量优
 
 > **模型负责决定下一步做什么；Runtime 负责限制它能做什么、执行多久、失败后怎么办，以及何时必须停止。**
 
-相关问题：[[评估#Agent 评估应覆盖哪些维度？|Agent 评估应覆盖哪些维度？]]。
+相关问题：[[评估#Agent 评估应覆盖哪些维度？|Agent 评估应覆盖哪些维度？]]；工具调度、恢复与安全机制详见 [[Agent/Harness/Harness|Harness]]。
 
 ---
 
-相关主题：[[LLM]] · [[Agent框架]] · [Context](Context/context.md) · [[Memory]] · [[RAG]] · [[评估]] · [[对比问题]]
+相关主题：[[LLM]] · [[Agent/Harness/Harness|Harness]] · [[Agent框架]] · [Context](Context/context.md) · [[Memory]] · [[RAG]] · [[评估]] · [[对比问题]]
