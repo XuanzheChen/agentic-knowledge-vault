@@ -9,6 +9,7 @@
 - [[agentic-sdlc-contract-runtime#为什么已有 Codex、Claude Code，还需要开发 PSC？|为什么已有 Codex、Claude Code，还需要开发 PSC？]]
 - [[agentic-sdlc-contract-runtime#PSC 的 Supervisor 如何验收 Executor 的真实完成情况？|PSC 的 Supervisor 如何验收 Executor 的真实完成情况？]]
 - [[agentic-sdlc-contract-runtime#Executor 中途失败后，PSC 如何恢复部分完成的任务并避免重复修改？|Executor 中途失败后，PSC 如何恢复部分完成的任务并避免重复修改？]]
+- [[agentic-sdlc-contract-runtime#MCP 断连后，PSC 如何避免重复启动 Executor 和并发写入？|MCP 断连后，PSC 如何避免重复启动 Executor 和并发写入？]]
 
 ## 实际实现流程架构
 
@@ -75,3 +76,32 @@
 3. **新 Executor 从现有代码继续。** 重新派发时注入当前 Task、Contract、上一轮 Supervisor Review 和兼容的历史 Execution Memory。历史记录必须匹配任务 ID、Contract 版本、任务正文与执行包；读取时会重新比较所记录文件的 SHA-256，标示文件是否已变化。 `abnormal_retry` 的执行指令要求先检查当前 Git Diff、任务产物和失败证据，保留有效修改，优先补完剩余部分。参考：[恢复上下文拼装](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)。
 
 **边界与改进方向：** 历史 Execution Memory 是有界的、未经 Supervisor 验收的执行记录，不是可信的“已完成文件清单”；SHA-256 只能检测相关文件内容是否与归档时一致，不能证明功能正确，更不能百分之百避免重复编辑。当前主要依靠重派提示、代码核验和 Supervisor 复核降低破坏风险；若进一步增强，可考虑为已验收的子目标建立显式进度标记、恢复前基线检查以及细粒度的幂等修改与回滚机制。
+
+---
+
+## MCP 断连后，PSC 如何避免重复启动 Executor 和并发写入？
+
+**核心原则：MCP 连接断开不等于 Executor 进程已经终止。** 如果 Supervisor 只根据通信异常重试，就可能让两个执行器同时修改同一仓库。因此，同一工作流的执行互斥必须由 Runtime 的确定性机制保证，不能只依赖 Supervisor 的 Prompt。
+
+### 已实现：工作流级文件锁与进度记录
+
+正常调度通过 `psc_invoke_executor` 等待一次 Executor 尝试返回终态；`_serialize_executor_dispatch` 在进入 `_invoke_executor_impl` 前获取工作流的 `runtime/executor-dispatch.lock`，锁持有范围覆盖 Preflight、Executor 运行与调用结果处理。底层 `workflow_registry._locked()` 使用 Windows 的 `msvcrt.locking` 或类 Unix 系统的 `fcntl.flock`，属于操作系统级跨进程互斥，而不是 Python 内存标志。如果另一调用占锁，最多等待约 10 秒，仍无法获取就抛出 `TimeoutError`。因此，只要原 MCP Server 仍正常运行并持锁，后续同工作流派发不能并发进入执行段。参考：[MCP 调度](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[文件锁实现](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/workflow_registry.py)。
+
+此外，`ProgressRecorder` 会尽力持久化 `run_id`、任务、运行状态、最近活动及心跳时间，便于连接异常后的诊断。但这些记录是**观测信息**：心跳超时或状态文件滞后不能证明旧 Executor 已退出。参考：[执行进度采集](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/executor_progress.py)。
+
+### 尚未完整解决：服务崩溃后的孤儿执行器
+
+| 故障场景 | 当前保障与边界 |
+| --- | --- |
+| Supervisor 客户端断连，MCP Server 仍在执行 | 文件锁持续由 Server 持有；同工作流的新派发受阻 |
+| MCP Server 崩溃，Executor 子进程继续运行 | 文件锁可能随 Server 退出而释放，尚不能可靠识别和阻止孤儿进程继续写入 |
+| Executor 主进程退出，但派生进程仍在写入 | 尚无完整的进程树级生命周期约束；现有超时处理主要终止所启动的直接进程 |
+| 两个 PSC 工作流同时使用同一代码仓库 | 工作流级锁不等于仓库级互斥 |
+
+### 后续设计：先确认旧执行者失效，再允许新执行者写入
+
+可为每次派发建立持久化执行身份与租约，记录 Task / Run ID、进程身份、工作区和运行状态；重连后结合操作系统进程信息及进程组或 Windows Job Object 核验旧执行器是否仍存活。**无法确认旧执行器已经停止时应阻断重试（fail closed）**，而不是仅靠 PID 或心跳超时推断其死亡。
+
+为了进一步保证“同一代码工作区只有一个有效写入者”，还应引入仓库级独占控制，或将每个执行器隔离到独立工作树；新执行器接管前核查代码和运行记录，并利用执行代际标识（fencing）防止过期执行者提交结果。单靠租约过期并不能阻止仍在运行的旧进程修改共享文件，必须结合进程隔离或受控工作区写入。
+
+**结论：Prompt 可以指导 Supervisor 遵守恢复流程，但无法作为并发安全边界。** 当前 PSC 已解决正常 MCP 派发路径的同工作流互斥；Server 崩溃后孤儿进程、进程树清理和跨工作流共享仓库写入仍属于待完善的工程能力。
