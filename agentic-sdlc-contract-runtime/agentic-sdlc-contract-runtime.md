@@ -11,6 +11,7 @@
 - [[agentic-sdlc-contract-runtime#Executor 中途失败后，PSC 如何恢复部分完成的任务并避免重复修改？|Executor 中途失败后，PSC 如何恢复部分完成的任务并避免重复修改？]]
 - [[agentic-sdlc-contract-runtime#MCP 断连后，PSC 如何避免重复启动 Executor 和并发写入？|MCP 断连后，PSC 如何避免重复启动 Executor 和并发写入？]]
 - [[agentic-sdlc-contract-runtime#远程 Executor 状态未知时，如何兼顾安全与任务恢复？|远程 Executor 状态未知时，如何兼顾安全与任务恢复？]]
+- [[agentic-sdlc-contract-runtime#文件锁失效后，如何防止旧 Executor 继续写入与提交？|文件锁失效后，如何防止旧 Executor 继续写入与提交？]]
 
 ## 实际实现流程架构
 
@@ -121,3 +122,19 @@
 **核心工程取舍：** 当旧执行器状态未知时，对**同一共享工作区**必须阻断重派；但如果采用隔离执行，可以允许重新计算，把“任务执行可用性”和“最终结果一致性”交给不同机制保障。PID 或心跳超时不足以证明旧进程死亡，最终还需要进程生命周期管理及防止过期执行身份写入的 fencing 约束。
 
 **现状与边界：** PSC 目前已实现本地 MCP 调度、工作流级文件锁和进度持久化，**尚未实现完整的远程执行租约、跨服务器 Worktree 隔离与受控合并**。图中的 `UNKNOWN` 是建议引入的执行状态语义，并非当前 PSC Runtime 已有的状态枚举；整套远程故障恢复流程属于后续设计。可对照：[MCP 调度实现](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[进度记录](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/executor_progress.py)及[运行时协议](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/references/runtime-protocol.md)。
+
+---
+
+## 文件锁失效后，如何防止旧 Executor 继续写入与提交？
+
+**文件锁只能约束正常调度，不能证明失去锁的旧进程已经停止。** 例如管理进程崩溃后，Executor A 可能仍在写文件，Executor B 却已获取新锁。要解决这个问题，需要三层保障：
+
+![[psc-q8-fencing-layered-architecture.svg]]
+
+1. **调度控制层——谁可以开始？** 现有 PSC 使用操作系统文件锁 `executor-dispatch.lock` 防止同工作流正常并发派发；后续可加入单调递增的执行代际（Fencing Token），明确当前有效执行者。
+2. **执行隔离层——谁能修改哪里？** 每次执行分配独立 Git Worktree / 容器，并配合操作系统文件权限或沙箱，使 A 即使继续运行，也无法修改 B 或正式工作区。**只有 Worktree 路径隔离、没有写入权限隔离，并不够。**
+3. **结果提交层——谁的结果能生效？** Executor 不能直接更新正式分支；受控提交模块原子检查 Task / Run 身份、当前代际、Git 基线和 Contract 验收结果。A 的旧 Token 即使携带正确代码，也必须被拒绝。
+
+**现状与边界：** PSC 已有文件锁、`execution_owner`、`expected_state_sha256` 与执行文件指纹，但它们不能直接撤销旧进程的文件写权限。**独立工作区、强制写入隔离、Fencing Token 和原子提交门仍是后续设计。** 对尚未隔离、仍拥有共享目录写权限的旧任务，应先阻断接管，确认旧进程已停止或其权限已被撤销，再允许 B 在共享目录执行。
+
+一句话概括：**锁管启动，隔离管写入，Fencing + 受控提交管结果生效。** 参考：[MCP 调度](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[文件锁](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/workflow_registry.py)及[Supervisor 状态提交](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)。
