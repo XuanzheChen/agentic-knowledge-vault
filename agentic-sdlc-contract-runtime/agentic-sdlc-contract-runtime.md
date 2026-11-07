@@ -85,9 +85,9 @@
 
 ### 已实现：工作流级文件锁与进度记录
 
-正常调度通过 `psc_invoke_executor` 等待一次 Executor 尝试返回终态；`_serialize_executor_dispatch` 在进入 `_invoke_executor_impl` 前获取工作流的 `runtime/executor-dispatch.lock`，锁持有范围覆盖 Preflight、Executor 运行与调用结果处理。底层 `workflow_registry._locked()` 使用 Windows 的 `msvcrt.locking` 或类 Unix 系统的 `fcntl.flock`，属于操作系统级跨进程互斥，而不是 Python 内存标志。如果另一调用占锁，最多等待约 10 秒，仍无法获取就抛出 `TimeoutError`。因此，只要原 MCP Server 仍正常运行并持锁，后续同工作流派发不能并发进入执行段。参考：[MCP 调度](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[文件锁实现](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/workflow_registry.py)。
+正常调度通过  MCP 工具调用 Executor ，调用前会获取工作流的一个内置操作系统管理文件锁，锁持有范围覆盖 Preflight、Executor 运行与调用结果处理。锁属于操作系统级跨进程互斥，而不是 Python 内存标志。如果另一调用占锁，最多等待约 10 秒，仍无法获取就抛出 `TimeoutError`。因此，只要原 MCP Server 仍正常运行并持锁，后续同工作流派发不能并发进入执行段。参考：[MCP 调度](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[文件锁实现](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/workflow_registry.py)。
 
-此外，`ProgressRecorder` 会尽力持久化 `run_id`、任务、运行状态、最近活动及心跳时间，便于连接异常后的诊断。但这些记录是**观测信息**：心跳超时或状态文件滞后不能证明旧 Executor 已退出。参考：[执行进度采集](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/executor_progress.py)。
+此外，skill已经实现了持久化 `run_id`、任务、运行状态、最近活动及心跳时间，便于连接异常后的诊断。参考：[执行进度采集](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/executor_progress.py)。
 
 ### 尚未完整解决：服务崩溃后的孤儿执行器
 
@@ -100,8 +100,6 @@
 
 ### 后续设计：先确认旧执行者失效，再允许新执行者写入
 
-可为每次派发建立持久化执行身份与租约，记录 Task / Run ID、进程身份、工作区和运行状态；重连后结合操作系统进程信息及进程组或 Windows Job Object 核验旧执行器是否仍存活。**无法确认旧执行器已经停止时应阻断重试（fail closed）**，而不是仅靠 PID 或心跳超时推断其死亡。
+可为每次派发建立持久化执行身份与租约，记录 Task / Run ID、PID、工作区和运行状态；重连后结合操作系统进程信息等核验旧执行器是否仍存活。**无法确认旧执行器已经停止时应阻断重试（fail closed）**，而不是仅靠 PID 或心跳超时推断其死亡。
 
-为了进一步保证“同一代码工作区只有一个有效写入者”，还应引入仓库级独占控制，或将每个执行器隔离到独立工作树；新执行器接管前核查代码和运行记录，并利用执行代际标识（fencing）防止过期执行者提交结果。单靠租约过期并不能阻止仍在运行的旧进程修改共享文件，必须结合进程隔离或受控工作区写入。
-
-**结论：Prompt 可以指导 Supervisor 遵守恢复流程，但无法作为并发安全边界。** 当前 PSC 已解决正常 MCP 派发路径的同工作流互斥；Server 崩溃后孤儿进程、进程树清理和跨工作流共享仓库写入仍属于待完善的工程能力。
+或者使用git worktree隔离不同派发的工作区，避免新旧执行者同时写入。
