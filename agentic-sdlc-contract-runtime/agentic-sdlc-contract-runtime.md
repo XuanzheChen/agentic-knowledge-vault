@@ -7,6 +7,7 @@
 ## 问题目录
 
 - [[agentic-sdlc-contract-runtime#为什么已有 Codex、Claude Code，还需要开发 PSC？|为什么已有 Codex、Claude Code，还需要开发 PSC？]]
+- [[agentic-sdlc-contract-runtime#PSC 的 Supervisor 如何验收 Executor 的真实完成情况？|PSC 的 Supervisor 如何验收 Executor 的真实完成情况？]]
 
 ## 实际实现流程架构
 
@@ -43,3 +44,21 @@
 **因此，PSC 不打算替代 Coding Agent 的代码生成能力，而是把它们当作可替换的执行单元，补齐跨任务的契约约束、状态管理、独立验收和异常恢复。** 最初关注的是降低使用高智能模型和人工反复交互的成本；最终形成的工程价值，则是让复杂开发过程具备更清晰的控制边界和可追溯证据。
 
 相关实现：[Contract 与工作流](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_runtime.py)、[MCP 调度与重试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[Supervisor 状态提交](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)。
+
+---
+
+## PSC 的 Supervisor 如何验收 Executor 的真实完成情况？
+
+**核心原则：Executor 的完成声明只是线索，不是验收结论。** PSC 把实际执行、证据采集与最终验收分离，让 Supervisor 基于 Contract 和可检查的代码事实作出判断，而非仅让两个模型互相评价。
+
+![[psc-supervisor-acceptance-flow.svg]]
+
+整个验收过程可概括为三步：
+
+1. **Runtime 采集客观证据。** Executor 返回结构化 Completion，解析后保存为 `plan.md`、`coding.md`；同时 Runtime 保留真实执行日志，在执行前后调用 `_git_snapshot()`，计算 `changed_paths`，再由 `_scope_violations()` 对照 Contract 的 Allowed / Forbidden Scope 检查越界修改。Executor 自称修改了哪些文件，不能覆盖实际快照结果。参考：[执行器及证据采集实现](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)。
+2. **Supervisor 独立核验。** 重新读取 Contract 的验收条件（AC），结合 Git Diff、代码实现与必要的实际测试判断完成质量。例如 FastAPI 接口不仅检查路由是否存在，还要核对请求与响应、非法参数及异常处理；关键 AC 应能对应到具体代码或验证证据。**这些测试与语义判断由 Supervisor 负责，不是 Runtime 自动运行全部测试。**
+3. **作出并提交验收决策。** 满足 AC、证据充分且无阻断时，提交 `pass`，生成 `review.md`、`result.md` 并推进工作流；若存在真实功能缺陷，提交 `quality_rework`，向 Executor 反馈具体问题；无法继续或需要变更契约时，使用 `blocked` / `waiting_planner`。正式接口 `psc_commit_supervisor_transition()` 校验任务、Contract 版本、可选状态 SHA 及部分安全阻断，并持久化决策。参考：[Supervisor 状态提交](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)。
+
+**异常但可验收的情况：** Executor 进程或输出格式异常，不代表产品一定失败。如果 Supervisor 已独立验证交付满足 AC，且没有越界或硬阻断，可以保留真实异常记录并直接 PASS，避免无意义的重复开发。反之，异常且尚未完成或无法验证时，再按 `abnormal_retry` 重新派发；它是下一次派发的重试类型，**不是** Supervisor 状态提交的 decision。
+
+**当前技术边界：** Runtime 的确定性检查降低了误判风险，但尚无能够自动证明所有 AC 均满足的通用验证器；复杂功能仍需要 Supervisor 判断，因此不能宣称“模型审核绝对可靠”。后续可逐步将可执行的验收条款结构化，增加自动测试与证据校验。参考：[MCP 运行时接口](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)。
