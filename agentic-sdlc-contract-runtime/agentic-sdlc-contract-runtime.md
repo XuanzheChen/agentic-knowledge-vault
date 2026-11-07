@@ -10,6 +10,7 @@
 - [[agentic-sdlc-contract-runtime#PSC 的 Supervisor 如何验收 Executor 的真实完成情况？|PSC 的 Supervisor 如何验收 Executor 的真实完成情况？]]
 - [[agentic-sdlc-contract-runtime#Executor 中途失败后，PSC 如何恢复部分完成的任务并避免重复修改？|Executor 中途失败后，PSC 如何恢复部分完成的任务并避免重复修改？]]
 - [[agentic-sdlc-contract-runtime#MCP 断连后，PSC 如何避免重复启动 Executor 和并发写入？|MCP 断连后，PSC 如何避免重复启动 Executor 和并发写入？]]
+- [[agentic-sdlc-contract-runtime#executor-dispatch.lock 会限制哪些调用，锁的真实粒度和异常边界是什么？|executor-dispatch.lock 会限制哪些调用，锁的真实粒度和异常边界是什么？]]
 - [[agentic-sdlc-contract-runtime#远程 Executor 状态未知时，如何兼顾安全与任务恢复？|远程 Executor 状态未知时，如何兼顾安全与任务恢复？]]
 - [[agentic-sdlc-contract-runtime#文件锁失效后，如何防止旧 Executor 继续写入与提交？|文件锁失效后，如何防止旧 Executor 继续写入与提交？]]
 - [[agentic-sdlc-contract-runtime#PSC 为什么需要版本化 Contract，如何将需求转化为可执行任务？|PSC 为什么需要版本化 Contract，如何将需求转化为可执行任务？]]
@@ -107,6 +108,66 @@
 可为每次派发建立持久化执行身份与租约，记录 Task / Run ID、PID、工作区和运行状态；重连后结合操作系统进程信息等核验旧执行器是否仍存活。**无法确认旧执行器已经停止时应阻断重试（fail closed）**，而不是仅靠 PID 或心跳超时推断其死亡。
 
 或者使用git worktree隔离不同派发的工作区，避免新旧执行者同时写入。
+
+---
+
+## executor-dispatch.lock 会限制哪些调用，锁的真实粒度和异常边界是什么？
+
+**结论：它是 PSC 的工作流级关键操作互斥锁，不是 Task 级锁，也不是把某个源代码文件锁成只读。** 同一个 PSC 项目下，原生 Executor 调度、Contract 激活、Supervisor 正式状态提交及若干恢复/关闭操作共享这一锁；它保护的是程序执行的临界区（Critical Section），而不是直接控制 Executor 或其他进程对代码文件的写权限。
+
+### 锁文件、作用域与获取过程
+
+锁路径为 \`Path(project).resolve() / "runtime" / "executor-dispatch.lock"\`。其中 \`project\` 是 PSC 工作流目录；\`task_continuity.LOCK_NAME\` 的常量值即 \`executor-dispatch.lock\`。因此：
+
+- **同一个 Workflow，哪怕是不同 Task，也争用同一把锁。** T-001 与 T-002 即使修改互不相干的代码，也无法经由当前原生 Executor 派发路径同时执行。
+- **不同 Workflow 使用不同的锁文件。** 即使它们都指向同一 Git 仓库，工作流锁也不会自动提供仓库级互斥。
+- **锁粒度以 Workflow 为单位，而非整个 MCP Server。** 没有申请该锁的只读或辅助工具仍可运行，不能理解成“一个 MCP Server 每次只能调用一个工具”。
+
+真正的互斥逻辑位于 \`workflow_registry._locked(path)\`。程序打开一个**保留在磁盘上的锁文件**（不通过删除文件释放锁），Windows 使用 \`msvcrt.locking(..., LK_NBLCK, 1)\` 锁定起始 1 字节，类 Unix 平台使用 \`fcntl.flock(..., LOCK_EX | LOCK_NB)\` 获取排他锁；两者都是操作系统级文件锁，而不是 Python 的线程锁。获取失败每隔约 **50 ms** 重试一次，最长约 **10 秒**，仍不能获取便抛出 \`TimeoutError\`。成功后在 \`with\` 范围内保持锁，在退出该范围时调用解锁操作；持锁过程可跨越不同 MCP 服务进程的调用。
+
+参考：[工作流文件锁的实际实现（workflow_registry.py）](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/workflow_registry.py)、[锁名与连续性常量（task_continuity.py）](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/task_continuity.py)。
+
+### 哪些调用会被这把锁串行化？
+
+以下是源码中能够确认的**主要六类受保护操作**。它们共享的是同一工作流目录下同一锁文件，但持锁时长各不相同：
+
+| 操作与入口 | 实际锁住的范围 | 工程目的 |
+| --- | --- | --- |
+| \`psc_invoke_executor\` → \`_invoke_executor_impl\` | 从进入核心派发实现、检查连续性与 Preflight，到 Executor 阻塞执行及结果处理结束 | 不允许同工作流同时派发多个 Executor |
+| \`activate_contract()\` | Approved Contract 的选择、必要连续性迁移、Task 记录重建与 \`workflow_state.json\` 版本激活 | 不让执行过程和 Contract 生效版本同时改变 |
+| \`psc_commit_supervisor_transition\` → \`commit_supervisor_transition()\` | 读取并校验版本/Task/状态 SHA，落地 Review、Result 和状态变更 | 不让 PASS/返工提交与执行、激活发生并发竞态 |
+| \`psc_recover_task_continuity\` → \`task_continuity.recover()\` | 跨版本待完成任务的尝试/连续性账本恢复 | 避免恢复与新执行记账交错 |
+| \`resolve_retry_exhaustion()\` | 重试耗尽后的预算重置、执行权接管等恢复决策 | 避免重试决策与执行过程交错 |
+| \`psc_close_workflow\` → \`close_workflow()\` | 检查可关闭条件、持久化关闭标记及登记 | 不允许在执行或提交中途关闭同一工作流 |
+
+另外，Supervisor 的正式提交使用**固定锁顺序**：先获取 \`executor-dispatch.lock\`，再获取 \`supervisor-transition.lock\`；关闭工作流也采用相同顺序。第二把锁进一步保护 Supervisor 状态提交，但不能把它理解为另一套独立的 Executor 派发权限。
+
+这并不表示所有 MCP 工具都持锁。例如 \`psc_supervisor_snapshot\` 属于只读上下文查询，独立调用的 \`psc_preflight_check\` 也不通过 Executor 派发锁；\`psc_ensure_executor_ready\` 的健康/Smoke 检查亦不等同于进入核心派发临界区。尤其要区分：**独立 Preflight 不持此锁；在 \`_invoke_executor_impl\` 内执行的 Preflight 因为处于上层 \`with\` 中而受到锁保护。**
+
+参考：[MCP 派发与工具注册（psc_mcp_server.py）](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[Contract 激活和重试决策（psc_runtime.py）](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_runtime.py)、[Supervisor 双锁与状态提交（supervisor_runtime.py）](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)、[任务连续性恢复（task_continuity.py）](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/task_continuity.py)、[关闭工作流（workflow_registry.py）](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/workflow_registry.py)。
+
+### 为什么一次长任务会阻塞 Contract 激活或 PASS？
+
+\`psc_mcp_server.py\` 通过装饰器 \`_serialize_executor_dispatch\` 给阻塞式 \`_invoke_executor_impl\` 包上 \`with _locked(...)\`。锁不是在“启动 Executor”之后马上释放，而是直到核心函数返回为止。因此，如果 A 的执行过程持续 30 分钟，期间 V2 激活或 Supervisor PASS 提交会尝试等待锁；约 10 秒仍拿不到便失败，而不是绕过锁更新状态。只有 **A 的执行路径退出、锁释放以后**，这些状态操作才可能继续进入自己的检查流程。
+
+这项串行化是一种**保守的单工作流执行模型**：牺牲同一工作流内彼此独立 Task 的并发潜力，换取“执行、版本激活、验收提交”之间更清晰的顺序，减少状态文件与任务账本的竞态。它主要解决执行边界的顺序问题，不会让所有业务状态自动正确；Supervisor 提交 PASS 时仍需独立检查 Contract 版本、当前 Task 和可选的状态 SHA。
+
+### 能保证什么，不能保证什么？
+
+**能够保证的前提**是：操作走 PSC 的受控入口，竞争者位于能够正确遵守同一操作系统文件锁语义的环境，且持锁的管理进程持续存活。此时同一工作流的上述临界区不会并发进入。
+
+**不能推出的保证**包括：
+
+1. **不是代码仓库级锁。** 两个 PSC Workflow 指向同一仓库时可以各自成功持锁，仍可能修改相同文件。
+2. **不是强制文件写入权限。** 绕过 PSC 的工具、人工编辑器或孤儿进程仍可直接修改仓库；执行锁不会自动拦截文件 I/O。
+3. **不等于 Executor 进程存活证明。** 如果持锁的 MCP Server 崩溃，操作系统可能释放锁，但它启动的 Executor 子进程仍在运行；后继派发有可能获得新锁并与旧进程并发写入。
+4. **不是跨服务器的可靠分布式执行权协议。** 共享网络文件系统的锁语义依赖部署环境；当前没有以租约、Fencing Token、受控写入或独立工作区实现端到端的分布式单写入者保证。
+
+因此，**“锁被成功获取”只能说明当前受控入口没有其他活跃持锁者，不能证明不存在旧 Executor 或其他代码写入者。** 若未来要支持多个 Task 并行，可在独立工作区和仓库级提交控制的前提下细化锁粒度，并对共享工作流状态继续使用串行化或 CAS；这些都属于后续设计，不是当前已实现的保障。
+
+关联：[[agentic-sdlc-contract-runtime#MCP 断连后，PSC 如何避免重复启动 Executor 和并发写入？|MCP 断连后的重复派发]]、[[agentic-sdlc-contract-runtime#文件锁失效后，如何防止旧 Executor 继续写入与提交？|孤儿执行器与执行权失效]]。
+
+**复习时可记住：锁的是 Workflow 的关键操作临界区，不是 Task、MCP 连接、Executor 进程或 Git 仓库；锁管受控调用的顺序，不管进程异常后的所有文件写入。**
 
 ---
 
