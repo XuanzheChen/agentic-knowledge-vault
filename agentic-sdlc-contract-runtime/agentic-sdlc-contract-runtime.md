@@ -8,6 +8,7 @@
 
 - [[agentic-sdlc-contract-runtime#为什么已有 Codex、Claude Code，还需要开发 PSC？|为什么已有 Codex、Claude Code，还需要开发 PSC？]]
 - [[agentic-sdlc-contract-runtime#PSC 的 Supervisor 如何验收 Executor 的真实完成情况？|PSC 的 Supervisor 如何验收 Executor 的真实完成情况？]]
+- [[agentic-sdlc-contract-runtime#Executor 中途失败后，PSC 如何恢复部分完成的任务并避免重复修改？|Executor 中途失败后，PSC 如何恢复部分完成的任务并避免重复修改？]]
 
 ## 实际实现流程架构
 
@@ -62,3 +63,15 @@
 **异常但可验收的情况：** Executor 进程或输出格式异常，不代表产品一定失败。如果 Supervisor 已独立验证交付满足 AC，且没有越界或硬阻断，可以保留真实异常记录并直接 PASS，避免无意义的重复开发。反之，异常且尚未完成或无法验证时，再按 `abnormal_retry` 重新派发；它是下一次派发的重试类型，**不是** Supervisor 状态提交的 decision。
 
 **当前技术边界：** Runtime 的确定性检查降低了误判风险，但尚无能够自动证明所有 AC 均满足的通用验证器；复杂功能仍需要 Supervisor 判断，因此不能宣称“模型审核绝对可靠”。后续可逐步将可执行的验收条款结构化，增加自动测试与证据校验。参考：[MCP 运行时接口](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)。
+
+---
+
+## Executor 中途失败后，PSC 如何恢复部分完成的任务并避免重复修改？
+
+**核心思路：保留代码现场，将失败尝试转化为可验证的恢复上下文，而不是重新从零开发。** 例如任务要求修改五个文件，Executor 完成其中三个后因 API 超时退出，PSC 不会把这次进程失败直接等同于全部代码失败。
+
+1. **归档本轮执行现场。** 对于已启动、并已返回执行结果及日志的尝试，Runtime 即使收到失败结果，也会在 `developing/artifacts/T-###/execution-memory/attempts/` 写入不可变回执：执行状态与失败原因、实际 `changed_paths` 中可记录文件的 SHA-256、已有的实现摘要、决策、失败路径和后续步骤。没有有效 Completion 时仍保存能取得的失败事实，但不虚构实现进度。参考：[Task Execution Memory](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/task_execution_memory.py)、[Executor 调用及归档](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)。
+2. **Supervisor 决定是否重派。** 先以 Contract 和实际代码、测试判断任务是否已完成：若成果已被独立验证且无硬阻断，即使进程异常也可 PASS；若实现不完整或尚未验证，才使用 `abnormal_retry` 重派。这个重试类别与有明确质量缺陷时的 `quality_rework` 分开管理。参考：[运行时协议](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/references/runtime-protocol.md)。
+3. **新 Executor 从现有代码继续。** 重新派发时注入当前 Task、Contract、上一轮 Supervisor Review 和兼容的历史 Execution Memory。历史记录必须匹配任务 ID、Contract 版本、任务正文与执行包；读取时会重新比较所记录文件的 SHA-256，标示文件是否已变化。 `abnormal_retry` 的执行指令要求先检查当前 Git Diff、任务产物和失败证据，保留有效修改，优先补完剩余部分。参考：[恢复上下文拼装](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)。
+
+**边界与改进方向：** 历史 Execution Memory 是有界的、未经 Supervisor 验收的执行记录，不是可信的“已完成文件清单”；SHA-256 只能检测相关文件内容是否与归档时一致，不能证明功能正确，更不能百分之百避免重复编辑。当前主要依靠重派提示、代码核验和 Supervisor 复核降低破坏风险；若进一步增强，可考虑为已验收的子目标建立显式进度标记、恢复前基线检查以及细粒度的幂等修改与回滚机制。
