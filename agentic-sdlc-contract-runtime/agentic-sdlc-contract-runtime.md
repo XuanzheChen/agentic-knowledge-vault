@@ -12,6 +12,8 @@
 - [[agentic-sdlc-contract-runtime#MCP 断连后，PSC 如何避免重复启动 Executor 和并发写入？|MCP 断连后，PSC 如何避免重复启动 Executor 和并发写入？]]
 - [[agentic-sdlc-contract-runtime#远程 Executor 状态未知时，如何兼顾安全与任务恢复？|远程 Executor 状态未知时，如何兼顾安全与任务恢复？]]
 - [[agentic-sdlc-contract-runtime#文件锁失效后，如何防止旧 Executor 继续写入与提交？|文件锁失效后，如何防止旧 Executor 继续写入与提交？]]
+- [[agentic-sdlc-contract-runtime#PSC 为什么需要版本化 Contract，如何将需求转化为可执行任务？|PSC 为什么需要版本化 Contract，如何将需求转化为可执行任务？]]
+- [[agentic-sdlc-contract-runtime#Contract 升级时，PSC 如何选择迁移策略并防止跨版本误验收？|Contract 升级时，PSC 如何选择迁移策略并防止跨版本误验收？]]
 
 ## 实际实现流程架构
 
@@ -138,3 +140,58 @@
 **现状与边界：** PSC 已有文件锁、`execution_owner`、`expected_state_sha256` 与执行文件指纹，但它们不能直接撤销旧进程的文件写权限。**独立工作区、强制写入隔离、Fencing Token 和原子提交门仍是后续设计。** 对尚未隔离、仍拥有共享目录写权限的旧任务，应先阻断接管，确认旧进程已停止或其权限已被撤销，再允许 B 在共享目录执行。
 
 一句话概括：**锁管启动，隔离管写入，Fencing + 受控提交管结果生效。** 参考：[MCP 调度](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[文件锁](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/workflow_registry.py)及[Supervisor 状态提交](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)。
+
+---
+
+## PSC 为什么需要版本化 Contract，如何将需求转化为可执行任务？
+
+**Contract 的价值不是比 TODO List 写得更详细，而是将需求、实现边界和验收依据变成可持久化、可校验、可执行的协议。** 普通 Prompt 主要靠模型理解；PSC 则让 Runtime 也能够读取并执行其中一部分约束。
+
+以“给 FastAPI 增加 JWT 认证”为例，Planner 先与用户明确登录、Token 校验与权限规则，再形成 Draft Contract，交由人审查。Contract 保存在独立的 `contract/vN/` 中，包含六个文件：
+
+| 文件 | 职责及本例内容 |
+| --- | --- |
+| `requirements.md` | 稳定需求 ID（`REQ-###`）：登录、鉴权、权限控制 |
+| `acceptance.md` | 验收 ID（`AC-###`）：错误密码返回 401、过期 Token 被拒绝、权限不足返回 403 |
+| `tasks.md` | `T-###` 任务、REQ/AC 引用、依赖、Allowed/Forbidden Scope、必要验证 |
+| `constraints.md` | 全局安全与兼容约束，如不能泄漏密钥 |
+| `implementation.md` | 架构建议，不等同于必须采用的唯一实现 |
+| `metadata.json` | 版本、状态、来源及工作流变更策略 |
+
+例如可以把登录实现、Token 验证、受保护路由与权限测试划分为相互依赖的 Task。**这只是示例拆解，不代表 PSC 为 JWT 自动生成固定模板。**
+
+Planner 导出的 Bundle 先由 Runtime 校验：六文件结构、ID 唯一性及引用、依赖无环、任务必填声明、需求与验收覆盖关系等；不符合要求就拒绝或升级给 Planner，不能直接拿去执行。通过审查的 Approved Contract 以不可变版本保存。参考：[Contract 校验与导入](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_runtime.py)。
+
+执行时，Supervisor 按当前有效 Contract 选择任务；Runtime 为 Executor 生成只含当前任务相关 REQ、AC、实现建议及全局约束的 **Task-Scoped Contract Packet**。Executor 的实际修改由 Git 快照采集并做 Scope 检查，最终由 Supervisor 对照 AC 与测试证据独立验收。参考：[任务上下文与文件范围检查](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)。
+
+**工程边界：** 结构与引用校验不能证明 JWT 安全方案在语义上正确；目前的 Scope 检查主要是**执行后检测越界**，不是文件系统级的实时写入隔离。Contract 真正区别于 TODO 的，是其**稳定身份、可检查约束、明确验收、不可变版本与运行时状态绑定**，而不是名称本身。
+
+---
+
+## Contract 升级时，PSC 如何选择迁移策略并防止跨版本误验收？
+
+**Contract 变更的核心问题，是确定“新版本应继承哪些旧成果，以及从哪里重新承担验收责任”。** PSC 不默认全部重做，也不自动相信旧任务仍然有效，而是通过 `activate_contract()` 支持的三种显式策略，让 Planner 与用户决定变更影响范围，再由 Runtime 执行确定性的状态迁移。
+
+### 三种策略：运行时行为与设计取舍
+
+| 策略 | 源码实际行为 | 设计理念与适用场景 |
+| --- | --- | --- |
+| `restart: all` | 重建新版本任务记录，清空 `last_completed_task`，从任务序列起点重新推进 | **正确性优先**：需求或架构大范围改变，无法安全继承旧验收成果时，宁愿付出重做成本 |
+| `restart: pending_only` | 保留已完成边界；校验跨版本 Task 身份与完成前缀，并把兼容的未完成任务重试记录迁移到新版本 | **连续性优先**：主要调整执行计划、实现说明或验证方式，任务身份及验收责任仍应连续；避免重复开发和丢失恢复上下文 |
+| `invalidate_from_task: T-006` | 将当前任务设为 `T-006`，将 `last_completed_task` 设为其前一任务（此例为 `T-005`） | **精准失效**：明确知道变更从哪个 Task 开始影响正确性，保留此前验收边界，从指定任务按新版 Contract 重验收 |
+
+这三种策略都不会自动删除或回滚产品代码。所谓“重做”或“失效”，首先是**工作流验收资格的调整**，旧代码是否可复用仍需根据新 Contract 独立判断。特别是 `pending_only` 的连续性校验依据 Task 身份字段（如目标、REQ/AC 引用、依赖和禁止范围）及来源哈希，**不等于能自动理解验收文本的语义是否改变**；因此不能拿它代替 Planner 对影响范围的判断。参考：[版本激活逻辑](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_runtime.py)、[任务连续性约束](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/task_continuity.py)。
+
+### V1 → V2：10 个 Task 中修改 T-006～T-008
+
+![[psc-contract-lifecycle-v1-v2.svg]]
+
+首先让 Planner 编制并审批 V2，明确 `workflow_policy.invalidate_from_task: T-006`。**导入 V2 不等于激活 V2**：现有工作流的生效版本由 `workflow_state.json.contract_version` 记录，只有正式激活才更新。
+
+激活与 Executor 派发、Supervisor 状态提交共用工作流执行锁。正常本地运行时，正在执行 V1 的 T-006 会阻止并发激活；应先等待本轮结束，或者在锁超时时停止激活尝试，而不是直接让 V2 Executor 写同一工作区。完成激活后，V1 的 T-001～T-005 保留完成边界，T-006 起重新按 V2 检查与开发，T-007、T-008 使用更新后的 AC；既有代码和历史证据继续保留，但**V1 的通过记录不能自动算作 V2 的通过**。
+
+正式验收时，Runtime 会检查当前 Task、有效 Contract 版本及可选的 `expected_state_sha256`：工作流已切换 V2 后，拿 V1 Contract 提交 PASS 将被拒绝；基于过时状态快照的提交也可被拒绝。参考：[Supervisor 状态提交](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)。
+
+**仍然存在的边界：** 当前 PASS 尚未强制绑定同版本、同轮次的 Executor Invocation ID 和验收证据哈希；如果 Supervisor 用 V2 身份提交，却错误沿用 V1 证据，Runtime 不一定能自动识别。后续可将 Contract SHA、Task SHA、执行轮次和验证证据一起绑定，使**旧代码可以复用，但必须重新取得新版验收资格**。
+
+**总结：** 三种激活策略体现不同的工程取舍：`all` 选择全面重新确认，`pending_only` 选择严格条件下的连续性，`invalidate_from_task` 选择显式风险边界；确定性 Runtime 负责落实迁移与版本检查，Planner 和用户负责判断变更究竟影响了哪些需求。
