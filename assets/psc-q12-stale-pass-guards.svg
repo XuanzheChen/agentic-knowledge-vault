@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2300" height="1600" viewBox="0 0 2300 1600"><defs><style>text{font-family:'Noto Sans CJK SC','Microsoft YaHei','PingFang SC',sans-serif}</style><marker id="ar" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="10" refY="6" orient="auto"><path d="M1 1L11 6L1 11Z" fill="#B4C3D8"/></marker></defs><rect width="2300" height="1600" fill="#F7F9FD"/><rect width="2300" height="12" fill="#4E74D7"/>
+<text x="73" y="68" font-size="23" fill="#476BC5" font-weight="800" text-anchor="start">PSC · Q12 / STALE SUPERVISOR PASS</text>
+<text x="73" y="138" font-size="48" fill="#192B43" font-weight="850" text-anchor="start">过期 Review 能提出 PASS，但不能绕过 Runtime 的状态校验</text>
+<text x="73" y="190" font-size="25" fill="#526782" font-weight="500" text-anchor="start">场景：Supervisor 已基于 V1 审核 T-006；提交前 Planner 完成了 V2 激活</text>
+<rect x="68" y="238" width="2162" height="170" rx="18" fill="#FFFFFF" stroke="#D8E2EE" stroke-width="2"/>
+<rect x="92" y="262" width="660" height="119" rx="17" fill="#EEF4FF" stroke="#BED4FB" stroke-width="2"/>
+<text x="116" y="304" font-size="26" fill="#192B43" font-weight="800" text-anchor="start">Supervisor：V1 Review 已完成</text>
+<text x="116" y="342" font-size="20" fill="#526782" font-weight="500" text-anchor="start">认为 T-006 符合旧版 AC，准备提交 PASS</text>
+<rect x="832" y="262" width="660" height="119" rx="17" fill="#F2ECFF" stroke="#DCCEF7" stroke-width="2"/>
+<text x="856" y="304" font-size="26" fill="#192B43" font-weight="800" text-anchor="start">Planner：V2 已被批准</text>
+<text x="856" y="342" font-size="20" fill="#526782" font-weight="500" text-anchor="start">选择 invalidate_from_task: T-006</text>
+<rect x="1572" y="262" width="631" height="119" rx="17" fill="#EAF7F1" stroke="#BFE2D1" stroke-width="2"/>
+<text x="1596" y="304" font-size="26" fill="#192B43" font-weight="800" text-anchor="start">竞态窗口：状态已变化</text>
+<text x="1596" y="342" font-size="20" fill="#526782" font-weight="500" text-anchor="start">激活 V2 先于 PASS 提交完成</text>
+<path d="M753 321 L820 321" fill="none" stroke="#B4C3D8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#ar)"/>
+<path d="M1492 321 L1560 321" fill="none" stroke="#B4C3D8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#ar)"/>
+<rect x="68" y="446" width="2162" height="245" rx="22" fill="#F1EBFF" stroke="#DBCDF4" stroke-width="2"/>
+<rect x="92" y="463" width="430" height="47" rx="12" fill="#7457B4" stroke="#7457B4" stroke-width="2"/>
+<text x="110" y="495" font-size="25" fill="#FFFFFF" font-weight="800" text-anchor="start">第一层 · 激活即状态迁移</text>
+<text x="108" y="555" font-size="29" fill="#192B43" font-weight="800" text-anchor="start">激活 Approved V2 并应用 workflow_policy</text>
+<rect x="108" y="580" width="622" height="86" rx="17" fill="#FFFFFF" stroke="#D2C2EE" stroke-width="2"/>
+<text x="132" y="622" font-size="26" fill="#192B43" font-weight="800" text-anchor="start">T-001～T-005</text>
+<text x="132" y="660" font-size="20" fill="#526782" font-weight="500" text-anchor="start">保留已完成边界</text>
+<rect x="821" y="580" width="622" height="86" rx="17" fill="#FFFFFF" stroke="#D2C2EE" stroke-width="2"/>
+<text x="845" y="622" font-size="26" fill="#192B43" font-weight="800" text-anchor="start">T-006</text>
+<text x="845" y="660" font-size="20" fill="#526782" font-weight="500" text-anchor="start">重新按 V2 验收</text>
+<rect x="1535" y="580" width="642" height="86" rx="17" fill="#FFFFFF" stroke="#D2C2EE" stroke-width="2"/>
+<text x="1559" y="622" font-size="26" fill="#192B43" font-weight="800" text-anchor="start">workflow_state.json</text>
+<text x="1559" y="660" font-size="20" fill="#526782" font-weight="500" text-anchor="start">contract_version = 2 · current_task = T-006</text>
+<path d="M730 625 L808 625" fill="none" stroke="#B4C3D8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#ar)"/>
+<path d="M1445 625 L1522 625" fill="none" stroke="#B4C3D8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#ar)"/>
+<rect x="68" y="725" width="2162" height="224" rx="22" fill="#EAF3FF" stroke="#C8DCF5" stroke-width="2"/>
+<rect x="92" y="742" width="430" height="47" rx="12" fill="#2F6CB7" stroke="#2F6CB7" stroke-width="2"/>
+<text x="110" y="774" font-size="25" fill="#FFFFFF" font-weight="800" text-anchor="start">第二层 · 串行化状态操作</text>
+<rect x="113" y="823" width="597" height="91" rx="17" fill="#FFFFFF" stroke="#C9DEF9" stroke-width="2"/>
+<text x="137" y="865" font-size="26" fill="#192B43" font-weight="800" text-anchor="start">Contract 激活</text>
+<text x="137" y="903" font-size="20" fill="#526782" font-weight="500" text-anchor="start">先获取工作流执行锁</text>
+<rect x="839" y="813" width="618" height="112" rx="17" fill="#DBE9FF" stroke="#8FB9E8" stroke-width="2"/>
+<text x="863" y="855" font-size="26" fill="#192B43" font-weight="800" text-anchor="start">executor-dispatch.lock</text>
+<text x="863" y="893" font-size="20" fill="#526782" font-weight="500" text-anchor="start">同一工作流的互斥边界</text>
+<text x="863" y="924" font-size="20" fill="#526782" font-weight="500" text-anchor="start">不能同时激活 Contract 与提交 PASS</text>
+<rect x="1582" y="823" width="589" height="91" rx="17" fill="#FFFFFF" stroke="#C9DEF9" stroke-width="2"/>
+<text x="1606" y="865" font-size="26" fill="#192B43" font-weight="800" text-anchor="start">Supervisor 提交 PASS</text>
+<text x="1606" y="903" font-size="20" fill="#526782" font-weight="500" text-anchor="start">随后获得执行锁</text>
+<path d="M710 867 L827 867" fill="none" stroke="#B4C3D8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#ar)"/>
+<path d="M1458 867 L1569 867" fill="none" stroke="#B4C3D8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#ar)"/>
+<rect x="68" y="981" width="2162" height="357" rx="22" fill="#EAF7EF" stroke="#BEE1CC" stroke-width="2"/>
+<rect x="92" y="997" width="500" height="47" rx="12" fill="#238262" stroke="#238262" stroke-width="2"/>
+<text x="110" y="1029" font-size="25" fill="#FFFFFF" font-weight="800" text-anchor="start">第三层 · 提交时重新校验</text>
+<rect x="110" y="1086" width="620" height="152" rx="17" fill="#FFFFFF" stroke="#C4DED1" stroke-width="2"/>
+<text x="134" y="1128" font-size="26" fill="#192B43" font-weight="800" text-anchor="start">Runtime 读取当前权威状态</text>
+<text x="134" y="1166" font-size="20" fill="#526782" font-weight="500" text-anchor="start">检查 State SHA（若提供）</text>
+<text x="134" y="1197" font-size="20" fill="#526782" font-weight="500" text-anchor="start">核验 Contract 版本与当前 Task</text>
+<rect x="840" y="1086" width="610" height="152" rx="17" fill="#FFF1F0" stroke="#EBBDBF" stroke-width="2"/>
+<text x="864" y="1128" font-size="26" fill="#192B43" font-weight="800" text-anchor="start">过期状态 / V1 Contract</text>
+<text x="864" y="1166" font-size="20" fill="#526782" font-weight="500" text-anchor="start">旧状态 SHA → workflow_state_conflict</text>
+<text x="864" y="1197" font-size="20" fill="#526782" font-weight="500" text-anchor="start">旧版本 → Contract version mismatch</text>
+<rect x="1559" y="1086" width="622" height="152" rx="17" fill="#E4F6E9" stroke="#A4D6B8" stroke-width="2"/>
+<text x="1583" y="1128" font-size="26" fill="#192B43" font-weight="800" text-anchor="start">拒绝 T-006 的旧 PASS</text>
+<text x="1583" y="1166" font-size="20" fill="#526782" font-weight="500" text-anchor="start">状态不推进到 T-007</text>
+<text x="1583" y="1197" font-size="20" fill="#526782" font-weight="500" text-anchor="start">Supervisor 读取新 Snapshot，按 V2 复核</text>
+<path d="M731 1164 L827 1164" fill="none" stroke="#B4C3D8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#ar)"/>
+<path d="M1452 1164 L1546 1164" fill="none" stroke="#B4C3D8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#ar)"/>
+<text x="105" y="1298" font-size="21" fill="#42765D" font-weight="650" text-anchor="start">注意：expected_state_sha256 是可选参数；传入 V1 Contract 时仍有版本不匹配检查。</text>
+<rect x="68" y="1371" width="2162" height="164" rx="21" fill="#FFF4E6" stroke="#EACAA3" stroke-width="2"/>
+<text x="99" y="1415" font-size="27" fill="#A66B26" font-weight="800" text-anchor="start">当前实现边界 · 不自动证明 Review 内容的来源版本</text>
+<text x="99" y="1459" font-size="22" fill="#192B43" font-weight="600" text-anchor="start">如果 Supervisor 错把 V1 Review 包装成 V2 验收，提交 V2 Contract 且状态信息有效，Runtime 不一定能识别语义错配。</text>
+<text x="99" y="1498" font-size="21" fill="#526782" font-weight="500" text-anchor="start">未来可将 Review、Contract SHA、Task SHA 与工作区快照绑定，阻断过期验收证据复用。</text>
+</svg>

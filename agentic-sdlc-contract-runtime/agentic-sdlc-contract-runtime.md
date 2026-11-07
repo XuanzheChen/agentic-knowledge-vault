@@ -15,6 +15,7 @@
 - [[agentic-sdlc-contract-runtime#文件锁失效后，如何防止旧 Executor 继续写入与提交？|文件锁失效后，如何防止旧 Executor 继续写入与提交？]]
 - [[agentic-sdlc-contract-runtime#PSC 为什么需要版本化 Contract，如何将需求转化为可执行任务？|PSC 为什么需要版本化 Contract，如何将需求转化为可执行任务？]]
 - [[agentic-sdlc-contract-runtime#Contract 升级时，PSC 如何选择迁移策略并防止跨版本误验收？|Contract 升级时，PSC 如何选择迁移策略并防止跨版本误验收？]]
+- [[agentic-sdlc-contract-runtime#Supervisor 基于过期 Contract 提交 PASS 时，Runtime 如何处理？|Supervisor 基于过期 Contract 提交 PASS 时，Runtime 如何处理？]]
 
 ## 实际实现流程架构
 
@@ -256,3 +257,21 @@ Planner 导出的 Bundle 先由 Runtime 校验：六文件结构、ID 唯一性�
 **仍然存在的边界：** 当前 PASS 尚未强制绑定同版本、同轮次的 Executor Invocation ID 和验收证据哈希；如果 Supervisor 用 V2 身份提交，却错误沿用 V1 证据，Runtime 不一定能自动识别。后续可将 Contract SHA、Task SHA、执行轮次和验证证据一起绑定，使**旧代码可以复用，但必须重新取得新版验收资格**。
 
 **总结：** 三种激活策略体现不同的工程取舍：`all` 选择全面重新确认，`pending_only` 选择严格条件下的连续性，`invalidate_from_task` 选择显式风险边界；确定性 Runtime 负责落实迁移与版本检查，Planner 和用户负责判断变更究竟影响了哪些需求。
+
+---
+
+## Supervisor 基于过期 Contract 提交 PASS 时，Runtime 如何处理？
+
+这是典型的 **TOCTOU（检查与提交之间状态发生变化）** 问题：Supervisor 按 V1 完成了 T-006 的 Code Review，但正式提交 PASS 前，Planner 已经激活 V2。**Review 只是验收判断，不能直接修改工作流状态；最终由 Runtime 按提交时的权威状态决定是否允许 PASS。**
+
+![[psc-q12-stale-pass-guards.svg]]
+
+PSC 现有三层保护：
+
+1. **Contract 激活联动状态机。** `activate_contract()` 根据新版本的 `workflow_policy` 重建任务边界。若使用 `invalidate_from_task: T-006`，V2 激活后更新 `workflow_state.json`：`contract_version=2`、`current_task=T-006`、`last_completed_task=T-005`。激活不仅更换文档，也是一项持久化工作流状态变更。
+2. **互斥保护状态转换。** Contract 激活和 Supervisor 提交均获取同一工作流的 `executor-dispatch.lock`，在正常本地运行时串行执行；不能一边切换生效版本，一边完成旧版 PASS 提交。
+3. **提交时重新校验。** `commit_supervisor_transition()` 会读取当前状态，检查**可选的** `expected_state_sha256`、提交的 Contract 版本及当前 Task。如果 Supervisor 携带旧状态 SHA，拒绝并报 `workflow_state_conflict`；如果省略 SHA 但仍使用 V1 Contract，则因 `Contract version mismatch` 拒绝。两者都不会把 T-006 标记为 PASS 或推进到 T-007。
+
+**尚未完全解决：** Runtime 校验的是**提交声明与当前状态是否匹配**，还不能严格溯源 Review 具体依据哪个版本生成。假如旧 V1 Review 被错误地当成 V2 验收证据，且以有效 V2 身份提交，现有检查未必能发现。后续需要将 Review 与 Contract SHA、Task SHA 及代码快照等证据绑定。参考：[Contract 激活](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_runtime.py)、[Supervisor 状态提交](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)。
+
+**总结：PSC 的核心做法是把 Supervisor 的验收判断和 Runtime 的状态提交分离。** 即使 Supervisor 有权提交 PASS，也不能绕过 Runtime 对当前 Contract、Task 边界和状态版本的检查。**Review 可以基于过期状态产生，但过期的状态转换会被拒绝；Review 内容本身的版本溯源仍需更强的证据绑定机制。**
