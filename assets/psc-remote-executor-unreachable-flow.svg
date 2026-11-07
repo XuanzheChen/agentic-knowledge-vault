@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2450" height="1740" viewBox="0 0 2450 1740" role="img" aria-label="PSC 远程 Executor 不可达时任务处理流程图"><defs><style>text{font-family:'Noto Sans CJK SC','Microsoft YaHei','PingFang SC',sans-serif}</style><marker id="arr" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="11" refY="6" orient="auto"><path d="M1 1 L11 6 L1 11Z" fill="#8AA0BB"/></marker></defs><rect width="2450" height="1740" fill="#F5F8FD"/><rect width="2450" height="10" fill="#3573C8"/>
+<text x="72" y="66" font-size="22" font-weight="800" text-anchor="start" fill="#3573C8">PSC / REMOTE EXECUTOR RECOVERY</text>
+<text x="72" y="128" font-size="48" font-weight="850" text-anchor="start" fill="#193049">远程 Executor 不可达时：安全恢复与任务处理流程</text>
+<text x="72" y="170" font-size="23" font-weight="500" text-anchor="start" fill="#5D7088">核心：执行状态未知 ≠ 执行失败；允许重新计算 ≠ 允许提交结果</text>
+<rect x="1983" y="58" width="389" height="30" rx="10" fill="#FFF3E5" stroke="#F0D4AE" stroke-width="1"/>
+<text x="2177.5" y="79" font-size="17" font-weight="800" text-anchor="middle" fill="#B87823">方案设计 · 非当前完整实现</text>
+<rect x="70" y="207" width="1540" height="47" rx="12" fill="#E8F1FE" stroke="#C3D9FB" stroke-width="1.4"/>
+<rect x="82" y="216" width="38" height="28" rx="8" fill="#3573C8" stroke="#3573C8" stroke-width="1"/>
+<text x="101" y="236" font-size="17" font-weight="800" text-anchor="middle" fill="#FFFFFF">1</text>
+<text x="135" y="238" font-size="22" font-weight="800" text-anchor="start" fill="#3573C8">执行与监控</text>
+<rect x="75" y="274" width="445" height="140" rx="20" fill="#E8F1FE" stroke="#C3D9FB" stroke-width="2"/>
+<rect x="92" y="294" width="6" height="100" rx="3" fill="#3573C8"/>
+<text x="114" y="316" font-size="25" font-weight="800" text-anchor="start" fill="#193049">Supervisor 通过 MCP 派发</text>
+<text x="114" y="353" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">远程服务器启动 Executor</text>
+<text x="114" y="384" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">记录 Task ID / Run ID</text>
+<rect x="617" y="274" width="430" height="140" rx="20" fill="#E8F1FE" stroke="#C3D9FB" stroke-width="2"/>
+<rect x="634" y="294" width="6" height="100" rx="3" fill="#3573C8"/>
+<text x="656" y="316" font-size="26" font-weight="800" text-anchor="start" fill="#193049">远程 Executor 执行</text>
+<text x="656" y="353" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">修改代码、运行测试</text>
+<text x="656" y="384" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">进度和心跳只作观测</text>
+<rect x="1150" y="274" width="445" height="140" rx="20" fill="#E8F1FE" stroke="#C3D9FB" stroke-width="2"/>
+<rect x="1167" y="294" width="6" height="100" rx="3" fill="#3573C8"/>
+<text x="1189" y="316" font-size="26" font-weight="800" text-anchor="start" fill="#193049">连接与状态监控</text>
+<text x="1189" y="353" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">MCP 响应、日志、进度</text>
+<text x="1189" y="384" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">可能因网络故障丢失</text>
+<path d="M522 340 H610" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<path d="M1049 340 H1143" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<rect x="70" y="453" width="1540" height="47" rx="12" fill="#F2EBFC" stroke="#D7C4F4" stroke-width="1.4"/>
+<rect x="82" y="462" width="38" height="28" rx="8" fill="#7957B8" stroke="#7957B8" stroke-width="1"/>
+<text x="101" y="482" font-size="17" font-weight="800" text-anchor="middle" fill="#FFFFFF">2</text>
+<text x="135" y="484" font-size="22" font-weight="800" text-anchor="start" fill="#7957B8">断连后的有限探测</text>
+<polygon points="438,505 745,578 438,651 131,578" fill="#F2EBFC" stroke="#7957B8" stroke-width="3"/>
+<text x="438" y="585" font-size="23" font-weight="800" text-anchor="middle" fill="#193049">MCP 连接是否断开？</text>
+<rect x="828" y="525" width="90" height="30" rx="10" fill="#E9F7EF" stroke="#B7E3CA" stroke-width="1"/>
+<text x="873" y="546" font-size="17" font-weight="800" text-anchor="middle" fill="#218566">否</text>
+<rect x="924" y="504" width="670" height="116" rx="20" fill="#E9F7EF" stroke="#B7E3CA" stroke-width="2"/>
+<rect x="941" y="524" width="6" height="76" rx="3" fill="#218566"/>
+<text x="963" y="546" font-size="27" font-weight="800" text-anchor="start" fill="#193049">正常继续：直至返回终态</text>
+<text x="963" y="583" font-size="21" font-weight="500" text-anchor="start" fill="#5D7088">仍需按 Contract 与真实代码证据验收</text>
+<path d="M747 578 H914" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<path d="M1369 416 V438 H438 V501" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<rect x="451" y="660" width="95" height="30" rx="10" fill="#F2EBFC" stroke="#D7C4F4" stroke-width="1"/>
+<text x="498.5" y="681" font-size="17" font-weight="800" text-anchor="middle" fill="#7957B8">是</text>
+<path d="M438 654 V686" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<rect x="168" y="691" width="635" height="131" rx="20" fill="#F2EBFC" stroke="#D7C4F4" stroke-width="2"/>
+<rect x="185" y="711" width="6" height="91" rx="3" fill="#7957B8"/>
+<text x="207" y="733" font-size="26" font-weight="800" text-anchor="start" fill="#193049">有限重连 / 查询旧 Executor</text>
+<text x="207" y="770" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">采用次数限制、时间窗口与退避</text>
+<text x="207" y="801" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">不把连接失败推断为进程已死亡</text>
+<polygon points="1079,690 1286,755 1079,820 872,755" fill="#F2EBFC" stroke="#7957B8" stroke-width="3"/>
+<text x="1079" y="762" font-size="23" font-weight="800" text-anchor="middle" fill="#193049">是否确认状态？</text>
+<path d="M806 752 H863" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<rect x="1335" y="692" width="260" height="131" rx="20" fill="#E9F7EF" stroke="#B7E3CA" stroke-width="2"/>
+<rect x="1352" y="712" width="6" height="91" rx="3" fill="#218566"/>
+<text x="1374" y="734" font-size="25" font-weight="800" text-anchor="start" fill="#193049">已确认</text>
+<text x="1374" y="771" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">完成 → 验收</text>
+<text x="1374" y="802" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">仍运行 → 继续监控</text>
+<path d="M1288 755 H1327" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<rect x="1009" y="844" width="140" height="30" rx="10" fill="#FFF3E5" stroke="#F0D4AE" stroke-width="1"/>
+<text x="1079" y="865" font-size="17" font-weight="800" text-anchor="middle" fill="#B87823">持续不可达</text>
+<path d="M1079 824 V882" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<rect x="70" y="900" width="1540" height="47" rx="12" fill="#E9F7EF" stroke="#B7E3CA" stroke-width="1.4"/>
+<rect x="82" y="909" width="38" height="28" rx="8" fill="#218566" stroke="#218566" stroke-width="1"/>
+<text x="101" y="929" font-size="17" font-weight="800" text-anchor="middle" fill="#FFFFFF">3</text>
+<text x="135" y="931" font-size="22" font-weight="800" text-anchor="start" fill="#218566">超时后：UNKNOWN 与恢复选择</text>
+<rect x="75" y="966" width="683" height="176" rx="20" fill="#FFF3E5" stroke="#F0D4AE" stroke-width="2"/>
+<rect x="92" y="986" width="6" height="136" rx="3" fill="#B87823"/>
+<text x="114" y="1008" font-size="29" font-weight="800" text-anchor="start" fill="#193049">执行结果标记为 UNKNOWN</text>
+<text x="114" y="1045" font-size="21" font-weight="500" text-anchor="start" fill="#5D7088">已知：Task ID / Run ID / 最后心跳</text>
+<text x="114" y="1076" font-size="21" font-weight="500" text-anchor="start" fill="#5D7088">旧执行器可能继续写入，不能当作 FAILED</text>
+<text x="114" y="1107" font-size="21" font-weight="500" text-anchor="start" fill="#5D7088">将调度暂停为 BLOCKED；释放等待资源</text>
+<path d="M1079 883 H416 V956" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<rect x="824" y="966" width="770" height="176" rx="20" fill="#E9F7EF" stroke="#B7E3CA" stroke-width="2"/>
+<rect x="841" y="986" width="6" height="136" rx="3" fill="#218566"/>
+<text x="863" y="1008" font-size="29" font-weight="800" text-anchor="start" fill="#193049">依据业务需求选择两种处置</text>
+<text x="863" y="1045" font-size="21" font-weight="500" text-anchor="start" fill="#5D7088">A  非紧急：保持阻断，等远程恢复或人工决策</text>
+<text x="863" y="1076" font-size="21" font-weight="500" text-anchor="start" fill="#5D7088">B  必须恢复：在全新隔离工作区重新执行</text>
+<text x="863" y="1107" font-size="21" font-weight="500" text-anchor="start" fill="#5D7088">不要让新旧 Executor 共用一个可写工作区</text>
+<path d="M762 1045 H813" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<rect x="1030" y="1153" width="172" height="30" rx="10" fill="#FFF3E5" stroke="#F0D4AE" stroke-width="1"/>
+<text x="1116" y="1174" font-size="17" font-weight="800" text-anchor="middle" fill="#B87823">A · 保守暂停</text>
+<rect x="1360" y="1153" width="177" height="30" rx="10" fill="#E9F7EF" stroke="#B7E3CA" stroke-width="1"/>
+<text x="1448.5" y="1174" font-size="17" font-weight="800" text-anchor="middle" fill="#218566">B · 隔离恢复</text>
+<rect x="75" y="1196" width="685" height="139" rx="20" fill="#FFF3E5" stroke="#F0D4AE" stroke-width="2"/>
+<rect x="92" y="1216" width="6" height="99" rx="3" fill="#B87823"/>
+<text x="114" y="1238" font-size="26" font-weight="800" text-anchor="start" fill="#193049">暂停同工作区自动重派</text>
+<text x="114" y="1275" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">有限探测结束即停止占用调度资源</text>
+<text x="114" y="1306" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">保留 UNKNOWN、告警与可恢复记录</text>
+<rect x="824" y="1196" width="770" height="139" rx="20" fill="#E9F7EF" stroke="#B7E3CA" stroke-width="2"/>
+<rect x="841" y="1216" width="6" height="99" rx="3" fill="#218566"/>
+<text x="863" y="1238" font-size="25" font-weight="800" text-anchor="start" fill="#193049">从可信 Commit 创建 Git Worktree / 容器</text>
+<text x="863" y="1275" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">新服务器上重新执行；结果不能直接写主分支</text>
+<text x="863" y="1306" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">赋予新 Run ID；通过受控验收与提交门</text>
+<path d="M1035 1146 V1186 H425 V1189" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<path d="M1340 1146 V1188" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<rect x="70" y="1371" width="1540" height="47" rx="12" fill="#FFF3E5" stroke="#F0D4AE" stroke-width="1.4"/>
+<rect x="82" y="1380" width="38" height="28" rx="8" fill="#B87823" stroke="#B87823" stroke-width="1"/>
+<text x="101" y="1400" font-size="17" font-weight="800" text-anchor="middle" fill="#FFFFFF">4</text>
+<text x="135" y="1402" font-size="22" font-weight="800" text-anchor="start" fill="#B87823">旧服务器恢复后的对账与接受</text>
+<rect x="75" y="1435" width="620" height="157" rx="20" fill="#FFF3E5" stroke="#F0D4AE" stroke-width="2"/>
+<rect x="92" y="1455" width="6" height="117" rx="3" fill="#B87823"/>
+<text x="114" y="1477" font-size="26" font-weight="800" text-anchor="start" fill="#193049">旧服务器恢复 → 状态对账</text>
+<text x="114" y="1514" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">读取旧进程状态、实际 Git Diff 和日志</text>
+<text x="114" y="1545" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">必要时停止旧执行器；旧结果不得直合并</text>
+<rect x="772" y="1435" width="823" height="157" rx="20" fill="#E9F7EF" stroke="#B7E3CA" stroke-width="2"/>
+<rect x="789" y="1455" width="6" height="117" rx="3" fill="#218566"/>
+<text x="811" y="1477" font-size="26" font-weight="800" text-anchor="start" fill="#193049">唯一受控提交门（Contract + Run 身份）</text>
+<text x="811" y="1514" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">独立验收各候选结果，执行代际 / Fencing 校验</text>
+<text x="811" y="1545" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">仅允许一个被接受的结果进入主分支</text>
+<path d="M697 1513 H764" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<path d="M425 1340 V1425" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<path d="M1208 1340 V1411 H1150 V1426" fill="none" stroke="#8AA0BB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"  marker-end="url(#arr)"/>
+<rect x="75" y="1623" width="1520" height="73" rx="16" fill="#FFFFFF" stroke="#DBE5EF" stroke-width="1"/>
+<text x="96" y="1653" font-size="20" font-weight="700" text-anchor="start" fill="#193049">工程判断：状态不明时阻断共享写入；若需恢复可隔离重算，但接受结果必须串行化。</text>
+<text x="96" y="1681" font-size="18" font-weight="500" text-anchor="start" fill="#5D7088">UNKNOWN 是建议的执行状态语义，不等于 PSC 当前已经实现的状态枚举。</text>
+<rect x="1660" y="208" width="723" height="336" rx="22" fill="#FFFFFF" stroke="#D6E1F0" stroke-width="2"/>
+<rect x="1660" y="208" width="723" height="61" rx="22" fill="#EDF3FF" stroke="#D6E1F0" stroke-width="1"/>
+<text x="1695" y="246" font-size="27" font-weight="800" text-anchor="start" fill="#193049">四个状态：避免混为一谈</text>
+<rect x="1696" y="288" width="151" height="30" rx="10" fill="#E9F7EF" stroke="#B7E3CA" stroke-width="1"/>
+<text x="1771.5" y="309" font-size="17" font-weight="800" text-anchor="middle" fill="#218566">SUCCESS</text>
+<text x="1864" y="311" font-size="21" font-weight="600" text-anchor="start" fill="#193049">已完成且通过验收</text>
+<line x1="1696" y1="335" x2="2351" y2="335" stroke="#E7EDF5"/>
+<rect x="1696" y="350" width="151" height="30" rx="10" fill="#FFF0F0" stroke="#EEC8CC" stroke-width="1"/>
+<text x="1771.5" y="371" font-size="17" font-weight="800" text-anchor="middle" fill="#B44E5B">FAILED</text>
+<text x="1864" y="373" font-size="21" font-weight="600" text-anchor="start" fill="#193049">已确认执行失败</text>
+<line x1="1696" y1="397" x2="2351" y2="397" stroke="#E7EDF5"/>
+<rect x="1696" y="412" width="151" height="30" rx="10" fill="#FFF3E5" stroke="#F0D4AE" stroke-width="1"/>
+<text x="1771.5" y="433" font-size="17" font-weight="800" text-anchor="middle" fill="#B87823">UNKNOWN</text>
+<text x="1864" y="435" font-size="21" font-weight="600" text-anchor="start" fill="#193049">旧 Executor 生死 / 结果未知</text>
+<line x1="1696" y1="459" x2="2351" y2="459" stroke="#E7EDF5"/>
+<rect x="1696" y="474" width="151" height="30" rx="10" fill="#E8F1FE" stroke="#C3D9FB" stroke-width="1"/>
+<text x="1771.5" y="495" font-size="17" font-weight="800" text-anchor="middle" fill="#3573C8">BLOCKED</text>
+<text x="1864" y="497" font-size="21" font-weight="600" text-anchor="start" fill="#193049">自动调度暂停，等待处理</text>
+<rect x="1660" y="576" width="723" height="434" rx="22" fill="#FFFFFF" stroke="#D6E1F0" stroke-width="2"/>
+<rect x="1660" y="576" width="723" height="61" rx="22" fill="#EDF3FF" stroke="#D6E1F0" stroke-width="1"/>
+<text x="1695" y="615" font-size="27" font-weight="800" text-anchor="start" fill="#193049">关键工程机制</text>
+<rect x="1694" y="661" width="11" height="11" rx="5" fill="#218566" stroke="#218566" stroke-width="0"/>
+<text x="1723" y="684" font-size="23" font-weight="760" text-anchor="start" fill="#193049">有限探测</text>
+<text x="1880" y="684" font-size="19" font-weight="500" text-anchor="start" fill="#5D7088">重试次数 / 时间窗口 / 退避</text>
+<rect x="1694" y="724" width="11" height="11" rx="5" fill="#218566" stroke="#218566" stroke-width="0"/>
+<text x="1723" y="747" font-size="23" font-weight="760" text-anchor="start" fill="#193049">状态持久化</text>
+<text x="1880" y="747" font-size="19" font-weight="500" text-anchor="start" fill="#5D7088">Task ID、Run ID、最后心跳</text>
+<rect x="1694" y="787" width="11" height="11" rx="5" fill="#218566" stroke="#218566" stroke-width="0"/>
+<text x="1723" y="810" font-size="23" font-weight="760" text-anchor="start" fill="#193049">工作区隔离</text>
+<text x="1880" y="810" font-size="19" font-weight="500" text-anchor="start" fill="#5D7088">独立 Worktree / 容器避免并发覆盖</text>
+<rect x="1694" y="850" width="11" height="11" rx="5" fill="#218566" stroke="#218566" stroke-width="0"/>
+<text x="1723" y="873" font-size="23" font-weight="760" text-anchor="start" fill="#193049">受控提交</text>
+<text x="1880" y="873" font-size="19" font-weight="500" text-anchor="start" fill="#5D7088">Contract 验收 + 结果唯一接受</text>
+<rect x="1694" y="913" width="11" height="11" rx="5" fill="#218566" stroke="#218566" stroke-width="0"/>
+<text x="1723" y="936" font-size="23" font-weight="760" text-anchor="start" fill="#193049">状态对账</text>
+<text x="1880" y="936" font-size="19" font-weight="500" text-anchor="start" fill="#5D7088">旧服务器恢复后核对代码与日志</text>
+<rect x="1660" y="1041" width="723" height="427" rx="22" fill="#FFFFFF" stroke="#D6E1F0" stroke-width="2"/>
+<rect x="1660" y="1041" width="723" height="61" rx="22" fill="#EDF3FF" stroke="#D6E1F0" stroke-width="1"/>
+<text x="1695" y="1080" font-size="27" font-weight="800" text-anchor="start" fill="#193049">当前实现 vs 后续设计</text>
+<rect x="1697" y="1124" width="135" height="30" rx="10" fill="#E8F1FE" stroke="#C3D9FB" stroke-width="1"/>
+<text x="1764.5" y="1145" font-size="17" font-weight="800" text-anchor="middle" fill="#3573C8">当前已有</text>
+<text x="1851" y="1146" font-size="20" font-weight="650" text-anchor="start" fill="#193049">本地 MCP 文件锁 / 执行进度记录</text>
+<text x="1697" y="1191" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">可保护正常的同工作流本地派发，</text>
+<text x="1697" y="1222" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">但不能自动确认远程孤儿进程已终止。</text>
+<line x1="1695" y1="1247" x2="2349" y2="1247" stroke="#E5EDF5"/>
+<rect x="1697" y="1268" width="135" height="30" rx="10" fill="#FFF3E5" stroke="#F0D4AE" stroke-width="1"/>
+<text x="1764.5" y="1289" font-size="17" font-weight="800" text-anchor="middle" fill="#B87823">后续方案</text>
+<text x="1851" y="1290" font-size="20" font-weight="650" text-anchor="start" fill="#193049">远程租约 / 隔离执行 / 受控合并</text>
+<text x="1697" y="1335" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">UNKNOWN → 阻断自动调度，是设计建议；</text>
+<text x="1697" y="1366" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">独立 Worktree 恢复 + Fencing 提交门</text>
+<text x="1697" y="1397" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">尚非 PSC 已具备的端到端保证。</text>
+<rect x="1660" y="1505" width="723" height="191" rx="22" fill="#EAF7F0" stroke="#BBDCCB" stroke-width="2"/>
+<text x="1692" y="1548" font-size="27" font-weight="800" text-anchor="start" fill="#218566">安全优先，但不无限等待</text>
+<text x="1692" y="1592" font-size="20" font-weight="650" text-anchor="start" fill="#193049">等待要有上限；共享写入必须 fail closed。</text>
+<text x="1692" y="1627" font-size="20" font-weight="650" text-anchor="start" fill="#193049">隔离重算可以并行，最终提交不能并发。</text>
+<text x="1692" y="1664" font-size="20" font-weight="500" text-anchor="start" fill="#5D7088">远程恢复后还需处理迟到的旧结果。</text>
+</svg>

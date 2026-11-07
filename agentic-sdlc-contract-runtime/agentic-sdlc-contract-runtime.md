@@ -10,6 +10,7 @@
 - [[agentic-sdlc-contract-runtime#PSC 的 Supervisor 如何验收 Executor 的真实完成情况？|PSC 的 Supervisor 如何验收 Executor 的真实完成情况？]]
 - [[agentic-sdlc-contract-runtime#Executor 中途失败后，PSC 如何恢复部分完成的任务并避免重复修改？|Executor 中途失败后，PSC 如何恢复部分完成的任务并避免重复修改？]]
 - [[agentic-sdlc-contract-runtime#MCP 断连后，PSC 如何避免重复启动 Executor 和并发写入？|MCP 断连后，PSC 如何避免重复启动 Executor 和并发写入？]]
+- [[agentic-sdlc-contract-runtime#远程 Executor 状态未知时，如何兼顾安全与任务恢复？|远程 Executor 状态未知时，如何兼顾安全与任务恢复？]]
 
 ## 实际实现流程架构
 
@@ -103,3 +104,20 @@
 可为每次派发建立持久化执行身份与租约，记录 Task / Run ID、PID、工作区和运行状态；重连后结合操作系统进程信息等核验旧执行器是否仍存活。**无法确认旧执行器已经停止时应阻断重试（fail closed）**，而不是仅靠 PID 或心跳超时推断其死亡。
 
 或者使用git worktree隔离不同派发的工作区，避免新旧执行者同时写入。
+
+---
+
+## 远程 Executor 状态未知时，如何兼顾安全与任务恢复？
+
+**判断：远程服务器不可达，不等于 Executor 已退出；但调度器也不能无限等待。** 应把“旧执行是否仍在运行”与“是否继续安排新工作”分开处理，优先保证共享代码仓库不会被两个身份不明的执行器同时修改。
+
+![[psc-remote-executor-unreachable-flow.svg]]
+
+1. **有限时间内恢复连接。** MCP 断连后，在明确的重试次数和时间窗口内尝试重连、查询旧 Executor 状态；若可确认，则依据实际运行情况继续监控或进入独立验收。
+2. **无法确认时停止自动重派。** 若持续不可达，将执行结果标记为概念上的 `UNKNOWN`（未知，而非 `FAILED`），把任务调度暂停为阻断状态，保存 Task / Run ID、最后心跳与已知代码状态。有限探测结束后释放调度资源，等待外部条件恢复或人工决策。
+3. **紧急恢复只能隔离重算。** 若业务确实不能等待，可在另一台服务器上基于最后可信 Git Commit 创建**独立 Git Worktree 或容器工作区**，启动新的 Executor。旧、新执行器只在各自工作区写入，结果不能直接进入主分支；必须经 Contract 验收、执行身份与版本检查及**唯一受控提交门**，防止两个结果同时被接受。
+4. **旧服务器恢复后对账。** 重新读取旧进程状态、代码差异和日志，决定终止、保留或审查旧结果。即使旧 Executor 最后完成，也不能跳过验收或覆盖已被接受的结果。
+
+**核心工程取舍：** 当旧执行器状态未知时，对**同一共享工作区**必须阻断重派；但如果采用隔离执行，可以允许重新计算，把“任务执行可用性”和“最终结果一致性”交给不同机制保障。PID 或心跳超时不足以证明旧进程死亡，最终还需要进程生命周期管理及防止过期执行身份写入的 fencing 约束。
+
+**现状与边界：** PSC 目前已实现本地 MCP 调度、工作流级文件锁和进度持久化，**尚未实现完整的远程执行租约、跨服务器 Worktree 隔离与受控合并**。图中的 `UNKNOWN` 是建议引入的执行状态语义，并非当前 PSC Runtime 已有的状态枚举；整套远程故障恢复流程属于后续设计。可对照：[MCP 调度实现](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[进度记录](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/executor_progress.py)及[运行时协议](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/references/runtime-protocol.md)。
