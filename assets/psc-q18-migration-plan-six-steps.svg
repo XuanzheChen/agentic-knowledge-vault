@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2550" height="1870" viewBox="0 0 2550 1870"><defs><style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC","PingFang SC",sans-serif}</style><marker id="a" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="10" refY="6" orient="auto"><path d="M1 1L11 6L1 11Z" fill="#9BAFC6"/></marker></defs><rect width="2550" height="1870" fill="#F7F9FD"/><rect width="2550" height="12" fill="#254E7D"/>
+<text x="80" y="71" font-size="23" fill="#3979BE" font-weight="820" text-anchor="start">PSC · Q18 / MIGRATION PLAN</text>
+<text x="80" y="139" font-size="54" fill="#152A43" font-weight="850" text-anchor="start">Contract 结构化迁移计划：六步激活事务</text>
+<text x="80" y="184" font-size="23" fill="#546B85" font-weight="500" text-anchor="start">当前 Python Runtime 的后续扩展设计 · 安全迁移、用户授权、状态提交与故障恢复</text>
+<rect x="2030" y="74" width="414" height="39" rx="11" fill="#FFF3E4" stroke="#ECD3B0" stroke-width="1"/>
+<text x="2237" y="101" font-size="19" fill="#B8742B" font-weight="800" text-anchor="middle">后续扩展 · 非已实现功能</text>
+<rect x="80" y="240" width="1100" height="187" rx="21" fill="#EAF3FD" stroke="#C6DAF3" stroke-width="2.5"/>
+<circle cx="140" cy="291" r="40" fill="#3979BE"/>
+<text x="140" y="305" font-size="39" fill="#FFFFFF" font-weight="850" text-anchor="middle">1</text>
+<rect x="198" y="264" width="6" height="141" rx="3" fill="#3979BE"/>
+<text x="225" y="290" font-size="30" fill="#152A43" font-weight="820" text-anchor="start">接收并校验迁移计划</text>
+<text x="225" y="331" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• Planner 提交 V2 与 Migration Plan；绑定 V1 / V2 版本及 SHA</text>
+<text x="225" y="362" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 逐 Task：保留 PASS / 重新执行 / 重新验收 / 新增 / 删除</text>
+<text x="225" y="393" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 校验 ID、任务覆盖、依赖、缺失和互相冲突的声明</text>
+<path d="M630 430 V465" fill="none" stroke="#9BAFC6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a)"/>
+<rect x="1242" y="256" width="510" height="155" rx="19" fill="#FFF0F1" stroke="#F2C5CA" stroke-width="2"/>
+<text x="1263" y="297" font-size="26" fill="#BE4D60" font-weight="830" text-anchor="start">✕  拒绝激活 / 返回修正</text>
+<text x="1263" y="342" font-size="20" fill="#546B85" font-weight="560" text-anchor="start">计划缺失 / 哈希不匹配 / 声明冲突</text>
+<path d="M1186 333 H1232" fill="none" stroke="#BE4D60" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a)"/>
+<rect x="80" y="469" width="1100" height="187" rx="21" fill="#EAF3FD" stroke="#C6DAF3" stroke-width="2.5"/>
+<circle cx="140" cy="520" r="40" fill="#3979BE"/>
+<text x="140" y="534" font-size="39" fill="#FFFFFF" font-weight="850" text-anchor="middle">2</text>
+<rect x="198" y="493" width="6" height="141" rx="3" fill="#3979BE"/>
+<text x="225" y="519" font-size="30" fill="#152A43" font-weight="820" text-anchor="start">独立执行迁移安全检查</text>
+<text x="225" y="560" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 对比 Task 身份、AC 变更和任务依赖影响</text>
+<text x="225" y="591" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 上游任务需要重做时，不可盲目保留下游 PASS</text>
+<text x="225" y="622" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 不能安全继承的状态必须拒绝或要求重新验证</text>
+<path d="M630 659 V694" fill="none" stroke="#9BAFC6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a)"/>
+<rect x="1242" y="485" width="510" height="155" rx="19" fill="#FFF0F1" stroke="#F2C5CA" stroke-width="2"/>
+<text x="1263" y="526" font-size="26" fill="#BE4D60" font-weight="830" text-anchor="start">✕  拒绝激活 / 返回修正</text>
+<text x="1263" y="571" font-size="20" fill="#546B85" font-weight="560" text-anchor="start">变更影响未覆盖 / 继承依据不足</text>
+<path d="M1186 562 H1232" fill="none" stroke="#BE4D60" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a)"/>
+<rect x="80" y="698" width="1100" height="187" rx="21" fill="#F1EBFC" stroke="#DCCAF4" stroke-width="2.5"/>
+<circle cx="140" cy="749" r="40" fill="#7C5BC4"/>
+<text x="140" y="763" font-size="39" fill="#FFFFFF" font-weight="850" text-anchor="middle">3</text>
+<rect x="198" y="722" width="6" height="141" rx="3" fill="#7C5BC4"/>
+<text x="225" y="748" font-size="30" fill="#152A43" font-weight="820" text-anchor="start">校验用户授权</text>
+<text x="225" y="789" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 识别高风险变化：删已 PASS 的 Task / 关键验收变更</text>
+<text x="225" y="820" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 检查审批范围、批准身份及 Migration Plan 哈希</text>
+<text x="225" y="851" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 计划在批准后修改，原审批自动失效</text>
+<path d="M630 888 V923" fill="none" stroke="#9BAFC6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a)"/>
+<rect x="1242" y="714" width="510" height="155" rx="19" fill="#FFF0F1" stroke="#F2C5CA" stroke-width="2"/>
+<text x="1263" y="755" font-size="26" fill="#BE4D60" font-weight="830" text-anchor="start">✕  拒绝激活 / 返回修正</text>
+<text x="1263" y="800" font-size="20" fill="#546B85" font-weight="560" text-anchor="start">审批缺失 / 审批与计划哈希不符</text>
+<path d="M1186 791 H1232" fill="none" stroke="#BE4D60" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a)"/>
+<rect x="80" y="927" width="1100" height="187" rx="21" fill="#F1EBFC" stroke="#DCCAF4" stroke-width="2.5"/>
+<circle cx="140" cy="978" r="40" fill="#7C5BC4"/>
+<text x="140" y="992" font-size="39" fill="#FFFFFF" font-weight="850" text-anchor="middle">4</text>
+<rect x="198" y="951" width="6" height="141" rx="3" fill="#7C5BC4"/>
+<text x="225" y="977" font-size="30" fill="#152A43" font-weight="820" text-anchor="start">获取执行锁与重新校验状态</text>
+<text x="225" y="1018" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 获取工作流执行锁，重读当前有效版本和 State SHA</text>
+<text x="225" y="1049" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 确认现有 Contract 仍为 V1、旧 Executor 已安全结束</text>
+<text x="225" y="1080" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 遇状态漂移或执行状态未知：拒绝激活</text>
+<path d="M630 1117 V1152" fill="none" stroke="#9BAFC6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a)"/>
+<rect x="1242" y="943" width="510" height="155" rx="19" fill="#FFF0F1" stroke="#F2C5CA" stroke-width="2"/>
+<text x="1263" y="984" font-size="26" fill="#BE4D60" font-weight="830" text-anchor="start">✕  拒绝激活 / 返回修正</text>
+<text x="1263" y="1029" font-size="20" fill="#546B85" font-weight="560" text-anchor="start">状态漂移 / 旧执行者未清理</text>
+<path d="M1186 1020 H1232" fill="none" stroke="#BE4D60" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a)"/>
+<rect x="80" y="1156" width="1672" height="187" rx="21" fill="#F1EBFC" stroke="#DCCAF4" stroke-width="2.5"/>
+<circle cx="140" cy="1207" r="40" fill="#7C5BC4"/>
+<text x="140" y="1221" font-size="39" fill="#FFFFFF" font-weight="850" text-anchor="middle">5</text>
+<rect x="198" y="1180" width="6" height="141" rx="3" fill="#7C5BC4"/>
+<text x="225" y="1206" font-size="30" fill="#152A43" font-weight="820" text-anchor="start">生成 V2 目标状态（不覆盖 V1）</text>
+<text x="225" y="1247" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 逐 Task 构造 PASS / PENDING / REVERIFY / DELETE 等状态</text>
+<text x="225" y="1278" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 示例：T1/T2 保留 PASS，T3 重做，T5/T8 重验收，T18 新增</text>
+<text x="225" y="1309" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 保留 V1 原始执行与验收证据，先写目标快照</text>
+<path d="M630 1346 V1381" fill="none" stroke="#9BAFC6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#a)"/>
+<rect x="80" y="1385" width="1672" height="187" rx="21" fill="#E8F7EF" stroke="#BCE2D0" stroke-width="2.5"/>
+<circle cx="140" cy="1436" r="40" fill="#188968"/>
+<text x="140" y="1450" font-size="39" fill="#FFFFFF" font-weight="850" text-anchor="middle">6</text>
+<rect x="198" y="1409" width="6" height="141" rx="3" fill="#188968"/>
+<text x="225" y="1435" font-size="30" fill="#152A43" font-weight="820" text-anchor="start">事务化提交、恢复与激活</text>
+<text x="225" y="1476" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 暂存目标任务表、重试记录与迁移审计，写入事务日志</text>
+<text x="225" y="1507" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 所有文件验证完成后，原子切换权威 Contract 指针至 V2</text>
+<text x="225" y="1538" font-size="21" fill="#546B85" font-weight="550" text-anchor="start">• 准备失败：V1 有效；提交中崩溃：按日志幂等恢复</text>
+<rect x="1239" y="1498" width="483" height="39" rx="11" fill="#E8F7EF" stroke="#BCE2D0" stroke-width="1"/>
+<text x="1480.5" y="1525" font-size="19" fill="#188968" font-weight="800" text-anchor="middle">成功：V2 成为当前权威版本</text>
+<rect x="1814" y="238" width="650" height="625" rx="22" fill="#FFFFFF" stroke="#D8E2EF" stroke-width="2"/>
+<rect x="1814" y="238" width="650" height="70" rx="20" fill="#E9F0FB" stroke="#E9F0FB" stroke-width="0"/>
+<text x="1842" y="286" font-size="30" fill="#152A43" font-weight="830" text-anchor="start">目前 PSC 已经实现</text>
+<rect x="1844" y="337" width="118" height="39" rx="11" fill="#E8F7EF" stroke="#BCE2D0" stroke-width="1"/>
+<text x="1903" y="364" font-size="19" fill="#188968" font-weight="800" text-anchor="middle">已实现</text>
+<text x="1844" y="405" font-size="21" fill="#546B85" font-weight="600" text-anchor="start">不可变 contract/vN 与 Approved 校验</text>
+<rect x="1844" y="431" width="118" height="39" rx="11" fill="#E8F7EF" stroke="#BCE2D0" stroke-width="1"/>
+<text x="1903" y="458" font-size="19" fill="#188968" font-weight="800" text-anchor="middle">已实现</text>
+<text x="1844" y="499" font-size="21" fill="#546B85" font-weight="600" text-anchor="start">all / pending_only / invalidate_from_task</text>
+<rect x="1844" y="525" width="118" height="39" rx="11" fill="#E8F7EF" stroke="#BCE2D0" stroke-width="1"/>
+<text x="1903" y="552" font-size="19" fill="#188968" font-weight="800" text-anchor="middle">已实现</text>
+<text x="1844" y="593" font-size="21" fill="#546B85" font-weight="600" text-anchor="start">同工作流执行锁与版本状态校验</text>
+<rect x="1844" y="619" width="118" height="39" rx="11" fill="#E8F7EF" stroke="#BCE2D0" stroke-width="1"/>
+<text x="1903" y="646" font-size="19" fill="#188968" font-weight="800" text-anchor="middle">已实现</text>
+<text x="1844" y="687" font-size="21" fill="#546B85" font-weight="600" text-anchor="start">pending_only 的来源哈希与连续性凭据</text>
+<rect x="1840" y="745" width="595" height="78" rx="13" fill="#FFF3E4" stroke="#ECD3B0" stroke-width="1"/>
+<text x="1858" y="778" font-size="21" fill="#B8742B" font-weight="760" text-anchor="start">本图扩展：逐 Task 迁移、审批绑定、</text>
+<text x="1858" y="807" font-size="21" fill="#B8742B" font-weight="760" text-anchor="start">事务日志和完整崩溃恢复</text>
+<rect x="1814" y="887" width="650" height="430" rx="22" fill="#FFFFFF" stroke="#D8E2EF" stroke-width="2"/>
+<rect x="1814" y="887" width="650" height="70" rx="20" fill="#E9F0FB" stroke="#E9F0FB" stroke-width="0"/>
+<text x="1842" y="935" font-size="30" fill="#152A43" font-weight="830" text-anchor="start">事务的三个阶段</text>
+<rect x="1844" y="995" width="137" height="39" rx="11" fill="#EAF3FD" stroke="#C6DAF3" stroke-width="1"/>
+<text x="1912.5" y="1022" font-size="19" fill="#3979BE" font-weight="800" text-anchor="middle">PREPARE</text>
+<text x="2000" y="1024" font-size="20" fill="#546B85" font-weight="590" text-anchor="start">校验计划与授权，保存暂存记录</text>
+<rect x="1844" y="1086" width="137" height="39" rx="11" fill="#E8F7EF" stroke="#BCE2D0" stroke-width="1"/>
+<text x="1912.5" y="1113" font-size="19" fill="#188968" font-weight="800" text-anchor="middle">PUBLISH</text>
+<text x="2000" y="1115" font-size="20" fill="#546B85" font-weight="590" text-anchor="start">原子更新当前生效版本指针</text>
+<rect x="1844" y="1177" width="137" height="39" rx="11" fill="#EAF3FD" stroke="#C6DAF3" stroke-width="1"/>
+<text x="1912.5" y="1204" font-size="19" fill="#3979BE" font-weight="800" text-anchor="middle">RECOVER</text>
+<text x="2000" y="1206" font-size="20" fill="#546B85" font-weight="590" text-anchor="start">通过事务日志识别已提交 / 未提交</text>
+<rect x="1814" y="1345" width="650" height="235" rx="22" fill="#FFF3E4" stroke="#ECD3B0" stroke-width="2"/>
+<text x="1841" y="1395" font-size="30" fill="#B8742B" font-weight="830" text-anchor="start">核心设计理念</text>
+<text x="1842" y="1444" font-size="23" fill="#152A43" font-weight="640" text-anchor="start">Planner 声明变更意图，Runtime 负责</text>
+<text x="1842" y="1485" font-size="23" fill="#152A43" font-weight="640" text-anchor="start">确定性校验，用户负责高风险授权，</text>
+<text x="1842" y="1526" font-size="23" fill="#152A43" font-weight="640" text-anchor="start">最后通过受控事务切换权威版本。</text>
+<rect x="80" y="1651" width="2384" height="121" rx="19" fill="#EAF0F7" stroke="#D9E3EF" stroke-width="1"/>
+<text x="112" y="1693" font-size="22" fill="#546B85" font-weight="670" text-anchor="start">工程边界：当前 activate_contract() 并不支持完整的逐 Task Migration Plan 与审批绑定；此图是落地方案。</text>
+<text x="112" y="1733" font-size="21" fill="#546B85" font-weight="560" text-anchor="start">多文件写入并非天然原子操作：先写暂存状态 + 事务日志，再切换单一权威生效点；崩溃后必须幂等恢复。</text>
+</svg>

@@ -16,6 +16,7 @@
 - [[agentic-sdlc-contract-runtime#PSC 为什么需要版本化 Contract，如何将需求转化为可执行任务？|PSC 为什么需要版本化 Contract，如何将需求转化为可执行任务？]]
 - [[agentic-sdlc-contract-runtime#Contract 升级时，PSC 如何选择迁移策略并防止跨版本误验收？|Contract 升级时，PSC 如何选择迁移策略并防止跨版本误验收？]]
 - [[agentic-sdlc-contract-runtime#Supervisor 基于过期 Contract 提交 PASS 时，Runtime 如何处理？|Supervisor 基于过期 Contract 提交 PASS 时，Runtime 如何处理？]]
+- [[agentic-sdlc-contract-runtime#如何将 Contract V2 激活扩展为逐 Task 的可恢复迁移事务？|如何将 Contract V2 激活扩展为逐 Task 的可恢复迁移事务？]]
 
 ## 实际实现流程架构
 
@@ -275,3 +276,26 @@ PSC 现有三层保护：
 **尚未完全解决：** Runtime 校验的是**提交声明与当前状态是否匹配**，还不能严格溯源 Review 具体依据哪个版本生成。假如旧 V1 Review 被错误地当成 V2 验收证据，且以有效 V2 身份提交，现有检查未必能发现。后续需要将 Review 与 Contract SHA、Task SHA 及代码快照等证据绑定。参考：[Contract 激活](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_runtime.py)、[Supervisor 状态提交](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)。
 
 **总结：PSC 的核心做法是把 Supervisor 的验收判断和 Runtime 的状态提交分离。** 即使 Supervisor 有权提交 PASS，也不能绕过 Runtime 对当前 Contract、Task 边界和状态版本的检查。**Review 可以基于过期状态产生，但过期的状态转换会被拒绝；Review 内容本身的版本溯源仍需更强的证据绑定机制。**
+
+---
+
+## 如何将 Contract V2 激活扩展为逐 Task 的可恢复迁移事务？
+
+**目标：把 V2 激活由“按一个策略切换任务边界”，扩展为“逐 Task 明确迁移意图、经过独立校验与必要批准、可从崩溃中恢复的状态迁移事务”。** Planner 提案不等于 Runtime 的授权，迁移计划也不能直接覆盖 V1。
+
+**现有基础：** PSC 已将 Contract 存为不可变的 `contract/vN/`，`activate_contract()` 支持 `restart: all`、`restart: pending_only`、`invalidate_from_task: T-###` 三种策略，并以工作流级 `executor-dispatch.lock` 串行化激活。`pending_only` 还会迁移带有来源版本、Task 身份和 Contract 哈希的兼容重试状态。**但现有机制以顺序任务边界为主，尚没有独立的逐 Task Migration Plan、审批绑定和完整激活事务。** 参考：[当前激活实现](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_runtime.py)、[连续性迁移](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/task_continuity.py)。
+
+![[psc-q18-migration-plan-six-steps.svg]]
+
+### 六步扩展设计
+
+1. **接收并校验计划。** Planner 提交 Approved V2 与结构化 Migration Plan，绑定源/目标 Contract 的版本及 SHA，为全部相关 Task 明确声明保留 `PASS`、重新执行、重新验收、新增或删除。版本、Task ID、声明覆盖或一致性不符则**拒绝激活**。
+2. **独立检查迁移安全。** Runtime 对比 AC、Task 身份与依赖关系：验收标准改变、上游任务失效或证据无法证明兼容时，不允许直接继承旧 `PASS`。Planner 解释业务影响，Runtime 强制确定性规则；语义风险需重新验证，而非自动判断“没影响”。
+3. **核验用户批准。** 删除已验收 Task、改动关键 AC、继承有风险的历史 PASS 等操作应列为需授权事项。批准记录绑定规范化 Migration Plan 的哈希；若缺失、过期或计划被修改，**拒绝激活**。
+4. **获取执行锁并重读状态。** 沿用当前工作流级执行锁，进入提交阶段重新确认有效版本仍为 V1、状态 SHA 未变，且没有无法确认已终止的旧 Executor。遇并发更新、状态漂移或未隔离的存活执行器，按 **fail closed** 拒绝本轮切换。
+5. **构造完整 V2 目标状态。** 按计划生成新 Task 状态表，例如 T-001/T-002 继承 PASS，T-003 重新执行，T-005/T-008 重新验收，T-018 新增。保留 V1 的 Review、执行与重试证据；**只生成和校验暂存状态，不直接覆盖旧状态**。
+6. **事务化提交与崩溃恢复。** 暂存目标状态、Task 记录、重试账本和迁移审计，写入 `PREPARED` 等事务日志；全部校验成功后再通过**单一权威生效点**原子切换到 V2，并记录 `COMMITTED`。准备失败时 V1 继续生效；切换途中崩溃时，根据日志和当前权威指针幂等补全或恢复，不能依靠猜测重跑迁移。
+
+**拒绝条件与工程边界：** 计划结构不合法、历史 PASS 继承规则不满足、缺少有效批准、版本/状态冲突、旧执行器存活性不明或目标状态准备失败，都不能发布 V2。多文件写入本身**不是**一个原子事务：必须先准备一致的暂存数据，再切换单一权威状态，并保证恢复流程可重复执行。当前 PSC 尚未完整实现这六步，也尚不具备天然的孤儿进程隔离保障。
+
+**总结：真正需要扩展的不只是 Migration Plan JSON，而是让计划校验、用户授权、任务状态迁移与 Contract 激活共同形成可审计、可拒绝、可恢复的事务边界。**
