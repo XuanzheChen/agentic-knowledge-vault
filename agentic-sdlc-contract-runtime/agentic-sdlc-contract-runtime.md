@@ -20,6 +20,7 @@
 - [[agentic-sdlc-contract-runtime#Contract 激活崩溃时，如何保证版本与 Task 状态的事务原子性？|Contract 激活崩溃时，如何保证版本与 Task 状态的事务原子性？]]
 - [[agentic-sdlc-contract-runtime#Planner 并发修改 Contract 时，如何保证 SQLite 保存的是同一份已校验快照？|Planner 并发修改 Contract 时，如何保证 SQLite 保存的是同一份已校验快照？]]
 - [[agentic-sdlc-contract-runtime#Preflight 如何用 SHA-256 绑定证据，以及能否阻止过期检查后的派发？|Preflight 如何用 SHA-256 绑定证据，以及能否阻止过期检查后的派发？]]
+- [[agentic-sdlc-contract-runtime#只读 Preflight 依赖 Prompt 还是程序权限，如何防止 pytest 等工具产生副作用？|只读 Preflight 依赖 Prompt 还是程序权限，如何防止 pytest 等工具产生副作用？]]
 
 ## 实际实现流程架构
 
@@ -374,3 +375,24 @@ SQLite 方案可将 `migration_id` 设为唯一键，按 `(project_id, contract_
 **总结：Preflight 用 SHA-256 把“允许执行”的判断绑定到具体证据，并在启动前复核；能发现复核前的变化，却不能保证复核后代码绝不会再变。**
 
 源码：[Preflight 证据收集与重校验](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/preflight_checker.py)、[MCP 派发准入](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)。
+
+---
+
+## 只读 Preflight 依赖 Prompt 还是程序权限，如何防止 pytest 等工具产生副作用？
+
+**核心判断：PSC 的“只读 Preflight”不只是 Skill Prompt 约束，而是 Runtime 在启动独立 Checker 时施加的工具限制和环境限制；但目前不能声称拥有严格、经过验证的操作系统级无副作用隔离。**
+
+### 当前实际机制
+
+1. **受控证据输入，而非开放仓库权限。** Runtime 先收集 Task、Task-Scoped Contract、历史 Review 及有界的代码证据，计算 SHA-256 后通过 Prompt 交给独立 Checker；Checker 不需要自己遍历仓库。检查失败、超时、配置不可验证或证据过期时阻断 Executor 派发。
+2. **Harness 级工具限制。** **Codex** 强制使用 `--sandbox read-only --ask-for-approval never`；**DSH** 通过运行时 `--patch` 禁用 Shell、写文件、代码编辑、MCP 和外部工具等能力，并校验组合配置，无法验证就拒绝运行；**Claude Code** 使用 `--tools "" --disallowedTools "*" --permission-mode dontAsk`，关闭工具访问。三者均在仓库外的隔离空工作目录运行，Runtime 还检查该目录是否出现非预期文件。
+3. **明确权限边界。** Prompt 可以要求“不要修改代码”，但不是安全边界。上述措施能限制正常 Harness 的工具调用路径，**不能等同于对进程、插件或外部资源施加了完整的 OS 级只读沙箱**。例如仅看 `pytest` 的名称不能把它当作只读命令：测试可能写缓存、数据库或调用外部 API。当前 Checker 的职责是分析证据和提出可执行的验证计划，而不是直接获得通用测试执行权。
+
+### 后续方案：将证据分析和测试执行分离
+
+- **Checker 只分析。** 不提供命令执行、任意文件访问或外部 MCP 工具；由 Runtime 通过受控接口采集证据，Checker 只返回结构化准入判断。
+- **需要实际运行 `pytest` 时，交给独立测试执行器。** 在一次性容器/沙箱中运行，源码只读挂载，缓存、临时文件及测试输出定向到隔离的可写目录；默认断网、无真实数据库凭证及 API Key，并使用测试替身或临时数据库。必要时还应限制进程、文件系统和资源权限，结束后销毁环境并保存测试证据。
+
+**总结：Prompt 约束“应该做什么”，Harness 工具配置限制“通常能调用什么”，真正严格的副作用隔离则需要独立执行环境与 OS 权限边界。PSC 已实现前两类程序化限制，但尚未完整实现第三层。**
+
+源码：[Preflight Checker 运行与证据采集](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/preflight_checker.py)、[Codex 适配器](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/adapters/codex.py)、[DSH 适配器](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/adapters/dsh.py)、[Claude 适配器](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/adapters/claude.py)。
