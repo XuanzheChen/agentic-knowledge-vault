@@ -24,6 +24,7 @@
 - [[agentic-sdlc-contract-runtime#WinError 206 如何定位与修复，启动传输失败为何不能扣 Executor 重试预算？|WinError 206 如何定位与修复，启动传输失败为何不能扣 Executor 重试预算？]]
 - [[agentic-sdlc-contract-runtime#如何区分 PROCESS_STARTED、EXECUTOR_READY 与 TASK_STARTED？|如何区分 PROCESS_STARTED、EXECUTOR_READY 与 TASK_STARTED？]]
 - [[agentic-sdlc-contract-runtime#Executor 失联后如何避免重复执行数据库迁移等外部副作用？|Executor 失联后如何避免重复执行数据库迁移等外部副作用？]]
+- [[agentic-sdlc-contract-runtime#PSC 为什么引入 MCP Server，而不让 Supervisor 直接执行 Python CLI？|PSC 为什么引入 MCP Server，而不让 Supervisor 直接执行 Python CLI？]]
 
 ## 实际实现流程架构
 
@@ -479,3 +480,36 @@ SQLite 方案可将 `migration_id` 设为唯一键，按 `(project_id, contract_
 **总结：让任务重试从“失败后重新执行”升级为“先验证执行证据与外部状态，再决定重试、跳过、恢复或补偿”。幂等性降低重复操作风险，Execution Memory 提供上下文，Supervisor 负责验收决策，Runtime 则必须阻断未经确认的副作用重放。**
 
 参考：[Execution Memory](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/task_execution_memory.py)、[Executor 异常恢复](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)、[Supervisor 状态与验收](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)。
+
+---
+
+## PSC 为什么引入 MCP Server，而不让 Supervisor 直接执行 Python CLI？
+
+**先承认：MCP 在技术上并非不可替代。** 如果目标只是启动一次 Executor，Skill 指导 Supervisor 调用 Python CLI 完全可行；结构化返回、参数验证和状态锁也能由 CLI + Python SDK 实现。PSC 引入 MCP 的理由不是“Supervisor 不会运行 Python”，而是**在长期任务中，将 Agent 的执行意图表达与 Runtime 的确定性控制分离，形成标准化的工具调用界面**。
+
+### 三层职责
+
+| 层次 | 负责什么 | 不能代替什么 |
+| --- | --- | --- |
+| **Skill** | 告诉 Supervisor 何时派发、检查、验收、恢复及如何遵循 Contract | Prompt 指导不等于强制权限控制 |
+| **MCP Server** | 暴露 `psc_supervisor_snapshot`、`psc_invoke_executor`、`psc_commit_supervisor_transition` 等带参数和结构化返回的控制接口 | MCP 本身不保证状态一致性，不是执行沙箱 |
+| **Python Runtime / Harness Adapter** | 负责文件锁、工作流状态、Readiness/Preflight、重试预算、证据与持久化，并封装 Codex / Claude Code / DSH 的具体启动和日志差异 | 不能依靠 Supervisor 自述取代权威验收 |
+
+### MCP 对 PSC 的实际收益
+
+1. **结构化交互契约。** Supervisor 传项目、Task、Contract 路径和重试类型，而不是拼终端命令并解析任意 stdout；Runtime 可返回 `preflight_unknown`、`retry_limit_reached`、`scope_violation` 等明确状态。这提升了多 Supervisor/Harness 场景下的接口一致性，**但不是 MCP 独占的正确性能力**。
+2. **集中运行时检查。** `psc_invoke_executor` 先检查路径参数和 Executor Readiness，再进入持有工作流派发锁的 `_invoke_executor_impl()`；底层统一处理 Contract/Task 边界、预检、预算计费、Scope 和执行记录。Supervisor 即便决定错误，也不能仅凭一次普通 MCP 派发请求越过这些检查。
+3. **阻塞调用与受控进度。** 一次 `psc_invoke_executor` 调用可以等待完整 Executor Attempt 结束，并通过 request-scoped MCP Progress 显示经过收敛的过程信息；Supervisor 不必为了监控运行反复调用终端或读取完整日志。这有助于抑制监督上下文膨胀，**进度通知仅供观察，最终调用结果与持久化状态才是权威依据**。
+4. **降低 Harness 耦合。** 不管底层是 Codex、Claude Code 还是 DSH，Supervisor 只面对统一的工具契约；Prompt 传输、执行器启动参数、会话输出解析留给 Python Runtime/Adapter。
+
+### 为什么仍不等于不可绕过？
+
+`psc_mcp_server.py` 的 `invoke_executor_tool()` **兼容入口**明确返回 `mcp_transport_required / direct_python_dispatch_forbidden`，不会替代正式 MCP 派发。但 `scripts/invoke_executor.py` **仍存在独立的 `invoke` CLI 命令**。只要 Supervisor 仍持有无限制的本机终端和文件写权限，就可能直接调用底层 CLI 或改写状态文件；此时 MCP 的准入规范只是**正常控制路径上的约束**，而非操作系统级强制安全边界。若要生产级不可绕过，应将受保护 Runtime 置于独立服务/权限主体下，并对本机文件与执行权限作相应限制。
+
+### 引入 MCP 的工程成本
+
+维护独立 MCP Server、工具 Schema 和客户端配置；处理连接中断、超时、请求是否已到达 Runtime 的不确定性；保证请求级进度、调用返回和持久化执行记录不会互相冒充。当 MCP 断连时，**不能因为 Supervisor 未收到响应，就认定 Executor 没运行或直接重派**，必须查询权威执行记录并恢复。因此 MCP 使交互标准化，同时也增加了通信与恢复复杂度。
+
+**面试收尾：** 个人单次自动化任务用 CLI + Skill 更轻量；PSC 面向长期、多 Task、可中断恢复的 Agent 开发流程，选择 MCP 是为了让 **Supervisor 通过标准化接口表达意图，由 Runtime 确定性校验、派发和持久化**。MCP 的价值在于可靠的 *Agent–Runtime 交互契约*，而不是替代 Python、提供沙箱或天然实现 Exactly-Once。
+
+源码：[MCP 调用和进度转发](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[Executor CLI 和 Harness 适配](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)、[Skill 流程与进度边界](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/SKILL.md)。
