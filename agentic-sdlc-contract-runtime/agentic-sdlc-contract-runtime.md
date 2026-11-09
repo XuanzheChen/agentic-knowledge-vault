@@ -18,6 +18,7 @@
 - [[agentic-sdlc-contract-runtime#Supervisor 基于过期 Contract 提交 PASS 时，Runtime 如何处理？|Supervisor 基于过期 Contract 提交 PASS 时，Runtime 如何处理？]]
 - [[agentic-sdlc-contract-runtime#如何将 Contract V2 激活扩展为逐 Task 的可恢复迁移事务？|如何将 Contract V2 激活扩展为逐 Task 的可恢复迁移事务？]]
 - [[agentic-sdlc-contract-runtime#Contract 激活崩溃时，如何保证版本与 Task 状态的事务原子性？|Contract 激活崩溃时，如何保证版本与 Task 状态的事务原子性？]]
+- [[agentic-sdlc-contract-runtime#Planner 并发修改 Contract 时，如何保证 SQLite 保存的是同一份已校验快照？|Planner 并发修改 Contract 时，如何保证 SQLite 保存的是同一份已校验快照？]]
 
 ## 实际实现流程架构
 
@@ -337,3 +338,22 @@ SQLite 方案可将 `migration_id` 设为唯一键，按 `(project_id, contract_
 重启时应以**权威提交结果**为准，不以“是否收到成功响应”或普通日志是否写了成功来猜测：SQLite 查有效版本及迁移 ID；文件方案查当前快照指针并校验所指向的不可变快照。采用事务日志时，也必须与这个唯一提交点保持可判定、可幂等的恢复关系。
 
 **面试收尾：** PSC 已具备执行锁、单文件原子替换和部分迁移幂等保障，但尚无覆盖 Contract 激活全过程的多文件事务。下一步可以优先将权威状态集中到 SQLite；若沿用文件架构，则采用**不可变快照 + 单一原子生效指针**。原则始终是：**先准备完整 V2，再一次性发布；提交前崩溃保留 V1，提交后崩溃恢复完整 V2，状态不可验证时拒绝继续执行。**
+
+---
+
+## Planner 并发修改 Contract 时，如何保证 SQLite 保存的是同一份已校验快照？
+
+**核心问题：SQLite 只能保证数据库内部的事务原子性，不能保证从多个正在编辑的 Markdown 文件中读到同一版本。** 如果校验用的是旧 `tasks.md`，入库时又重新读取了 Planner 刚修改的文件，即使事务成功，保存的内容与 Hash 仍可能不一致。这是跨文件读取的 TOCTOU 问题。
+
+### 扩展方案：Git Commit → 内存快照 → SQLite 事务
+
+1. **固定数据来源。** Planner 可以持续编辑工作区，但每次提交可供激活的 Contract，都必须先将六个规范文件作为一个 Git Commit 发布，并把**确定的 Commit SHA** 交给 Runtime。Runtime 依据该 Commit 的 Tree/Blob 读取六个文件，**不再读取可变工作区**；后续编辑不会改变所选快照。Git Commit 负责锁定来源内容，并不自动证明这份 Contract 在业务上合理。
+2. **只校验一次内存事实。** Runtime 将该 Commit 的六份原始文件内容一次性读取为不可变的内存数据，分别计算文件 SHA-256 与整体 Contract Hash；在这**同一组字节**上完成格式、REQ/AC/T 引用、依赖无环和验收覆盖校验。失败则拒绝激活。校验后不重新读取源文件，也不重新生成待存储内容。
+3. **同一事务保存并生效。** 直接使用已校验的内存字节及对应 Hash，在一个 SQLite 事务中写入完整 Contract 快照、Commit SHA、Task 目标状态、迁移记录，并更新生效版本；所有写入成功才 `COMMIT`。提交前失败则保留 V1；成功后数据库中的权威 V2 内容与其 Hash 必然对应同一份已校验快照。
+4. **重启幂等检查。** 依据数据库中已提交的有效版本、Commit SHA 和迁移 ID 判断 V2 是否生效：已经提交则不重复迁移，未提交则继续 V1；若记录损坏或快照校验失败，则阻断调度。
+
+**分工与边界：** **Git Commit 保证读取来源不可变；内存快照保证校验和入库使用同一内容；SQLite 事务保证 Contract、Task 状态与权威版本同时生效。** SQLite 不会自动保护库外文件和代码工作区，因此执行必须读取数据库中的权威 Contract 快照（或受其 Hash 校验的不可变副本）。
+
+**与 PSC 现状的区别：** 当前 `import_bundle()` 已对**单个 Bundle 文件**执行一次 `read_bytes()` 并计算 Hash、解析与校验，然后将六文件落入版本目录；但尚未实现**按 Git Commit 读取六文件快照**或**SQLite 事务激活**。这套方案是 Q19 原子激活设计向上游数据来源一致性的延伸。参考：[现有 Bundle 导入与校验](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_runtime.py)。
+
+**总结：不要靠反复读取和比较 Hash 去追赶 Planner 的修改；先冻结输入版本，再用同一份内存数据完成校验与事务提交，从源头消除跨文件版本混杂。**
