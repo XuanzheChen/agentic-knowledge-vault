@@ -17,6 +17,7 @@
 - [[agentic-sdlc-contract-runtime#Contract 升级时，PSC 如何选择迁移策略并防止跨版本误验收？|Contract 升级时，PSC 如何选择迁移策略并防止跨版本误验收？]]
 - [[agentic-sdlc-contract-runtime#Supervisor 基于过期 Contract 提交 PASS 时，Runtime 如何处理？|Supervisor 基于过期 Contract 提交 PASS 时，Runtime 如何处理？]]
 - [[agentic-sdlc-contract-runtime#如何将 Contract V2 激活扩展为逐 Task 的可恢复迁移事务？|如何将 Contract V2 激活扩展为逐 Task 的可恢复迁移事务？]]
+- [[agentic-sdlc-contract-runtime#Contract 激活崩溃时，如何保证版本与 Task 状态的事务原子性？|Contract 激活崩溃时，如何保证版本与 Task 状态的事务原子性？]]
 
 ## 实际实现流程架构
 
@@ -299,3 +300,40 @@ PSC 现有三层保护：
 **拒绝条件与工程边界：** 计划结构不合法、历史 PASS 继承规则不满足、缺少有效批准、版本/状态冲突、旧执行器存活性不明或目标状态准备失败，都不能发布 V2。多文件写入本身**不是**一个原子事务：必须先准备一致的暂存数据，再切换单一权威状态，并保证恢复流程可重复执行。当前 PSC 尚未完整实现这六步，也尚不具备天然的孤儿进程隔离保障。
 
 **总结：真正需要扩展的不只是 Migration Plan JSON，而是让计划校验、用户授权、任务状态迁移与 Contract 激活共同形成可审计、可拒绝、可恢复的事务边界。**
+
+---
+
+## Contract 激活崩溃时，如何保证版本与 Task 状态的事务原子性？
+
+**核心判断：文件锁解决并发进入，`os.replace()` 解决单文件原子替换，但两者加起来也不能保证多文件迁移是一个事务。** 如果 V2 版本指针已切换，而 T-005、T-008 仍继承 V1 的 PASS，就可能发生跨版本错误验收。要做到“全部生效或全部不生效”，必须把 **Contract 版本、完整 Task 状态和迁移记录** 置于同一个权威提交边界。
+
+### PSC 当前实现：有局部保护，尚无完整事务
+
+`activate_contract()` 持有工作流级 `executor-dispatch.lock`，验证新的 Approved Contract 后，针对 `pending_only` 先执行带来源哈希的连续性账本迁移；随后 `_rebuild_task_records()` **删除并重建** `developing/tasks/T-*.md`，最后才更新 `workflow_state.json` 中的有效版本、`current_task`、`last_completed_task` 等字段。
+
+`dump_json()` 通过临时文件和 `os.replace()` 更新单个 JSON 文件；若在任务文件重建后、状态版本更新前崩溃，就会产生**V2 任务文件 + V1 工作流状态**的不一致。重试连续性账本提供局部幂等检查，但不等于整个激活具有事务性。参考：[激活与文件持久化](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_runtime.py)、[连续性账本](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/task_continuity.py)。
+
+**题目假设的 T-005、T-008 独立 PASS/PENDING 行，目前也尚未完整实现**：PSC 主要使用 `last_completed_task` / `current_task` 表达顺序任务边界。离散 Task 状态迁移属于进一步扩展。
+
+### 两种可落地的事务方案
+
+| 方案 | 单一提交点 | 实施要点 |
+| --- | --- | --- |
+| **继续使用文件系统** | 原子替换 `active_snapshot.json` 指针 | 先构建不可变的 `snapshots/v2/`，完整包含 Contract 版本、所有 Task 状态、任务视图与迁移 ID；校验并确保暂存内容持久化后，才切换唯一权威指针 |
+| **改用 SQLite（优先考虑）** | 数据库事务 `COMMIT` | 在一个 `BEGIN IMMEDIATE` 事务内核验 V1、写入 V2 的**完整** Task 状态、迁移审计记录，再更新唯一有效 Contract 版本；任何异常则 `ROLLBACK` |
+
+文件方案的关键约束是：**执行器、Supervisor 和恢复器必须全部通过同一权威快照读取状态**。如果某模块仍直接读取被提前覆盖的 `developing/tasks/`，单独原子替换 `workflow_state.json` 并不能解决问题。指针和快照应位于可靠的同一持久化域，使用同文件系统的 `os.replace()`，必要时进行文件及目录 `fsync`，以应对断电故障。
+
+SQLite 方案可将 `migration_id` 设为唯一键，按 `(project_id, contract_version, task_id)` 存储 Task 状态，**保留 V1 历史记录而非覆盖**。事务中使用条件更新并检查实际修改行数，防止版本漂移；数据库之外的 Contract 文件需事先准备并验证。SQLite 事务不会自动回滚对产品代码仓库的修改，也不替代执行器生命周期隔离。
+
+### 重启后如何判断迁移是否完成？
+
+| 崩溃时机 | 恢复时权威状态 | 处理 |
+| --- | --- | --- |
+| 开始准备前，或 `COMMIT` 前任意一步 | V1（旧快照 / 未提交事务） | 继续 V1；清理或忽略未生效暂存数据 |
+| `COMMIT` 成功后，响应尚未返回 | 完整 V2，存在对应 `migration_id` | 返回 `already_activated`，**不得重复重置 Task** |
+| 权威指针损坏、快照缺失或迁移账本不一致 | 无法确认 | **阻断调度**，进入明确的恢复/人工介入流程 |
+
+重启时应以**权威提交结果**为准，不以“是否收到成功响应”或普通日志是否写了成功来猜测：SQLite 查有效版本及迁移 ID；文件方案查当前快照指针并校验所指向的不可变快照。采用事务日志时，也必须与这个唯一提交点保持可判定、可幂等的恢复关系。
+
+**面试收尾：** PSC 已具备执行锁、单文件原子替换和部分迁移幂等保障，但尚无覆盖 Contract 激活全过程的多文件事务。下一步可以优先将权威状态集中到 SQLite；若沿用文件架构，则采用**不可变快照 + 单一原子生效指针**。原则始终是：**先准备完整 V2，再一次性发布；提交前崩溃保留 V1，提交后崩溃恢复完整 V2，状态不可验证时拒绝继续执行。**
