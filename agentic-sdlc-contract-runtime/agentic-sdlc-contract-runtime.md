@@ -23,6 +23,7 @@
 - [[agentic-sdlc-contract-runtime#只读 Preflight 依赖 Prompt 还是程序权限，如何防止 pytest 等工具产生副作用？|只读 Preflight 依赖 Prompt 还是程序权限，如何防止 pytest 等工具产生副作用？]]
 - [[agentic-sdlc-contract-runtime#WinError 206 如何定位与修复，启动传输失败为何不能扣 Executor 重试预算？|WinError 206 如何定位与修复，启动传输失败为何不能扣 Executor 重试预算？]]
 - [[agentic-sdlc-contract-runtime#如何区分 PROCESS_STARTED、EXECUTOR_READY 与 TASK_STARTED？|如何区分 PROCESS_STARTED、EXECUTOR_READY 与 TASK_STARTED？]]
+- [[agentic-sdlc-contract-runtime#Executor 失联后如何避免重复执行数据库迁移等外部副作用？|Executor 失联后如何避免重复执行数据库迁移等外部副作用？]]
 
 ## 实际实现流程架构
 
@@ -451,3 +452,30 @@ SQLite 方案可将 `migration_id` 设为唯一键，按 `(project_id, contract_
 **总结：进程启动成功不等于 Harness 就绪，Harness 就绪不等于 Task 已开始；每个状态转换都必须有本次运行的对应证据。**
 
 源码：[Executor 调用与 Smoke Check](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)、[流式 Popen、事件和心跳](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/executor_progress.py)、[MCP 预算管理](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)。
+
+---
+
+## Executor 失联后如何避免重复执行数据库迁移等外部副作用？
+
+**核心原则：Executor 失联不等于任务失败，更不意味着可以安全重试。** 尤其是 Alembic 数据库迁移这类外部副作用，即便没有收到 MCP Completion，数据库结构也可能已经改变；直接重派可能造成重复建表、版本冲突，甚至与尚在运行的旧 Executor 并发操作。
+
+**当前 PSC 已实现的部分：** `task_execution_memory.py` 为历史尝试归档不可变 Execution Memory，记录执行状态、失败原因、修改文件指纹及有界交接信息；`invoke_executor.py` 在异常重试时提供兼容的同 Task/Contract 历史上下文；Supervisor 通过 Contract、代码差异与验证证据独立验收，**不会仅因执行器自报失败就机械判定产品未完成**。但这些机制主要覆盖仓库与 Executor 证据，**尚不能可靠追踪数据库、外部 API 等副作用，也不提供跨外部系统的 Exactly-Once 保证**。
+
+### 拟议改进：副作用声明、持久意图、恢复门禁
+
+1. **任务副作用分类。** Planner 在 Contract 中声明只读、可幂等重放、需恢复检查或不可逆等风险等级，并指定外部目标和验证方式；Runtime 根据分类选择重试策略。普通只读任务可以考虑自动重试，外部写操作不能默认重放。
+2. **执行前持久化操作意图。** 为副作用操作分配稳定 `operation_id`，记录操作目标、预期结果和幂等键；支持幂等键的 API 重试时沿用同一键。Alembic 使用明确的 Revision / 迁移链标识并检查目标数据库。**Revision 不是通用的 Exactly-Once 锁**，仍需核实实际表结构和迁移是否部分完成。
+3. **失联后先恢复检查，再决定是否重派。** 对副作用未确认的任务引入拟议 `UNKNOWN` 状态，阻断自动重试。Supervisor 结合 `alembic_version`、实际数据库 Schema、操作日志和 Execution Memory 复核结果；同时确认旧 Executor 已停止或失去相关外部资源的操作权限，避免新旧执行器并发写库。
+
+| 恢复检查结论 | 下一步处理 |
+| --- | --- |
+| **确认未执行** | 可重新执行，必要时复用同一 `operation_id` |
+| **确认已完成** | 不重复迁移；只继续剩余工作与独立验收 |
+| **部分完成** | 先制定补偿/修复方案，核验后恢复 |
+| **状态无法确认或旧进程仍可能执行** | 保持 `UNKNOWN`，阻断重派并升级人工检查 |
+
+**实现边界：** 目前 PSC 有持久化执行记录、跨尝试交接和 Supervisor 决策；**任务级副作用分类、操作意图账本、数据库状态探测、强制恢复门禁及外部操作权撤销**都还需要实现。`UNKNOWN` 在这里表示期望引入的恢复语义，不能误称为当前 Runtime 已完备的正式状态机枚举。对不可事务化的外部效果，即使引入幂等键，也要考虑补偿与人工介入。
+
+**总结：让任务重试从“失败后重新执行”升级为“先验证执行证据与外部状态，再决定重试、跳过、恢复或补偿”。幂等性降低重复操作风险，Execution Memory 提供上下文，Supervisor 负责验收决策，Runtime 则必须阻断未经确认的副作用重放。**
+
+参考：[Execution Memory](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/task_execution_memory.py)、[Executor 异常恢复](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)、[Supervisor 状态与验收](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)。
