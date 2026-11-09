@@ -19,6 +19,7 @@
 - [[agentic-sdlc-contract-runtime#如何将 Contract V2 激活扩展为逐 Task 的可恢复迁移事务？|如何将 Contract V2 激活扩展为逐 Task 的可恢复迁移事务？]]
 - [[agentic-sdlc-contract-runtime#Contract 激活崩溃时，如何保证版本与 Task 状态的事务原子性？|Contract 激活崩溃时，如何保证版本与 Task 状态的事务原子性？]]
 - [[agentic-sdlc-contract-runtime#Planner 并发修改 Contract 时，如何保证 SQLite 保存的是同一份已校验快照？|Planner 并发修改 Contract 时，如何保证 SQLite 保存的是同一份已校验快照？]]
+- [[agentic-sdlc-contract-runtime#Preflight 如何用 SHA-256 绑定证据，以及能否阻止过期检查后的派发？|Preflight 如何用 SHA-256 绑定证据，以及能否阻止过期检查后的派发？]]
 
 ## 实际实现流程架构
 
@@ -357,3 +358,19 @@ SQLite 方案可将 `migration_id` 设为唯一键，按 `(project_id, contract_
 **与 PSC 现状的区别：** 当前 `import_bundle()` 已对**单个 Bundle 文件**执行一次 `read_bytes()` 并计算 Hash、解析与校验，然后将六文件落入版本目录；但尚未实现**按 Git Commit 读取六文件快照**或**SQLite 事务激活**。这套方案是 Q19 原子激活设计向上游数据来源一致性的延伸。参考：[现有 Bundle 导入与校验](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_runtime.py)。
 
 **总结：不要靠反复读取和比较 Hash 去追赶 Planner 的修改；先冻结输入版本，再用同一份内存数据完成校验与事务提交，从源头消除跨文件版本混杂。**
+
+---
+
+## Preflight 如何用 SHA-256 绑定证据，以及能否阻止过期检查后的派发？
+
+**定位：Preflight 是 Executor 启动前的只读准入检查，不是代码修改的权限隔离机制。** 它用独立检查器判断当前 Task 是否具备执行条件；`DENY`、超时、不可验证或证据过期均按 fail closed 阻断派发，而不是让 Executor 冒险继续。
+
+1. **采集并绑定证据。** Runtime 收集当前 Task、Task-Scoped Contract Packet、上一轮 Review、Contract 绑定信息，以及**有界的**相关仓库文件；对文件和相关上下文计算 SHA-256，形成 Preflight Evidence Bindings。检查器只能依据这份受约束的只读证据作出 `ALLOW` / `DENY` 判断。
+2. **ALLOW 后再次验证。** 在准备启动 Executor 前，Runtime 通过 `revalidate_evidence()` 重新收集证据并对比各项 Hash/绑定信息。即使检查器返回 `ALLOW`，只要相关文件或上下文在检查期间发生变化，最终结果仍转为 `UNKNOWN`，原因是 `preflight_evidence_stale`，**不启动 Executor**，也不消耗其重试额度。
+3. **承认剩余竞态窗口。** 最后一次 Hash 比对与 Executor 真正开始修改文件之间，仍存在 TOCTOU 时间窗口；外部进程可以继续修改共享工作区。且校验针对绑定的证据集合，并不等于保证仓库所有文件始终不变。**当前 PSC 实现的是乐观一致性检测，不是强制写入隔离。**
+
+**后续改进：** 从固定 Git 基线构建 Executor 专属工作区（例如受权限约束的 Worktree / 容器），保证 Preflight 与实际执行针对同一代码基线，并限制其他进程对该工作区的写入。仅凭最后一次 Hash 校验，无法彻底消除 TOCTOU。
+
+**总结：Preflight 用 SHA-256 把“允许执行”的判断绑定到具体证据，并在启动前复核；能发现复核前的变化，却不能保证复核后代码绝不会再变。**
+
+源码：[Preflight 证据收集与重校验](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/preflight_checker.py)、[MCP 派发准入](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)。
