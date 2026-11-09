@@ -21,6 +21,7 @@
 - [[agentic-sdlc-contract-runtime#Planner 并发修改 Contract 时，如何保证 SQLite 保存的是同一份已校验快照？|Planner 并发修改 Contract 时，如何保证 SQLite 保存的是同一份已校验快照？]]
 - [[agentic-sdlc-contract-runtime#Preflight 如何用 SHA-256 绑定证据，以及能否阻止过期检查后的派发？|Preflight 如何用 SHA-256 绑定证据，以及能否阻止过期检查后的派发？]]
 - [[agentic-sdlc-contract-runtime#只读 Preflight 依赖 Prompt 还是程序权限，如何防止 pytest 等工具产生副作用？|只读 Preflight 依赖 Prompt 还是程序权限，如何防止 pytest 等工具产生副作用？]]
+- [[agentic-sdlc-contract-runtime#WinError 206 如何定位与修复，启动传输失败为何不能扣 Executor 重试预算？|WinError 206 如何定位与修复，启动传输失败为何不能扣 Executor 重试预算？]]
 
 ## 实际实现流程架构
 
@@ -396,3 +397,28 @@ SQLite 方案可将 `migration_id` 设为唯一键，按 `(project_id, contract_
 **总结：Prompt 约束“应该做什么”，Harness 工具配置限制“通常能调用什么”，真正严格的副作用隔离则需要独立执行环境与 OS 权限边界。PSC 已实现前两类程序化限制，但尚未完整实现第三层。**
 
 源码：[Preflight Checker 运行与证据采集](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/preflight_checker.py)、[Codex 适配器](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/adapters/codex.py)、[DSH 适配器](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/adapters/dsh.py)、[Claude 适配器](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/adapters/claude.py)。
+
+---
+
+## WinError 206 如何定位与修复，启动传输失败为何不能扣 Executor 重试预算？
+
+**这是实际开发中暴露的“进程尚未创建，却被当作 Executor 失败”的状态机问题。** 当时 Task Packet 过长，PSC 将整段 Prompt 放进 Windows `subprocess` 命令行，触发 `OSError: [WinError 206]`。故障发生在进程创建阶段，Executor 未真正执行；历史案例中首次派发及三次异常重试均未产生有效产品修改，却耗尽了重试额度。排查重点因此从“为什么模型失败”转向了**Prompt 传输、进程启动位置和重试记账边界**。
+
+### 实际修复：输入传输与异常分类分开处理
+
+1. **长 Prompt 不再进入 `argv`。** `_prepare_prompt_transport()` 使 **Codex / Claude Code** 用 `-` 作为 stdin 标记，通过进程标准输入传递完整 Prompt；**DSH** 使用仓库 `.agentic-sdlc/runtime/executor-inputs/` 中短生命周期的 Runtime 自有提示词文件，命令行仅传简短的文件读取指令，执行结束后清理。这样可避开 Windows 命令行长度限制。
+2. **将启动传输错误独立分类。** `invoke_executor.py` 的 `_spawn_failure_reason()` 把 `winerror == 206` 或 `errno.ENAMETOOLONG` 映射成 `launch_transport_failed`，结果标记为 `retryable=False`；不能只凭 `status=failed` 认定模型已执行。
+3. **让重试记账遵循真实执行边界。** MCP Runtime 的 `_charge_actual_attempt()` 对 `launch_transport_failed` / 明确不可重试结果不扣预算，也不标记本轮首次 Executor 尝试已发生；`_mark_nonretryable_runtime_blocked()` 记录 `runtime_failure`，将工作流置为 `blocked`，待修复传输或环境问题后再继续同一 Task。
+4. **真正启动后的异常另行处理。** 进程已执行但超时、非零退出或输出无效时，保留日志与 Git 代码变更证据；按异常重试路径处理。若程序执行完成但代码不符合 AC，则由 Supervisor 独立验收、决定质量返工，**进程结果不直接等于 Task PASS**。质量返工派发本身发生异常时，Runtime 也会优先计入异常预算，而非消耗一次质量返工机会。
+
+| 情况 | 当前分类 / 处理 | 预算原则 |
+| --- | --- | --- |
+| WinError 206、`ENAMETOOLONG`，Executor 未创建 | `launch_transport_failed`；Runtime Failure 并阻断 | **不计首次执行，不扣任何重试预算** |
+| Executor 已运行但超时、非零退出 | `timeout` / `process_failed`；保留执行证据 | 根据派发轮次计入异常重试 |
+| Executor 完成但未通过 Contract 验收 | Supervisor 决定 `quality_rework` | 只在真实质量返工尝试时消耗相应预算 |
+
+**验证依据：** 仓库已有针对 5 万字符 Codex stdin 传输、DSH 短引导文件、`ENAMETOOLONG` → 不可重试分类，以及 MCP 不扣初始尝试/异常重试/质量返工预算并保存阻断状态的回归测试。参考：[Executor 实现](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)、[MCP 记账与阻断](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[传输与分类测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_runtime_hardening.py)、[预算测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_executor_mcp.py)。
+
+**实现边界：** 当前对 `launch_transport_failed` 已有明确的“不扣预算”保护；但其他 `spawn_failed` 并未全部统一标记为 `retryable=False`，不能宣称所有启动前失败都已严格分离。后续应引入明确的 `NOT_STARTED / STARTED / FINISHED` 进程生命周期证据，统一启动异常的分类与重试记账规则。
+
+**总结：Runtime 必须区分“传输/启动失败”“启动后执行失败”“执行完成但验收不通过”。没有真正发生的 Executor 尝试不应消耗重试预算，Supervisor 的最终 PASS 仍需独立验证。**
