@@ -22,6 +22,7 @@
 - [[agentic-sdlc-contract-runtime#Preflight 如何用 SHA-256 绑定证据，以及能否阻止过期检查后的派发？|Preflight 如何用 SHA-256 绑定证据，以及能否阻止过期检查后的派发？]]
 - [[agentic-sdlc-contract-runtime#只读 Preflight 依赖 Prompt 还是程序权限，如何防止 pytest 等工具产生副作用？|只读 Preflight 依赖 Prompt 还是程序权限，如何防止 pytest 等工具产生副作用？]]
 - [[agentic-sdlc-contract-runtime#WinError 206 如何定位与修复，启动传输失败为何不能扣 Executor 重试预算？|WinError 206 如何定位与修复，启动传输失败为何不能扣 Executor 重试预算？]]
+- [[agentic-sdlc-contract-runtime#如何区分 PROCESS_STARTED、EXECUTOR_READY 与 TASK_STARTED？|如何区分 PROCESS_STARTED、EXECUTOR_READY 与 TASK_STARTED？]]
 
 ## 实际实现流程架构
 
@@ -422,3 +423,31 @@ SQLite 方案可将 `migration_id` 设为唯一键，按 `(project_id, contract_
 **实现边界：** 当前对 `launch_transport_failed` 已有明确的“不扣预算”保护；但其他 `spawn_failed` 并未全部统一标记为 `retryable=False`，不能宣称所有启动前失败都已严格分离。后续应引入明确的 `NOT_STARTED / STARTED / FINISHED` 进程生命周期证据，统一启动异常的分类与重试记账规则。
 
 **总结：Runtime 必须区分“传输/启动失败”“启动后执行失败”“执行完成但验收不通过”。没有真正发生的 Executor 尝试不应消耗重试预算，Supervisor 的最终 PASS 仍需独立验证。**
+
+---
+
+## 如何区分 PROCESS_STARTED、EXECUTOR_READY 与 TASK_STARTED？
+
+**核心原则：OS 进程创建、Harness 完成初始化、Executor 开始处理 Task，是三个不同的事实，不能用 PID、日志出现或代码差异相互代替。** 例如 Codex 已获得 PID，却在加载配置或连接 API 时退出，此时最多能确认进程启动，不能把该 Task 当成真实执行失败并直接扣重试预算。
+
+### PSC 当前已经实现什么？
+
+- **进程调用与异常分类。** `invoke_executor.py` 默认使用 `subprocess.run()`；开启流式进度时由 `executor_progress.run_streaming()` 使用 `subprocess.Popen()`，并发读取 stdout/stderr、处理超时及退出码。`WinError 206` / `ENAMETOOLONG` 已单独分类为 `launch_transport_failed`，但还没有三阶段生命周期状态机。
+- **Harness 输出解析与进度观察。** Codex、Claude Code、DSH 各有响应解析路径；流式进度将不同事件映射为工具调用、模型步骤、最终响应等**观察事件**，并保存进度/心跳。这些事件用于展示进度，**不是已验证的 Ready 或 Task Started 凭证**。例如 `ProgressRecorder` 在真正调用 `Popen()` 前就会发出文案为 `Executor started` 的 `started` 事件，不能把它当作 OS 启动确认。
+- **独立 Smoke Check。** 正式派发前会验证与 Executor 配置指纹绑定的 Smoke Artifact；隔离工作区中的 Smoke Check 能检验曾经可启动并完成受控小任务，**但不能证明这一次派发已经 Ready 或开始处理当前 Task**。
+
+### 改进方案：Runtime 状态机 + Adapter 事件规范化
+
+| 阶段 | 可以信任的推进证据 | 不能据此推断的事 |
+| --- | --- | --- |
+| `PROCESS_STARTED` | 本次 `Popen()` **成功返回**进程对象及 PID，记录 Run ID、PID、启动时间、配置指纹 | PID 存在 ≠ Harness 初始化完成；瞬时退出也可能发生 |
+| `EXECUTOR_READY` | Adapter 解析到与当前运行对应的**明确初始化完成 / Ready 握手**，或经过定义的受控就绪探测 | 仅出现 stdout、进程存活或历史 Smoke PASS，不足以证明本次 Ready |
+| `TASK_STARTED` | 收到绑定当前 Run/Task 的**任务接收确认、首个明确的任务处理事件**等可信信号 | 普通心跳、模型连接成功、任意仓库 diff 都不能单独证明已开始本 Task |
+
+具体实现时，让 **Runtime 管 `Popen()`、进程身份、状态持久化和转移规则；Harness Adapter 管解析**：把 Codex、Claude Code、DSH 不同版本的结构化日志映射为统一 `PROCESS_STARTED`、`EXECUTOR_READY`、`TASK_STARTED`、`FAILED` 等事件，并附上来源事件、Run/Task ID 和可验证的时间顺序。状态只允许依据证据单向推进；退出时记录**最后已确认阶段**，区分启动前、初始化期和任务执行期故障。
+
+**没有 Ready 信号怎么办？** 不通过“有 PID / stdout / diff”猜测，而是把就绪状态保留为 `UNKNOWN`，可补充显式握手或 Adapter 专用探测；证据不足时不自动认定 `TASK_STARTED`。因此，**重试预算的最终扣费规则应以可证明的实际任务尝试为依据**；对状态未知的尝试应阻断并调查，不能直接当作“完全未执行”或“执行失败”去扣费或免费重试。这属于后续改进，当前 PSC 尚未完整实现跨 Harness 的统一生命周期证明。
+
+**总结：进程启动成功不等于 Harness 就绪，Harness 就绪不等于 Task 已开始；每个状态转换都必须有本次运行的对应证据。**
+
+源码：[Executor 调用与 Smoke Check](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)、[流式 Popen、事件和心跳](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/executor_progress.py)、[MCP 预算管理](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)。
