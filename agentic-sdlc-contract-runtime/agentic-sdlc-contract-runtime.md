@@ -25,6 +25,7 @@
 - [[agentic-sdlc-contract-runtime#如何区分 PROCESS_STARTED、EXECUTOR_READY 与 TASK_STARTED？|如何区分 PROCESS_STARTED、EXECUTOR_READY 与 TASK_STARTED？]]
 - [[agentic-sdlc-contract-runtime#Executor 失联后如何避免重复执行数据库迁移等外部副作用？|Executor 失联后如何避免重复执行数据库迁移等外部副作用？]]
 - [[agentic-sdlc-contract-runtime#PSC 为什么引入 MCP Server，而不让 Supervisor 直接执行 Python CLI？|PSC 为什么引入 MCP Server，而不让 Supervisor 直接执行 Python CLI？]]
+- [[agentic-sdlc-contract-runtime#PSC 如何用 pytest、Mock 与故障注入测试非确定性的 Agent Runtime？|PSC 如何用 pytest、Mock 与故障注入测试非确定性的 Agent Runtime？]]
 
 ## 实际实现流程架构
 
@@ -513,3 +514,39 @@ SQLite 方案可将 `migration_id` 设为唯一键，按 `(project_id, contract_
 **面试收尾：** 个人单次自动化任务用 CLI + Skill 更轻量；PSC 面向长期、多 Task、可中断恢复的 Agent 开发流程，选择 MCP 是为了让 **Supervisor 通过标准化接口表达意图，由 Runtime 确定性校验、派发和持久化**。MCP 的价值在于可靠的 *Agent–Runtime 交互契约*，而不是替代 Python、提供沙箱或天然实现 Exactly-Once。
 
 源码：[MCP 调用和进度转发](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[Executor CLI 和 Harness 适配](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)、[Skill 流程与进度边界](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/SKILL.md)。
+
+---
+
+## PSC 如何用 pytest、Mock 与故障注入测试非确定性的 Agent Runtime？
+
+**核心思路：PSC 不以“同一 Task 每次由 LLM 生成相同代码”作为回归测试标准，而是使用 `pytest`、`tmp_path`、`monkeypatch` 和故障注入，固定 Agent/进程等非确定性外部输入，验证 Python Runtime 的确定性状态规则。** 大部分单元与集成测试不需要真实调用 Codex、Claude Code 或 DSH；真实 Harness Smoke Check 是另一层验证，不应成为每次代码修改的必经步骤。
+
+### 当前采用的三类测试
+
+1. **Executor 调度与异常分类。** 用 `monkeypatch` 替换 `subprocess.run()` 或相关执行接口，模拟预设 Completion、非零退出、`TimeoutExpired`、`OSError` 等结果，检查 `status/reason`、Prompt 传输、Scope 和初始/质量/异常重试预算；例如已覆盖 `WinError 206` / `ENAMETOOLONG` 不扣预算。
+2. **MCP 边界与工具异常。** Mock 底层 `invoke_executor_from_paths()` 或包裹工具入口，模拟成功、失败、参数/状态冲突和异常。校验结构化返回（如 `status=tool_error`、`error_code`、`mutation_status`）、诊断持久化，并确认 MCP 工具异常**不应被误记为新的 Executor Attempt**。
+3. **Supervisor 状态提交与故障注入。** 用 `tmp_path` 建立包含 Contract、Task、`workflow_state.json` 的隔离工作流，调用 `commit_supervisor_transition()`；在文件暂存或 `os.replace()` 处注入 `PermissionError`，比较状态 SHA、`last_completed_task`、Review/Result 文件和 `supervisor-transactions/` 日志，检验失败的真实持久化结果。
+
+### 题目场景：Executor 已完成，但 PASS 提交失败
+
+对于“Executor 已返回 `completed`、Supervisor 正在提交 PASS，却在写 `workflow_state.json` 时失败”，推荐的**专项回归测试**如下：
+
+1. 在 `tmp_path` 中创建 V1、T-001 与初始 `workflow_state.json`，以固定 Fixture 模拟上一轮 Executor `completed` 与验收证据；不真正启动 LLM。
+2. 保存旧 `workflow_state.json` 字节/SHA 与 `last_completed_task`，`monkeypatch` 包装 `supervisor_runtime.os.replace`，**仅当目标为 `workflow_state.json` 时**抛出 `PermissionError`，其余文件允许正常替换。
+3. 发起 `decision=pass`，附有效的 `review_markdown`、`result_markdown` 与预期 State SHA；通过 MCP 诊断层捕获异常并核对结果。
+4. 断言**权威状态没有错误推进**：`last_completed_task` 和 State SHA 均保持不变，不得把 T-001 误标为 PASS；诊断返回 `tool_error / FILESYSTEM_ACCESS_DENIED`，并记录 `mutation_status=partial_mutation`。
+5. 断言事务日志记录 `phase=partial`，能定位失败路径；**Review、Result、Resume Capsule 可能已经部分落盘**，因此是“状态未提交 + 有可审计的部分写入”，**不是所有文件自动回滚**。同时检查 Executor 的既有重试计数未因 Supervisor 提交错误增加。
+
+### 已有测试覆盖与真实边界
+
+| 已有测试位置 | 实际已覆盖的重点 | 不能额外宣称 |
+| --- | --- | --- |
+| `tests/test_runtime_hardening.py`、`tests/test_executor_mcp.py` | 长 Prompt、执行异常分类、MCP 派发与重试计费 | 不等于每种 Harness 都真实执行了一轮任务 |
+| `tests/test_supervisor_runtime.py` | PASS 正常推进、Result/Resume 写入、状态 SHA 冲突阻断、验收拒绝条件 | 单靠这些用例不能证明 PASS 在每个故障点均可原子回滚 |
+| `tests/test_mcp_diagnostics.py` | `quality_rework` 提交阶段注入 `os.replace()` 失败；校验旧状态不变、`partial` 事务日志、结构化错误、无额外 Executor 扣费 | **现有这项故障注入测试针对 `quality_rework`，不应误写为已有同样的 PASS 专项测试** |
+
+还要覆盖一个对称的异常：**权威状态已成功替换，随后审计日志更新失败**。此时 MCP 可能返回 `tool_error`，但 `mutation_status` 应识别为 `committed_state`；不能因为响应报错就重新提交 PASS。仓库已有针对这一情况的测试。
+
+**总结：把 LLM 与外部进程替换为可控的测试替身，测试 Runtime 的状态推进、拒绝条件、审计与重试预算。尤其要区分“提交前失败且状态未推进”“辅助文件部分写入”“权威状态已提交但响应失败”，不能把一切异常都称为回滚，也不能将工具失败当成 Executor 失败。**
+
+源码与测试：[Supervisor 状态提交和事务日志](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)、[MCP 结构化诊断](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/mcp_diagnostics.py)、[Supervisor 测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_supervisor_runtime.py)、[故障注入测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_mcp_diagnostics.py)、[Executor 回归测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_runtime_hardening.py)。
