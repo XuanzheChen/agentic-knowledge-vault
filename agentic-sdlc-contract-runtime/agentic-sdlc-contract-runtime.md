@@ -26,6 +26,7 @@
 - [[agentic-sdlc-contract-runtime#Executor 失联后如何避免重复执行数据库迁移等外部副作用？|Executor 失联后如何避免重复执行数据库迁移等外部副作用？]]
 - [[agentic-sdlc-contract-runtime#PSC 为什么引入 MCP Server，而不让 Supervisor 直接执行 Python CLI？|PSC 为什么引入 MCP Server，而不让 Supervisor 直接执行 Python CLI？]]
 - [[agentic-sdlc-contract-runtime#PSC 如何用 pytest、Mock 与故障注入测试非确定性的 Agent Runtime？|PSC 如何用 pytest、Mock 与故障注入测试非确定性的 Agent Runtime？]]
+- [[agentic-sdlc-contract-runtime#为什么需要 Execution Memory，如何避免跨尝试继承过期 Agent 结论？|为什么需要 Execution Memory，如何避免跨尝试继承过期 Agent 结论？]]
 
 ## 实际实现流程架构
 
@@ -550,3 +551,45 @@ SQLite 方案可将 `migration_id` 设为唯一键，按 `(project_id, contract_
 **总结：把 LLM 与外部进程替换为可控的测试替身，测试 Runtime 的状态推进、拒绝条件、审计与重试预算。尤其要区分“提交前失败且状态未推进”“辅助文件部分写入”“权威状态已提交但响应失败”，不能把一切异常都称为回滚，也不能将工具失败当成 Executor 失败。**
 
 源码与测试：[Supervisor 状态提交和事务日志](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)、[MCP 结构化诊断](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/mcp_diagnostics.py)、[Supervisor 测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_supervisor_runtime.py)、[故障注入测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_mcp_diagnostics.py)、[Executor 回归测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_runtime_hardening.py)。
+
+---
+
+## 为什么需要 Execution Memory，如何避免跨尝试继承过期 Agent 结论？
+
+**对应面试官 Q37。核心动机：PSC 将每次 Executor 派发设计为独立进程/会话，但同一 Task 可能经历多次异常重试与质量返工。** 如果完全丢弃历史，下一轮 Executor 会重复探索；如果直接恢复旧 Agent 的上下文，又容易继承过期工具输出、错误假设甚至越权结论。Execution Memory 的目的，是**保存可重新核实的技术线索，而非继承前一个 Agent 的判断权**。
+
+### 一、记忆内容：不可覆盖的结构化 Attempt，而非完整对话回放
+
+`task_execution_memory.archive_attempt()` 会在已完成/失败/Scope Violation 的执行尝试收尾后，创建独立、不可覆盖的 `attempt-时间戳-UUID.json`。每条记录包含：
+
+- **身份与结果**：Task ID、Contract 版本、Task 文本 SHA-256、Task-Scoped Contract Packet SHA-256、重试类型、Executor 执行结果、失败原因和日志索引。
+- **文件与技术证据**：本次改动文件的有限集合及 SHA-256 指纹、`plan`/`coding_summary` 的有界快照、测试与未解决问题（旧 Executor 自述，不等于实际验收结果）。
+- **四类 Handoff**：`implementation_state`（实现进度自述）、`decisions`（历史技术决策）、`failed_approaches`（失败路径）、`next_steps`（后续建议）。
+
+Executor 没有有效 Completion 时，也可以依据失败原因、执行结果及文件改动生成回退性质的历史摘要；但**Runtime/MCP 若在归档之前崩溃，则不能保证该次 Attempt 收据完整存在**。历史文件独立保存，不将完整终端日志或原生聊天会话直接灌入新 Executor。
+
+### 二、记忆有效性：先验证身份，再标记文件漂移
+
+`prepare_memory()` 先从当前 Task 的归档目录读取历史记录，要求**Task ID、Contract 版本、Task 内容 SHA-256、Contract Packet SHA-256 全部匹配**才允许作为当前 Task 的历史上下文；不匹配的记录保留作审计，不注入新一轮 Executor。
+
+随后重新计算该 Attempt 所记录的文件 SHA-256。文件被修改、丢失或不可读取时，标记 `changed_since_attempt`；未发现字节变化则标记 `same_recorded_file_bytes`。**文件变化不导致整份记忆直接失效**，因为“以前尝试过什么”仍有参考价值，但新 Executor 必须重新检查文件、测试及最新 Review。
+
+**题目示例：** Executor A 声称“数据库模型和 API 已完成，只差测试”；Supervisor 随后修复其中一个文件。Executor B 会看到该条历史记录及 `changed_since_attempt`，知道 A 的结论已经可能过期；它应以**当前代码、当前 Contract、Preflight 和 Supervisor 最新 Review**重建真实进度。即使指纹不变，也只能说明受检文件字节相同，**不能证明 A 关于功能完成情况的声明正确**。
+
+### 三、上下文注入：兼容记录有界筛选，旧记忆始终低权威
+
+`prepare_memory()` 最多选取最近 **4 次**兼容 Attempt，注入文本上限 **7000 字符**，将实施状态、失败路径、文件漂移和下一步建议概括为 `untrusted, task-scoped historical notes`。超限时截减历史，避免挤占当前 Task Packet 与验收标准。当前 **Contract、仓库实际文件、最新 Preflight 证据和 Supervisor Review** 的权威级别始终高于 Execution Memory，旧记录不能恢复历史授权或重试计数。
+
+### 为什么不直接使用 Codex / Claude Code Session Resume？
+
+PSC 需要跨 Codex、Claude Code、DSH 等 Harness 派发，每一次 Executor 也被设计为独立、干净的会话。原生 Resume 依赖特定 Harness 的私有会话格式，容易携带与当前 Task 无关的历史内容、过期工具证据和未证实假设。**结构化 Execution Memory 脱离 Harness 私有会话协议**，可控制上下文开销，也方便事后按 Task/Contract 审计。
+
+### 源码验证与当前边界
+
+- `test_second_executor_gets_same_task_context_and_drift_marker`：验证文件被后续修改后出现 `changed_since_attempt`，且旧自述被明确标为非权威。
+- `test_cross_contract_task_and_packet_drift_are_not_injected`：验证 Contract 版本、Task 文本或 Packet 改变后，旧记录不会混入当前任务。
+- 文件指纹仅覆盖安全且有限的归档路径，**不解释语义正确性，也不追踪数据库或外部 API 副作用**。Execution Memory 是辅助恢复的历史证据，不是 Task State 或 Supervisor 最终 PASS 的权威来源。
+
+**面试总结：我希望新 Executor 继承的是过去尝试过什么、失败在哪里、哪些证据需要重新验证，而不是继承上一个 Agent 的完整上下文与主观结论。**
+
+源码：[Execution Memory 的归档与筛选](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/task_execution_memory.py)、[归档/注入调用路径](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)、[文件漂移与跨版本隔离测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_task_execution_memory.py)。
