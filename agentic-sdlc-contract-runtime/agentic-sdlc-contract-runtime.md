@@ -26,8 +26,6 @@
 - [[agentic-sdlc-contract-runtime#Executor 失联后如何避免重复执行数据库迁移等外部副作用？|Executor 失联后如何避免重复执行数据库迁移等外部副作用？]]
 - [[agentic-sdlc-contract-runtime#PSC 为什么引入 MCP Server，而不让 Supervisor 直接执行 Python CLI？|PSC 为什么引入 MCP Server，而不让 Supervisor 直接执行 Python CLI？]]
 - [[agentic-sdlc-contract-runtime#PSC 如何用 pytest、Mock 与故障注入测试非确定性的 Agent Runtime？|PSC 如何用 pytest、Mock 与故障注入测试非确定性的 Agent Runtime？]]
-- [[agentic-sdlc-contract-runtime#如何用 Git Diff 检测并处理 Executor 的 Scope 越界修改？|如何用 Git Diff 检测并处理 Executor 的 Scope 越界修改？]]
-- [[agentic-sdlc-contract-runtime#Execution Memory 如何跨尝试传递可验证的技术线索而非旧 Agent 结论？|Execution Memory 如何跨尝试传递可验证的技术线索而非旧 Agent 结论？]]
 
 ## 实际实现流程架构
 
@@ -552,55 +550,3 @@ SQLite 方案可将 `migration_id` 设为唯一键，按 `(project_id, contract_
 **总结：把 LLM 与外部进程替换为可控的测试替身，测试 Runtime 的状态推进、拒绝条件、审计与重试预算。尤其要区分“提交前失败且状态未推进”“辅助文件部分写入”“权威状态已提交但响应失败”，不能把一切异常都称为回滚，也不能将工具失败当成 Executor 失败。**
 
 源码与测试：[Supervisor 状态提交和事务日志](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/supervisor_runtime.py)、[MCP 结构化诊断](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/mcp_diagnostics.py)、[Supervisor 测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_supervisor_runtime.py)、[故障注入测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_mcp_diagnostics.py)、[Executor 回归测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_runtime_hardening.py)。
-
----
-
-## 如何用 Git Diff 检测并处理 Executor 的 Scope 越界修改？
-
-**对应面试官 Q36（按题目与源码补全）。** PSC 的 Allowed Scope / Forbidden Scope 不仅写进 Executor Prompt，还在 Runtime 完成一次 Executor Attempt 后进行**确定性的 Git 变更检查**。不过这是**事后验收门禁**，不是执行前的强制文件系统沙箱；越界改动可能已经实际发生。
-
-### 当前实现：差异指纹 → Scope 违规 → 禁止直接 PASS
-
-1. **执行前后采集 Git 工作区指纹。** `invoke_executor.py` 的 `_git_snapshot()` 依次调用 `git diff --name-only`、`git diff --cached --name-only`、`git ls-files --others --exclude-standard`，覆盖未暂存、已暂存和**未忽略的**未跟踪文件；对候选文件计算包含路径、当前字节内容与 Git Index 记录的指纹。执行前后的 `_changed_paths_between()` 仅返回这次尝试期间新增或发生指纹变化的路径，避免把执行前已存在且未改变的脏文件直接算给当前 Executor。
-2. **按 Contract 约束判定。** `_scope_violations()` 读取 Task 的 `Allowed Scope` / `Forbidden Scope`，通过路径、子目录与 glob 模式比对 `changed_paths`。凡命中 Forbidden，或不在非空 Allowed 列表内，都被列入 `scope_violations`。Executor 结果改为 `status=scope_violation`、`reason=scope_violation`，同时返回 `changed_paths`、违规路径与执行日志，不因 CLI 退出码正常就视为通过。
-3. **Supervisor 的独立验收门禁。** MCP 的 `executor_acceptance_guidance()` 对 Scope 不安全的结果禁止给出“可直接验收通过”的建议；`supervisor_runtime.commit_supervisor_transition()` 如果最近一次 Executor Attempt 是 `scope_violation`，会以 `unsafe_executor_scope_violation` 拒绝提交 PASS。**必须先解决越界问题并复核证据，不能接受 Executor“功能上确实需要”的口头理由。**
-
-### 登录接口案例中的判定
-
-| 文件 | Contract 范围 | 处理 |
-| --- | --- | --- |
-| `src/auth.py`、`tests/test_auth.py` | Allowed | 可进一步检查实现和测试是否符合 AC |
-| `src/database.py` | 不在 Allowed | **Scope Violation**；不能因实现依赖而自动接受 |
-| `debug.log`（未忽略的新文件） | 不在 Allowed | 同样会被纳入越界列表；即使它只是测试副产物，也不由 Runtime 静默豁免 |
-
-如果 `src/database.py` **确实必须修改**，应由 Supervisor 中止 PASS，记录原因并请求 Planner/用户审议，必要时生成并批准新的 Contract 版本、更新 Allowed Scope 和相关验收，再按正常流程激活和执行；若能在原范围内解决，则要求有权限的执行者撤销/修正越界变更并重新验证。**Runtime 当前不会自动回滚越界文件**，因为简单回滚可能误删共享工作区原本存在的改动或破坏部分完成的功能。对于 `debug.log` 应先确认是否由本次运行生成及是否可安全清理，而不是无条件删除。
-
-**工程边界：** 该策略只覆盖 Git 能看到的变化：被 `.gitignore` 忽略的临时文件不会通过上述 `ls-files --exclude-standard` 进入列表；仓库之外的写入、外部数据库副作用及执行后又发生的并发修改，也不能靠这次 Git 快照检查完全阻止。严格的**写入隔离**仍需独立工作区/OS 权限，当前实现属于“Prompt 范围提示 + Runtime 事后强制拒绝验收”。
-
-**结论：Contract Scope 已成为 Runtime 可检查、可阻断 PASS 的工程规则，但不是防止越界文件被实际写入的沙箱。必要的范围扩展必须经过 Contract 变更流程，不能让 Executor 或 Supervisor 私自放行。**
-
-参考：[Executor Git 指纹与 `_scope_violations()`](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)、[MCP Scope 验收建议](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/psc_mcp_server.py)、[Supervisor 拒绝越界 PASS 的测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_supervisor_runtime.py)、[脏文件前后变化测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_runtime_hardening.py)。
-
-
----
-
-## Execution Memory 如何跨尝试传递可验证的技术线索而非旧 Agent 结论？
-
-**来源说明：这是本轮消息附带的回答所讨论的主题，实际上与 Q36 的 Scope 问题不同，因此单独归档，避免错误地将它标为 Q36 答案。**
-
-**核心动机：Executor 是一次性进程，Task 却可能多次执行。** PSC 需要跨尝试保存技术上下文，但不能把上一个 Agent 的自述当作权威事实，更不应把旧 Session 全量注入新 Harness。
-
-### 当前实现：不可覆盖归档、身份核对、漂移标记与有界注入
-
-1. **`archive_attempt()` 持久化独立 Attempt。** `task_execution_memory.py` 为已返回的执行尝试写入不可覆盖的 `attempt-时间-UUID.json`，记录 Task ID、Contract 版本、Task/Packet SHA-256、执行结果、失败原因、修改文件指纹和日志索引；保留 `plan`、`coding_summary` 的有界副本及四种结构化 Handoff：`implementation_state`、`decisions`、`failed_approaches`、`next_steps`。对没有有效 Completion 的失败执行，尽可能从异常原因与文件变化生成历史线索。
-2. **`prepare_memory()` 先做身份筛选。** 读取相同 Task ID 的历史归档，再比较 Contract 版本、Task 文本 SHA-256、Task-Scoped Contract Packet SHA-256。**只有全部匹配**的记录才有资格注入新的 Executor；跨版本/内容变化的记录仍保留作审计，但不进入当前上下文。
-3. **重新校验历史文件指纹。** 对归档时记录的相关路径重新取 SHA-256，若字节变化或路径不可用，标为 `changed_since_attempt`；不变则标为 `same_recorded_file_bytes`。**发生漂移时不会自动丢弃整条记忆**，而是向新 Executor 显式标记证据已变化，要求重新核实。即便 Hash 未变，也只表示受检文件字节未变，不能证明旧 Agent 的功能判断正确。
-4. **有界、低权威地注入。** 最多选择最近 **4 次**兼容记录，记忆文本上限 **7000 字符**；历史描述明确标记为 `untrusted, task-scoped historical notes`。当前 Contract、仓库实际文件、最新 Preflight 和 Supervisor Review 始终高于旧 Executor 自述。下一个 Executor 仍从独立会话启动，不依赖 Codex/Claude Code/DSH 私有 Session Resume。
-
-**为什么不用原生 Session Resume？** PSC 可跨 Harness 切换。直接恢复某一工具的私有会话可能带回过期权限、错误假设、无关工具输出和过大的上下文；结构化 Execution Memory 仅提供“已尝试什么、可能失败在哪里、需要验证什么”的可审计线索，不传递上一轮 Agent 的决策权。
-
-**当前限制：** 文件指纹只覆盖所归档的有限路径（实现有数量及安全路径限制），不能解释语义差异，也不能追踪数据库等外部副作用；若 Executor/MCP/Runtime 在成功归档之前崩溃，Attempt 收据可能缺失。Execution Memory 不能替代工作流 State、Contract 或 Supervisor 最终验收。
-
-**结论：跨尝试继承的是可重新核实的技术线索，而不是上一个 Agent 的上下文与结论。**
-
-参考：[Execution Memory 实现](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/task_execution_memory.py)、[跨尝试与漂移测试](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/tests/test_task_execution_memory.py)、[Executor 归档与注入入口](https://github.com/XuanzheChen/agentic-sdlc-contract-runtime/blob/main/scripts/invoke_executor.py)。
