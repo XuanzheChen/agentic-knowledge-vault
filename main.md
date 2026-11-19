@@ -10,6 +10,7 @@
 | [Agent](Agent/Agent.md) | Agent 状态与执行循环，并延伸到框架、通信、Context、Memory、RAG 与评估 |
 | [agentic-sdlc-contract-runtime](agentic-sdlc-contract-runtime/agentic-sdlc-contract-runtime.md) | PSC 契约驱动研发运行时的实际架构、调度、验收与持久化恢复 |
 | [RSI](RSI/RSI.md) | 递归式自我改进、自动化 AI R&D 闭环，以及 AI 参与改进后继系统的机制与边界 |
+| [backend](backend/backend.md) | 后端开发知识树：MySQL、MyBatis、Spring Boot、REST API 与 HTTP/HTTPS |
 | [对比问题](对比问题/对比问题.md) | 难以可靠归入单一 Tree 的跨概念区别、联系与方案选择 |
 
 ## LLM
@@ -44,6 +45,15 @@
     - [Memory](Agent/Context/Memory/Memory.md)
     - [RAG](Agent/Context/RAG/RAG.md)
   - [评估](Agent/评估/评估.md)
+
+## backend
+
+- [backend](backend/backend.md)
+  - [MySQL](backend/MySQL/MySQL.md)
+  - [MyBatis](backend/MyBatis/MyBatis.md)
+  - [SpringBoot](backend/SpringBoot/SpringBoot.md)
+  - [REST API](backend/REST API/REST API.md)
+  - [HTTP/HTTPS](backend/HTTP-HTTPS/HTTP-HTTPS.md)
 
 ## agentic-sdlc-contract-runtime
 
