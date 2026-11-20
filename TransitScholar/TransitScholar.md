@@ -24,25 +24,25 @@
 
 ## 问题目录
 
-- [[TransitScholar/TransitScholar#TransitScholar 要解决什么科研工作流问题，和普通论文问答 RAG 有什么不同？|TransitScholar 要解决什么科研工作流问题，和普通论文问答 RAG 有什么不同？]]（待补充）
-- [[TransitScholar/TransitScholar#TransitScholar 从用户研究问题到最终回答的完整执行链路是什么？|TransitScholar 从用户研究问题到最终回答的完整执行链路是什么？]]（待补充）
-- [[TransitScholar/TransitScholar#论文知识构建与 Agent Runtime 为什么采用两条相互独立又协作的主线？|论文知识构建与 Agent Runtime 为什么采用两条相互独立又协作的主线？]]（待补充）
-- [[TransitScholar/TransitScholar#TransitScholar 的主要工程取舍、已实现边界与尚待验证的问题是什么？|TransitScholar 的主要工程取舍、已实现边界与尚待验证的问题是什么？]]（待补充）
+- [[TransitScholar/TransitScholar#TransitScholar 要解决什么科研工作流问题，和普通论文问答 RAG 有什么不同？|TransitScholar 要解决什么科研工作流问题，和普通论文问答 RAG 有什么不同？]]
+- [[TransitScholar/TransitScholar#TransitScholar 从用户研究问题到最终回答的完整执行链路是什么？|TransitScholar 从用户研究问题到最终回答的完整执行链路是什么？]]
+- [[TransitScholar/TransitScholar#论文知识构建与 Agent Runtime 为什么采用两条相互独立又协作的主线？|论文知识构建与 Agent Runtime 为什么采用两条相互独立又协作的主线？]]
+- [[TransitScholar/TransitScholar#TransitScholar 的主要工程取舍、已实现边界与尚待验证的问题是什么？|TransitScholar 的主要工程取舍、已实现边界与尚待验证的问题是什么？]]
 
 ---
 
 ## TransitScholar 要解决什么科研工作流问题，和普通论文问答 RAG 有什么不同？
 
-> 待补充：本轮仅建立问题框架，后续依据 TransitScholar 仓库源码与真实执行链路撰写。
+它解决的不是单次论文问答，而是**持续研究**：先把论文整理成可检索、可定位的材料，再让 Agent 规划子问题、逐轮收集证据、形成论点和引用，最后把结果沉淀为可复用知识。普通 RAG 通常检索一次就生成回答；这里把 Query、Evidence、Claim、研究会话和运行状态分别管理，便于检查与恢复。 参见：[RunResearchRuntime](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/runtime/run_runtime.py#L152)、[研究账本](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/ledger/service.py#L97)。
 
 ## TransitScholar 从用户研究问题到最终回答的完整执行链路是什么？
 
-> 待补充：本轮仅建立问题框架，后续依据 TransitScholar 仓库源码与真实执行链路撰写。
+典型路径是：React 提交消息 → FastAPI 创建 ConversationTurn 和 AgentRun → LocalExecutionManager 后台执行 → RunCoordinator 决定直接研究或先制订计划 → 一个个 ResearchSession 内由固定角色完成检索、证据筛选、论点构建与综合 → Run 级汇总 → 回写回答与引用。完成后还会尝试运行记忆沉淀流程。前端通过状态和 Timeline 接口轮询进度。 参见：[提交入口](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/api/routers/conversations.py#L127)、[任务执行](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/product/research.py#L52)、[Run 编排](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/runtime/run_runtime.py#L152)。
 
 ## 论文知识构建与 Agent Runtime 为什么采用两条相互独立又协作的主线？
 
-> 待补充：本轮仅建立问题框架，后续依据 TransitScholar 仓库源码与真实执行链路撰写。
+知识主线的输入是 PDF，产出带来源定位的 Chunk、Schema、Wiki 等；执行主线的输入是研究目标，产出 Query、Evidence、Claim、SessionOutcome 和回答。两者通过 WorkspaceKnowledgeGateway、KnowledgeToolService 连接。分离后可以独立更新解析或检索方法，而不必改动 Agent 的职责与状态机。 参见：[文献流水线](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer2/pipeline.py#L61)、[知识网关](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/knowledge/gateway.py#L113)、[运行时装配](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/product/runtime.py#L89)。
 
 ## TransitScholar 的主要工程取舍、已实现边界与尚待验证的问题是什么？
 
-> 待补充：本轮仅建立问题框架，后续依据 TransitScholar 仓库源码与真实执行链路撰写。
+主要取舍是：固定角色而非动态多 Agent；Python 管控状态与 Action，LLM 做语义判断；单机线程池而非分布式队列；证据必须可追溯。边界也要说清：跨论文 WorkspaceRagRetriever 虽已实现，但默认工厂没有直接注入；引用 ID 合法不等于科学论证正确；SQL 与文件检查点不是同一个事务，恢复采取保守策略。源码和相关测试存在，不代表这里重新运行过全部测试。 参见：[默认装配](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/product/runtime.py#L125)、[固定角色](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/roles/builtin.py#L208)、[恢复策略](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/runtime/role_runtime.py#L150)。
