@@ -6,7 +6,7 @@
 
 ## 总体架构图
 
-![TransitScholar 总体架构图](../assets/transitscholar-overview.svg)
+![TransitScholar 总体架构图](../assets/TransitScholar-ResearchAgent-overview.png)
 
 > 图示用于总体结构导航，描述论文知识层、服务层、Agent Core、上下文与记忆、运行时持久化及证据链之间的关系。它是概要示意，并不表示所有可选组件都已接入默认生产路径。后续写 Q&A 时，需逐项核实该界限。
 
