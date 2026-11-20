@@ -29,6 +29,7 @@
 - [[TransitScholar/TransitScholar#TransitScholar 从用户研究问题到最终回答的完整执行链路是什么？|TransitScholar 从用户研究问题到最终回答的完整执行链路是什么？]]
 - [[TransitScholar/TransitScholar#论文知识构建与 Agent Runtime 为什么采用两条相互独立又协作的主线？|论文知识构建与 Agent Runtime 为什么采用两条相互独立又协作的主线？]]
 - [[TransitScholar/TransitScholar#TransitScholar 的主要工程取舍、已实现边界与尚待验证的问题是什么？|TransitScholar 的主要工程取舍、已实现边界与尚待验证的问题是什么？]]
+- [[TransitScholar/TransitScholar#SQLAlchemy和Alembic在项目中起到了什么作用？为什么使用它们而不是用其他技术栈呢？|SQLAlchemy和Alembic在项目中起到了什么作用？为什么使用它们而不是用其他技术栈呢？]]
 
 ---
 
@@ -49,3 +50,11 @@
 主要取舍是：固定角色而非动态多 Agent；Python 管控状态与 Action，LLM 做语义判断；单机线程池而非分布式队列；证据必须可追溯。边界也要说清：跨论文 WorkspaceRagRetriever 虽已实现，但默认工厂没有直接注入；引用 ID 合法不等于科学论证正确；SQL 与文件检查点不是同一个事务，恢复采取保守策略。源码和相关测试存在，不代表这里重新运行过全部测试。 参见：[默认装配](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/product/runtime.py#L125)、[固定角色](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/roles/builtin.py#L208)、[恢复策略](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/runtime/role_runtime.py#L150)。
 
 ## SQLAlchemy和Alembic在项目中起到了什么作用？为什么使用它们而不是用其他技术栈呢？
+
+**SQLAlchemy 负责操作数据库，Alembic 负责更新数据库结构。**
+
+- **SQLAlchemy：** 让 Python 代码创建、查询和修改论文、工作区、研究任务等记录，并统一管理数据库连接和事务，不必为每项业务都手写 SQL。
+- **Alembic：** 新增数据表或修改字段时，通过带版本号的迁移脚本升级已有数据库，避免每次更新程序都手动改表。
+
+之所以采用这套组合，是因为项目后端使用 Python，默认使用 SQLite，二者兼容现有技术栈，也便于以后调整关系型数据库。相比完全手写 SQL，维护数据关系和升级表结构更方便。**这是一种适合当前项目的选择，并不意味着其他技术栈一定更差。**
+
