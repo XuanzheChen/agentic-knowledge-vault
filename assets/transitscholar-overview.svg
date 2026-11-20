@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1360" viewBox="0 0 1600 1360" role="img" aria-labelledby="title desc">
+<title id="title">TransitScholar 总体架构图</title><desc id="desc">论文知识系统与多角色单 Agent Runtime 双主线架构，包含前端、服务、知识处理、Agent、上下文记忆、持久化和证据链</desc>
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#1c6ea6"/></marker></defs>
+<rect x="0" y="0" width="1600" height="1360" fill="#f9fcff"/>
+<style>.panel{font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;font-size:26px;font-weight:700;fill:white}text{font-family:"Noto Sans SC","Microsoft YaHei",sans-serif}</style>
+<text x="800" y="75" text-anchor="middle" fill="#123e74" font-size="52" font-weight="750">TransitScholar 总体架构图</text>
+<text x="800" y="120" text-anchor="middle" fill="#27689e" font-size="23">面向科研文献研究的 Agent 系统 · 结构示意图</text>
+<rect x="36" y="154" width="430" height="220" rx="17" fill="#fff" stroke="#18629a" stroke-width="2.2"/>
+<rect x="36" y="154" width="430" height="47" rx="17" fill="#18629a"/>
+<rect x="36" y="186" width="430" height="15" fill="#18629a"/>
+<text x="54" y="185" class="panel">前端层</text>
+<rect x="54" y="217" width="394" height="57" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="251" y="251.1" text-anchor="middle" fill="#163b63" font-size="20" font-weight="700"><tspan x="251" dy="0">React + TypeScript + Vite</tspan></text>
+<rect x="54" y="289" width="394" height="66" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="251" y="316.24" text-anchor="middle" fill="#163b63" font-size="18" font-weight="500"><tspan x="251" dy="0">论文库 / 工作区 / Wiki</tspan><tspan x="251" dy="24">研究对话 / 运行监控</tspan></text>
+<rect x="502" y="154" width="582" height="220" rx="17" fill="#fff" stroke="#18629a" stroke-width="2.2"/>
+<rect x="502" y="154" width="582" height="47" rx="17" fill="#18629a"/>
+<rect x="502" y="186" width="582" height="15" fill="#18629a"/>
+<text x="520" y="185" class="panel">服务层</text>
+<rect x="521" y="217" width="263" height="56" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="652.5" y="250.04" text-anchor="middle" fill="#163b63" font-size="18" font-weight="700"><tspan x="652.5" dy="0">FastAPI API</tspan></text>
+<rect x="797" y="217" width="267" height="56" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="930.5" y="250.04" text-anchor="middle" fill="#163b63" font-size="18" font-weight="700"><tspan x="930.5" dy="0">Product Service</tspan></text>
+<rect x="521" y="289" width="263" height="66" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="652.5" y="316.56" text-anchor="middle" fill="#163b63" font-size="17" font-weight="500"><tspan x="652.5" dy="0">Conversation / AgentRun</tspan><tspan x="652.5" dy="23">Workspace 管理</tspan></text>
+<rect x="797" y="289" width="267" height="66" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="930.5" y="316.56" text-anchor="middle" fill="#163b63" font-size="17" font-weight="500"><tspan x="930.5" dy="0">LocalExecutionManager</tspan><tspan x="930.5" dy="23">单机后台线程池</tspan></text>
+<rect x="1120" y="154" width="444" height="220" rx="17" fill="#fff" stroke="#078985" stroke-width="2.2"/>
+<rect x="1120" y="154" width="444" height="47" rx="17" fill="#078985"/>
+<rect x="1120" y="186" width="444" height="15" fill="#078985"/>
+<text x="1138" y="185" class="panel">核心特点</text>
+<text x="1146" y="230" text-anchor="start" fill="#163b63" font-size="19" font-weight="500"><tspan x="1146" dy="0">✓ 论文知识系统 + Agent Runtime 双主线</tspan></text>
+<text x="1146" y="267" text-anchor="start" fill="#163b63" font-size="19" font-weight="500"><tspan x="1146" dy="0">✓ 研究计划 → 会话 → 角色 分层执行</tspan></text>
+<text x="1146" y="304" text-anchor="start" fill="#163b63" font-size="19" font-weight="500"><tspan x="1146" dy="0">✓ Evidence 与 Claim 可追溯</tspan></text>
+<text x="1146" y="341" text-anchor="start" fill="#163b63" font-size="19" font-weight="500"><tspan x="1146" dy="0">✓ 上下文裁剪与检查点恢复</tspan></text>
+<rect x="36" y="414" width="430" height="516" rx="17" fill="#fff" stroke="#18629a" stroke-width="2.2"/>
+<rect x="36" y="414" width="430" height="47" rx="17" fill="#18629a"/>
+<rect x="36" y="446" width="430" height="15" fill="#18629a"/>
+<text x="54" y="445" class="panel">文献知识层</text>
+<rect x="54" y="482" width="394" height="65" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="251" y="508.74" text-anchor="middle" fill="#163b63" font-size="18" font-weight="700"><tspan x="251" dy="0">Layer 1 文献管理</tspan><tspan x="251" dy="24">导入 / 元数据 / DOI / 去重</tspan></text>
+<path d="M250,554 L250,573" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+<rect x="54" y="580" width="394" height="67" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="251" y="607.74" text-anchor="middle" fill="#163b63" font-size="18" font-weight="700"><tspan x="251" dy="0">Layer 2 知识加工</tspan><tspan x="251" dy="24">PDF 解析 → Canonical Blocks</tspan></text>
+<rect x="54" y="662" width="190" height="59" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="149" y="696.54" text-anchor="middle" fill="#163b63" font-size="18" font-weight="500"><tspan x="149" dy="0">Chunking</tspan></text>
+<rect x="258" y="662" width="190" height="59" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="353" y="695.98" text-anchor="middle" fill="#163b63" font-size="16" font-weight="500"><tspan x="353" dy="0">Schema Extraction</tspan></text>
+<rect x="54" y="738" width="190" height="59" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="149" y="772.54" text-anchor="middle" fill="#163b63" font-size="18" font-weight="500"><tspan x="149" dy="0">Base Wiki</tspan></text>
+<rect x="258" y="738" width="190" height="59" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="353" y="772.54" text-anchor="middle" fill="#163b63" font-size="18" font-weight="500"><tspan x="353" dy="0">RAG Index</tspan></text>
+<rect x="54" y="829" width="394" height="72" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="251" y="859.24" text-anchor="middle" fill="#163b63" font-size="18" font-weight="700"><tspan x="251" dy="0">Knowledge Gateway</tspan><tspan x="251" dy="24">工作区隔离 / 版本约束</tspan></text>
+<rect x="502" y="414" width="642" height="516" rx="17" fill="#fff" stroke="#18629a" stroke-width="2.2"/>
+<rect x="502" y="414" width="642" height="47" rx="17" fill="#18629a"/>
+<rect x="502" y="446" width="642" height="15" fill="#18629a"/>
+<text x="520" y="445" class="panel">Agent Core（Layer 3）</text>
+<rect x="522" y="480" width="601" height="62" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="822.5" y="504.92" text-anchor="middle" fill="#163b63" font-size="19" font-weight="700"><tspan x="822.5" dy="0">Run 级研究编排</tspan><tspan x="822.5" dy="26">AgentRun / ResearchPlan / ResearchSession</tspan></text>
+<path d="M821,545 L821,565" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+<rect x="522" y="573" width="601" height="58" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="822.5" y="596.24" text-anchor="middle" fill="#163b63" font-size="18" font-weight="700"><tspan x="822.5" dy="0">Session 级研究执行</tspan><tspan x="822.5" dy="24">MainResearchRuntime</tspan></text>
+<path d="M821,635 L821,653" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+<rect x="522" y="659" width="601" height="50" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="822.5" y="689.04" text-anchor="middle" fill="#163b63" font-size="18" font-weight="700"><tspan x="822.5" dy="0">Role 级职能切换（多角色单 Agent）</tspan></text>
+<rect x="522" y="726" width="113" height="65" rx="11" fill="#f2f9ff" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="578.5" y="753.7" text-anchor="middle" fill="#163b63" font-size="15" font-weight="500"><tspan x="578.5" dy="0">Research</tspan><tspan x="578.5" dy="20">Coordinator</tspan></text>
+<rect x="643" y="726" width="113" height="65" rx="11" fill="#f2f9ff" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="699.5" y="753.7" text-anchor="middle" fill="#163b63" font-size="15" font-weight="500"><tspan x="699.5" dy="0">Query</tspan><tspan x="699.5" dy="20">Planning</tspan></text>
+<rect x="764" y="726" width="113" height="65" rx="11" fill="#f2f9ff" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="820.5" y="753.7" text-anchor="middle" fill="#163b63" font-size="15" font-weight="500"><tspan x="820.5" dy="0">Evidence</tspan><tspan x="820.5" dy="20">Reasoning</tspan></text>
+<rect x="885" y="726" width="113" height="65" rx="11" fill="#f2f9ff" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="941.5" y="753.7" text-anchor="middle" fill="#163b63" font-size="15" font-weight="500"><tspan x="941.5" dy="0">Claim</tspan><tspan x="941.5" dy="20">Reasoning</tspan></text>
+<rect x="1006" y="726" width="113" height="65" rx="11" fill="#f2f9ff" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="1062.5" y="753.7" text-anchor="middle" fill="#163b63" font-size="15" font-weight="500"><tspan x="1062.5" dy="0">Final</tspan><tspan x="1062.5" dy="20">Synthesis</tspan></text>
+<path d="M821,796 L821,814" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+<rect x="522" y="822" width="601" height="83" rx="11" fill="#e0f7f2" stroke="#6fc7b4" stroke-width="1.4"/>
+<text x="822.5" y="857.74" text-anchor="middle" fill="#163b63" font-size="18" font-weight="700"><tspan x="822.5" dy="0">Prompt + RoleContext → ActionPlanner</tspan><tspan x="822.5" dy="24">ActionValidator → ActionExecutor → KnowledgeToolService</tspan></text>
+<rect x="1180" y="414" width="384" height="516" rx="17" fill="#fff" stroke="#18629a" stroke-width="2.2"/>
+<rect x="1180" y="414" width="384" height="47" rx="17" fill="#18629a"/>
+<rect x="1180" y="446" width="384" height="15" fill="#18629a"/>
+<text x="1198" y="445" class="panel">上下文与记忆</text>
+<rect x="1198" y="481" width="348" height="56" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="1372" y="514.32" text-anchor="middle" fill="#163b63" font-size="19" font-weight="500"><tspan x="1372" dy="0">RuntimeContextSnapshot</tspan></text>
+<rect x="1198" y="551" width="348" height="56" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="1372" y="584.32" text-anchor="middle" fill="#163b63" font-size="19" font-weight="500"><tspan x="1372" dy="0">RoleContextProjector</tspan></text>
+<rect x="1198" y="621" width="348" height="56" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="1372" y="654.32" text-anchor="middle" fill="#163b63" font-size="19" font-weight="500"><tspan x="1372" dy="0">Working Memory</tspan></text>
+<rect x="1198" y="691" width="348" height="56" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="1372" y="724.32" text-anchor="middle" fill="#163b63" font-size="19" font-weight="500"><tspan x="1372" dy="0">Episodic Memory</tspan></text>
+<rect x="1198" y="761" width="348" height="56" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="1372" y="794.32" text-anchor="middle" fill="#163b63" font-size="19" font-weight="500"><tspan x="1372" dy="0">Knowledge Promotion</tspan></text>
+<rect x="1198" y="831" width="348" height="56" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="1372" y="864.32" text-anchor="middle" fill="#163b63" font-size="19" font-weight="500"><tspan x="1372" dy="0">Agentic Wiki</tspan></text>
+<rect x="36" y="963" width="1528" height="144" rx="17" fill="#fff" stroke="#18629a" stroke-width="2.2"/>
+<rect x="36" y="963" width="1528" height="47" rx="17" fill="#18629a"/>
+<rect x="36" y="995" width="1528" height="15" fill="#18629a"/>
+<text x="54" y="994" class="panel">存储与运行时基础设施</text>
+<rect x="55" y="1034" width="238" height="55" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="174" y="1066.26" text-anchor="middle" fill="#163b63" font-size="17" font-weight="500"><tspan x="174" dy="0">SQLAlchemy / SQLite</tspan></text>
+<rect x="307" y="1034" width="238" height="55" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="426" y="1066.26" text-anchor="middle" fill="#163b63" font-size="17" font-weight="500"><tspan x="426" dy="0">AgentRun / Session</tspan></text>
+<rect x="559" y="1034" width="238" height="55" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="678" y="1066.26" text-anchor="middle" fill="#163b63" font-size="17" font-weight="500"><tspan x="678" dy="0">Query / Evidence / Claim</tspan></text>
+<rect x="811" y="1034" width="238" height="55" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="930" y="1066.26" text-anchor="middle" fill="#163b63" font-size="17" font-weight="500"><tspan x="930" dy="0">Trace / Ledger / State</tspan></text>
+<rect x="1063" y="1034" width="238" height="55" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="1182" y="1066.26" text-anchor="middle" fill="#163b63" font-size="17" font-weight="500"><tspan x="1182" dy="0">Checkpoint / Pause / Resume</tspan></text>
+<rect x="1315" y="1034" width="238" height="55" rx="11" fill="#eaf4fc" stroke="#c7e4fa" stroke-width="1.4"/>
+<text x="1434" y="1066.26" text-anchor="middle" fill="#163b63" font-size="17" font-weight="500"><tspan x="1434" dy="0">解析产物 / 文件索引</tspan></text>
+<rect x="36" y="1144" width="1528" height="182" rx="17" fill="#fff" stroke="#078985" stroke-width="2.2"/>
+<rect x="36" y="1144" width="1528" height="47" rx="17" fill="#078985"/>
+<rect x="36" y="1176" width="1528" height="15" fill="#078985"/>
+<text x="54" y="1175" class="panel">知识检索与证据链</text>
+<rect x="54" y="1214" width="270" height="65" rx="11" fill="#e1f6f3" stroke="#71c3c1" stroke-width="1.4"/>
+<text x="189" y="1251.82" text-anchor="middle" fill="#163b63" font-size="19" font-weight="700"><tspan x="189" dy="0">Schema / Wiki / RAG</tspan></text>
+<path d="M328,1245 L356,1245" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+<rect x="366" y="1214" width="250" height="65" rx="11" fill="#e1f6f3" stroke="#71c3c1" stroke-width="1.4"/>
+<text x="491" y="1251.82" text-anchor="middle" fill="#163b63" font-size="19" font-weight="700"><tspan x="491" dy="0">Candidate Evidence</tspan></text>
+<path d="M620,1245 L648,1245" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+<rect x="658" y="1214" width="250" height="65" rx="11" fill="#e1f6f3" stroke="#71c3c1" stroke-width="1.4"/>
+<text x="783" y="1251.82" text-anchor="middle" fill="#163b63" font-size="19" font-weight="700"><tspan x="783" dy="0">Accepted Evidence</tspan></text>
+<path d="M912,1245 L940,1245" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+<rect x="950" y="1214" width="190" height="65" rx="11" fill="#e1f6f3" stroke="#71c3c1" stroke-width="1.4"/>
+<text x="1045" y="1251.82" text-anchor="middle" fill="#163b63" font-size="19" font-weight="700"><tspan x="1045" dy="0">Claim</tspan></text>
+<path d="M1144,1245 L1172,1245" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+<rect x="1182" y="1214" width="310" height="65" rx="11" fill="#e1f6f3" stroke="#71c3c1" stroke-width="1.4"/>
+<text x="1337" y="1251.82" text-anchor="middle" fill="#163b63" font-size="19" font-weight="700"><tspan x="1337" dy="0">Final Answer + Citations</tspan></text>
+<text x="800" y="1308" text-anchor="middle" fill="#0a7175" font-size="21" font-weight="700"><tspan x="800" dy="0">检索命中 ≠ 已采纳证据 ≠ 最终结论</tspan></text>
+<path d="M466,262 L502,262" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+<path d="M795,374 L795,414" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+<path d="M466,630 L502,630" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+<path d="M1144,650 L1180,650" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+<path d="M821,930 L821,963" stroke="#1c6ea6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+</svg>

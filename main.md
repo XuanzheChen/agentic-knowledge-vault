@@ -9,6 +9,7 @@
 | [LLM](LLM/LLM.md) | 大语言模型基础机制，以及预训练、中训练、后训练、模型架构与推理部署 |
 | [Agent](Agent/Agent.md) | Agent 状态与执行循环，并延伸到框架、通信、Context、Memory、RAG 与评估 |
 | [agentic-sdlc-contract-runtime](agentic-sdlc-contract-runtime/agentic-sdlc-contract-runtime.md) | PSC 契约驱动研发运行时的实际架构、调度、验收与持久化恢复 |
+| [TransitScholar](TransitScholar/TransitScholar.md) | 科研文献 Agent 系统：知识构建、研究编排、Role 执行、证据链、上下文记忆与可靠性 |
 | [RSI](RSI/RSI.md) | 递归式自我改进、自动化 AI R&D 闭环，以及 AI 参与改进后继系统的机制与边界 |
 | [backend](backend/backend.md) | 后端开发知识树：MySQL、MyBatis、Spring Boot、REST API 与 HTTP/HTTPS |
 | [对比问题](对比问题/对比问题.md) | 难以可靠归入单一 Tree 的跨概念区别、联系与方案选择 |
@@ -58,6 +59,17 @@
 ## agentic-sdlc-contract-runtime
 
 - [PSC 运行时架构](agentic-sdlc-contract-runtime/agentic-sdlc-contract-runtime.md)
+
+## TransitScholar
+
+- [TransitScholar 项目架构](TransitScholar/TransitScholar.md)
+  - [系统架构与服务层](TransitScholar/系统架构与服务层/系统架构与服务层.md)
+  - [文献处理与知识构建](TransitScholar/文献处理与知识构建/文献处理与知识构建.md)
+  - [知识检索与证据链](TransitScholar/知识检索与证据链/知识检索与证据链.md)
+  - [研究规划与会话编排](TransitScholar/研究规划与会话编排/研究规划与会话编排.md)
+  - [Agent Loop 与角色执行](TransitScholar/Agent Loop 与角色执行/Agent Loop 与角色执行.md)
+  - [上下文与记忆](TransitScholar/上下文与记忆/上下文与记忆.md)
+  - [运行时状态与可靠性](TransitScholar/运行时状态与可靠性/运行时状态与可靠性.md)
 
 ## RSI
 
