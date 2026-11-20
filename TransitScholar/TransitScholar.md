@@ -17,6 +17,7 @@
 | [系统架构与服务层](系统架构与服务层/系统架构与服务层.md) | 前端、FastAPI、Product Service、后台执行管理和数据持久化的调用边界 |
 | [文献处理与知识构建](文献处理与知识构建/文献处理与知识构建.md) | 论文身份、PDF 解析、Canonical Blocks、Chunking、Schema 与 Base Wiki 构建 |
 | [知识检索与证据链](知识检索与证据链/知识检索与证据链.md) | Schema、Wiki、RAG 混合检索以及 Query、Evidence、Claim 和来源约束 |
+| [工具](工具/工具.md) | Agent 可用的检索工具、结构化 Action、角色权限和默认装配边界 |
 | [研究规划与会话编排](研究规划与会话编排/研究规划与会话编排.md) | RunCoordinator、ResearchPlan、PlanItem、ResearchSession 和研究结果汇总 |
 | [Agent Loop 与角色执行](Agent%20Loop%20与角色执行/Agent%20Loop%20与角色执行.md) | 多角色单 Agent、RoleRuntime、结构化 Prompt、角色切换、Action 校验与工具调用 |
 | [上下文与记忆](上下文与记忆/上下文与记忆.md) | Context Snapshot、RoleContext Projection、Working Memory、Episodic Memory、Agentic Wiki |
