@@ -1,129 +1,100 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1110" viewBox="0 0 1700 1110" role="img" aria-labelledby="title">
-<title id="title">上下文与记忆架构图</title><desc>权威运行状态、角色 Context 与研究结束后的记忆演化</desc><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#805cb3"/></marker></defs>
-<rect width="1700" height="1110" fill="#f7fafd"/>
-<style>text{font-family:"Noto Sans SC","Microsoft YaHei","PingFang SC",sans-serif}</style>
-<rect width="1700" height="13" fill="#805cb3"/><text x="850" y="78" text-anchor="middle" font-size="48" font-weight="700" fill="#173956">上下文与记忆</text>
-<text x="850" y="130" text-anchor="middle" font-size="23" fill="#49677d">权威运行状态、角色 Context 与研究结束后的记忆演化</text>
-<rect x="36" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M56 184H316Q336 184 336 204V250H36V204Q36 184 56 184Z" fill="#805cb3"/>
-<circle cx="67" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="67" y="225" text-anchor="middle" font-size="22" fill="#fff">1</text>
-<text x="96" y="224" fill="#fff" font-size="22" font-weight="700">权威状态</text>
-<rect x="51" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="51" y="276" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="186" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">AgentRun / Session</tspan></text>
-<text x="186" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">研究身份与生命周期</tspan></text>
-<path d="M186 400v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="51" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="51" y="428" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="186" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">ResearchState / Ledger</tspan></text>
-<text x="186" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">Query / Evidence / Claim</tspan></text>
-<path d="M186 552v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="51" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="51" y="580" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="186" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">WorkingMemory</tspan></text>
-<text x="186" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">只读聚合门面</tspan></text>
-<path d="M186 704v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="51" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="51" y="732" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="186" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">Workspace Grounding</tspan></text>
-<text x="186" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">检查知识状态与版本</tspan></text>
-<path d="M339 610h23" stroke="#805cb3" stroke-width="3.5" fill="none" stroke-dasharray="6 5" marker-end="url(#ar)"/>
-<rect x="367" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M387 184H647Q667 184 667 204V250H367V204Q367 184 387 184Z" fill="#805cb3"/>
-<circle cx="398" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="398" y="225" text-anchor="middle" font-size="22" fill="#fff">2</text>
-<text x="427" y="224" fill="#fff" font-size="22" font-weight="700">Session Context</text>
-<rect x="382" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="382" y="276" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="517" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">RuntimeSnapshotBuilder</tspan></text>
-<text x="517" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">读取权威研究数据</tspan></text>
-<path d="M517 400v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="382" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="382" y="428" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="517" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">RoleContextProjector</tspan></text>
-<text x="517" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">基于角色字段白名单</tspan></text>
-<path d="M517 552v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="382" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="382" y="580" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="517" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">有限工作集</tspan></text>
-<text x="517" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">条数和字符上限</tspan></text>
-<path d="M517 704v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="382" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="382" y="732" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="517" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">Role Input</tspan></text>
-<text x="517" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">按职责投影 Context</tspan></text>
-<path d="M670 610h23" stroke="#805cb3" stroke-width="3.5" fill="none" stroke-dasharray="6 5" marker-end="url(#ar)"/>
-<rect x="698" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M718 184H978Q998 184 998 204V250H698V204Q698 184 718 184Z" fill="#805cb3"/>
-<circle cx="729" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="729" y="225" text-anchor="middle" font-size="22" fill="#fff">3</text>
-<text x="758" y="224" fill="#fff" font-size="22" font-weight="700">Run Context</text>
-<rect x="713" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="713" y="276" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="848" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">RunContextSnapshot</tspan></text>
-<text x="848" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">计划和 Session 结果</tspan></text>
-<path d="M848 400v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="713" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="713" y="428" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="848" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">RunCoordinatorProjector</tspan></text>
-<text x="848" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">全局有界摘要</tspan></text>
-<path d="M848 552v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="713" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="713" y="580" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="848" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">RunCoordinatorRole</tspan></text>
-<text x="848" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">宏观研究决策</tspan></text>
-<path d="M848 704v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="713" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="713" y="732" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="848" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">SessionHandoff</tspan></text>
-<text x="848" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">前序成果传给新会话</tspan></text>
-<path d="M1001 610h23" stroke="#805cb3" stroke-width="3.5" fill="none" stroke-dasharray="6 5" marker-end="url(#ar)"/>
-<rect x="1029" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M1049 184H1309Q1329 184 1329 204V250H1029V204Q1029 184 1049 184Z" fill="#805cb3"/>
-<circle cx="1060" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="1060" y="225" text-anchor="middle" font-size="22" fill="#fff">4</text>
-<text x="1089" y="224" fill="#fff" font-size="22" font-weight="700">Episodic Memory</text>
-<rect x="1044" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="1044" y="276" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="1179" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">L3S7Lifecycle</tspan></text>
-<text x="1179" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">Run 完成后的收集流程</tspan></text>
-<path d="M1179 400v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1044" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="1044" y="428" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="1179" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">Collector / Distiller</tspan></text>
-<text x="1179" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">经历提炼</tspan></text>
-<path d="M1179 552v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1044" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="1044" y="580" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="1179" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">EpisodicMemoryStore</tspan></text>
-<text x="1179" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">工作区 JSON 持久化</tspan></text>
-<path d="M1179 704v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1044" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="1044" y="732" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="1179" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">Run 级检索</tspan></text>
-<text x="1179" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">词项重叠相关性</tspan></text>
-<path d="M1332 610h23" stroke="#805cb3" stroke-width="3.5" fill="none" stroke-dasharray="6 5" marker-end="url(#ar)"/>
-<rect x="1360" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M1380 184H1640Q1660 184 1660 204V250H1360V204Q1360 184 1380 184Z" fill="#805cb3"/>
-<circle cx="1391" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="1391" y="225" text-anchor="middle" font-size="22" fill="#fff">5</text>
-<text x="1420" y="224" fill="#fff" font-size="22" font-weight="700">Agentic Wiki</text>
-<rect x="1375" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="1375" y="276" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="1510" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">KnowledgePromotion</tspan></text>
-<text x="1510" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">Claim / Evidence 候选</tspan></text>
-<path d="M1510 400v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1375" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="1375" y="428" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="1510" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">来源验证</tspan></text>
-<text x="1510" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">关联与工作区边界</tspan></text>
-<path d="M1510 552v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1375" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="1375" y="580" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="1510" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">AgenticWikiStore</tspan></text>
-<text x="1510" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">保存可复用知识条目</tspan></text>
-<path d="M1510 704v21" stroke="#805cb3" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1375" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="1375" y="732" width="5" height="122" rx="2" fill="#805cb3" opacity=".55"/>
-<text x="1510" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">Maintenance</tspan></text>
-<text x="1510" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">检测来源变化与失效</tspan></text>
-<rect x="36" y="955" width="1624" height="105" rx="17" fill="#ebf3f8" stroke="#d5e6ef"/>
-<text x="62" y="988" font-size="19" font-weight="600" fill="#805cb3">实际实现边界</text>
-<text x="62" y="1025" font-size="19" fill="#2d4b60"><tspan x="62" dy="0">这些列是关联模块而非强制线性流程；默认 RunRuntime 会把情景记忆检索器注入 Session Runtime，QueryPlanning 可使用相关经验。</tspan></text>
-<text x="850" y="1092" text-anchor="middle" font-size="17" fill="#7890a3">依据 TransitScholar master @ d077fb89aded · 源码架构示意，不代表运行性能或科学正确性证明</text></svg>
+<?xml version="1.0" encoding="utf-8" ?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink" baseProfile="full" height="1020px" version="1.1" viewBox="0 0 1600 1020" width="1600px">
+  <defs>
+    <marker id="arrow" markerHeight="12" markerWidth="13" orient="auto" refX="12" refY="6">
+      <path d="M 1 1 L 12 6 L 1 11 z" fill="#7653a0"/>
+    </marker>
+    <marker id="arrowmute" markerHeight="12" markerWidth="13" orient="auto" refX="12" refY="6">
+      <path d="M 1 1 L 12 6 L 1 11 z" fill="#8a9cad"/>
+    </marker>
+  </defs>
+  <g id="shapes">
+    <rect fill="#f6f9fc" height="1020" width="1600" x="0" y="0"/>
+    <rect fill="#7653a0" height="12" width="1600" x="0" y="0"/>
+    <text fill="#7653a0" font-family="Noto Sans CJK SC" font-size="25" font-weight="700" x="70" y="76">05 / 06</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="52" font-weight="700" x="70" y="136">上下文与记忆</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="23" x="72" y="176">分离权威状态、一次 LLM 调用的上下文、跨 Run 的情景记忆与知识提升</text>
+    <rect fill="#eaf0f5" height="49" rx="15" width="1500" x="50" y="949"/>
+    <text fill="#7653a0" font-family="Noto Sans CJK SC" font-size="19" font-weight="700" x="70" y="980">实现边界</text>
+    <text fill="#456075" font-family="Noto Sans CJK SC" font-size="19" font-weight="400" x="186" y="980">Episodic Memory 供 RunCoordinator / QueryPlanning 按需召回，不代表所有 Role 都读取</text>
+    <rect fill="#e4edf5" height="627" opacity="0.68" rx="21" width="485" x="55" y="232"/>
+    <rect fill="#fff" height="627" rx="21" stroke="#dce7f0" stroke-width="1.8" width="485" x="55" y="227"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="22" font-weight="700" x="77" y="264">当前 Run 的权威信息</text>
+    <line stroke="#dce7f0" stroke-width="1.8" x1="77" x2="518" y1="278" y2="278"/>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="15" font-weight="400" text-anchor="end" x="515" y="263">State ≠ Prompt</text>
+    <rect fill="#d3dfea" height="100" opacity="0.4" rx="15" width="430" x="84" y="312"/>
+    <rect fill="#ffffff" height="100" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="430" x="84" y="308"/>
+    <rect fill="#7653a0" height="100" rx="3.5" width="7" x="84" y="308"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="299.0" y="351.72">SQL 权威研究状态</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="299.0" y="378.72">Run / Session / Query / Evidence / Claim</text>
+    <rect fill="#d3dfea" height="100" opacity="0.4" rx="15" width="430" x="84" y="467"/>
+    <rect fill="#ffffff" height="100" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="430" x="84" y="463"/>
+    <rect fill="#7653a0" height="100" rx="3.5" width="7" x="84" y="463"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="299.0" y="506.72">WorkingMemoryFacade</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="299.0" y="533.72">聚合读取 · 不复制拥有状态</text>
+    <rect fill="#d3dfea" height="100" opacity="0.4" rx="15" width="430" x="84" y="624"/>
+    <rect fill="#ffffff" height="100" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="430" x="84" y="620"/>
+    <rect fill="#7653a0" height="100" rx="3.5" width="7" x="84" y="620"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="299.0" y="663.72">RuntimeContextSnapshotBuilder</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="299.0" y="690.72">为一次决策构造只读快照</text>
+    <rect fill="#e4edf5" height="627" opacity="0.68" rx="21" width="480" x="578" y="232"/>
+    <rect fill="#fff" height="627" rx="21" stroke="#dce7f0" stroke-width="1.8" width="480" x="578" y="227"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="22" font-weight="700" x="600" y="264">按职责投影到模型</text>
+    <line stroke="#dce7f0" stroke-width="1.8" x1="600" x2="1036" y1="278" y2="278"/>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="15" font-weight="400" text-anchor="end" x="1033" y="263">Context 控制预算</text>
+    <rect fill="#d3dfea" height="95" opacity="0.4" rx="15" width="423" x="606" y="316"/>
+    <rect fill="#ffffff" height="95" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="423" x="606" y="312"/>
+    <rect fill="#7653a0" height="95" rx="3.5" width="7" x="606" y="312"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="817.5" y="353.22">RoleContextProjector</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="817.5" y="380.22">字段白名单 · 条目/字符限制</text>
+    <rect fill="#d3dfea" height="88" opacity="0.4" rx="15" width="423" x="606" y="476"/>
+    <rect fill="#ffffff" height="88" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="423" x="606" y="472"/>
+    <rect fill="#7653a0" height="88" rx="3.5" width="7" x="606" y="472"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="817.5" y="509.72">Session RoleContext</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="817.5" y="536.72">Query / Evidence / Claim / Synthesis</text>
+    <rect fill="#d3dfea" height="88" opacity="0.4" rx="15" width="423" x="606" y="636"/>
+    <rect fill="#ffffff" height="88" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="423" x="606" y="632"/>
+    <rect fill="#7653a0" height="88" rx="3.5" width="7" x="606" y="632"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="817.5" y="669.72">RunContextProjection</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="817.5" y="696.72">Plan / Outcomes / Open Questions</text>
+    <rect fill="#e4edf5" height="627" opacity="0.68" rx="21" width="451" x="1095" y="232"/>
+    <rect fill="#fff" height="627" rx="21" stroke="#dce7f0" stroke-width="1.8" width="451" x="1095" y="227"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="22" font-weight="700" x="1117" y="264">跨 Run 记忆与知识演化</text>
+    <line stroke="#dce7f0" stroke-width="1.8" x1="1117" x2="1524" y1="278" y2="278"/>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="15" font-weight="400" text-anchor="end" x="1521" y="263">完成后沉淀</text>
+    <rect fill="#d3dfea" height="88" opacity="0.4" rx="15" width="401" x="1119" y="308"/>
+    <rect fill="#ffffff" height="88" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="401" x="1119" y="304"/>
+    <rect fill="#7653a0" height="88" rx="3.5" width="7" x="1119" y="304"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1319.5" y="341.72">L3S7Lifecycle</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="1319.5" y="368.72">完成 Run → Distill</text>
+    <rect fill="#d3dfea" height="92" opacity="0.4" rx="15" width="401" x="1119" y="431"/>
+    <rect fill="#ffffff" height="92" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="401" x="1119" y="427"/>
+    <rect fill="#7653a0" height="92" rx="3.5" width="7" x="1119" y="427"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1319.5" y="466.72">EpisodicMemoryStore</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="1319.5" y="493.72">按 Workspace 保存</text>
+    <rect fill="#d3dfea" height="91" opacity="0.4" rx="15" width="401" x="1119" y="555"/>
+    <rect fill="#ffffff" height="91" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="401" x="1119" y="551"/>
+    <rect fill="#7653a0" height="91" rx="3.5" width="7" x="1119" y="551"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1319.5" y="590.22">EpisodicMemoryRetriever</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="1319.5" y="617.22">词项重叠召回 → 协调/查询规划</text>
+    <rect fill="#d3dfea" height="92" opacity="0.4" rx="15" width="401" x="1119" y="679"/>
+    <rect fill="#ffffff" height="92" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="401" x="1119" y="675"/>
+    <rect fill="#7653a0" height="92" rx="3.5" width="7" x="1119" y="675"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1319.5" y="714.72">Knowledge Promotion</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="1319.5" y="741.72">校验来源 → Agentic Wiki / 维护</text>
+    <rect fill="#f0e8f9" height="34" rx="17.0" width="385" x="1126" y="785"/>
+    <text fill="#7653a0" font-family="Noto Sans CJK SC" font-size="16" font-weight="700" text-anchor="middle" x="1318.5" y="807.78">Base Wiki：文献加工的独立知识资产</text>
+  </g>
+  <g id="edges">
+    <path d="M 299,408 L 299,463" fill="none" marker-end="url(#arrow)" stroke="#7653a0" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 299,563 L 299,620" fill="none" marker-end="url(#arrow)" stroke="#7653a0" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 514,669 L 563,669 L 563,361 L 606,361" fill="none" marker-end="url(#arrow)" stroke="#7653a0" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 817,407 L 817,472" fill="none" marker-end="url(#arrow)" stroke="#7653a0" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 514,681 L 606,681" fill="none" marker-end="url(#arrowmute)" stroke="#8a9cad" stroke-dasharray="9 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 1320,392 L 1320,427" fill="none" marker-end="url(#arrow)" stroke="#7653a0" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 1320,519 L 1320,551" fill="none" marker-end="url(#arrow)" stroke="#7653a0" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 1119,605 L 1084,605 L 1084,683 L 1029,683" fill="none" marker-end="url(#arrowmute)" stroke="#8a9cad" stroke-dasharray="9 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 1520,348 L 1535,348 L 1535,720 L 1520,720" fill="none" marker-end="url(#arrowmute)" stroke="#8a9cad" stroke-dasharray="9 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 514,357 L 566,357 L 566,229 L 1319,229 L 1319,304" fill="none" marker-end="url(#arrowmute)" stroke="#8a9cad" stroke-dasharray="9 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  </g>
+</svg>

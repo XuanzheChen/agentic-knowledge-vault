@@ -1,129 +1,129 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1110" viewBox="0 0 1700 1110" role="img" aria-labelledby="title">
-<title id="title">系统架构与服务层架构图</title><desc>前端至 FastAPI、Product 与本地执行器的职责和运行调用</desc><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#12669d"/></marker></defs>
-<rect width="1700" height="1110" fill="#f7fafd"/>
-<style>text{font-family:"Noto Sans SC","Microsoft YaHei","PingFang SC",sans-serif}</style>
-<rect width="1700" height="13" fill="#12669d"/><text x="850" y="78" text-anchor="middle" font-size="48" font-weight="700" fill="#173956">系统架构与服务层</text>
-<text x="850" y="130" text-anchor="middle" font-size="23" fill="#49677d">前端至 FastAPI、Product 与本地执行器的职责和运行调用</text>
-<rect x="36" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M56 184H316Q336 184 336 204V250H36V204Q36 184 56 184Z" fill="#12669d"/>
-<circle cx="67" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="67" y="225" text-anchor="middle" font-size="22" fill="#fff">1</text>
-<text x="96" y="224" fill="#fff" font-size="22" font-weight="700">前端交互</text>
-<rect x="51" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="51" y="276" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="186" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">React + Vite</tspan></text>
-<text x="186" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">工作区、论文库与研究对话</tspan></text>
-<path d="M186 400v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="51" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="51" y="428" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="186" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">API Client</tspan></text>
-<text x="186" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">提交消息、轮询 Run</tspan></text>
-<path d="M186 552v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="51" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="51" y="580" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="186" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">useAgentRunMonitor</tspan></text>
-<text x="186" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">800ms 轮询运行状态</tspan></text>
-<path d="M186 704v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="51" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="51" y="732" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="186" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">Timeline / Citations</tspan></text>
-<text x="186" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">进度、暂停及引用展示</tspan></text>
-<path d="M339 610h23" stroke="#12669d" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
-<rect x="367" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M387 184H647Q667 184 667 204V250H367V204Q367 184 387 184Z" fill="#12669d"/>
-<circle cx="398" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="398" y="225" text-anchor="middle" font-size="22" fill="#fff">2</text>
-<text x="427" y="224" fill="#fff" font-size="22" font-weight="700">FastAPI</text>
-<rect x="382" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="382" y="276" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="517" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">Conversation Router</tspan></text>
-<text x="517" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">POST /turns 接收请求</tspan></text>
-<path d="M517 400v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="382" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="382" y="428" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="517" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">请求校验</tspan></text>
-<text x="517" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">Pydantic 类型契约</tspan></text>
-<path d="M517 552v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="382" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="382" y="580" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="517" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">202 Accepted</tspan></text>
-<text x="517" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">受理不代表执行完成</tspan></text>
-<path d="M517 704v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="382" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="382" y="732" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="517" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">Run Router</tspan></text>
-<text x="517" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">状态、Timeline 与控制</tspan></text>
-<path d="M670 610h23" stroke="#12669d" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
-<rect x="698" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M718 184H978Q998 184 998 204V250H698V204Q698 184 718 184Z" fill="#12669d"/>
-<circle cx="729" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="729" y="225" text-anchor="middle" font-size="22" fill="#fff">3</text>
-<text x="758" y="224" fill="#fff" font-size="22" font-weight="700">Product Service</text>
-<rect x="713" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="713" y="276" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="848" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">ConversationService</tspan></text>
-<text x="848" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">ConversationTurn 持久化</tspan></text>
-<path d="M848 400v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="713" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="713" y="428" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="848" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">ResearchService</tspan></text>
-<text x="848" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">prepare_message 与 execute_run</tspan></text>
-<path d="M848 552v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="713" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="713" y="580" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="848" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">RuntimeFactory</tspan></text>
-<text x="848" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">构建 AgentRun 的运行范围</tspan></text>
-<path d="M848 704v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="713" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="713" y="732" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="848" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">投影与回写</tspan></text>
-<text x="848" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">同步回答和来源引用</tspan></text>
-<path d="M1001 610h23" stroke="#12669d" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
-<rect x="1029" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M1049 184H1309Q1329 184 1329 204V250H1029V204Q1029 184 1049 184Z" fill="#12669d"/>
-<circle cx="1060" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="1060" y="225" text-anchor="middle" font-size="22" fill="#fff">4</text>
-<text x="1089" y="224" fill="#fff" font-size="22" font-weight="700">本地执行</text>
-<rect x="1044" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="1044" y="276" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="1179" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">LocalExecutionManager</tspan></text>
-<text x="1179" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">reserve → submit_reserved</tspan></text>
-<path d="M1179 400v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1044" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="1044" y="428" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="1179" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">ThreadPoolExecutor</tspan></text>
-<text x="1179" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">max_workers = 1</tspan></text>
-<path d="M1179 552v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1044" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="1044" y="580" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="1179" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">RunResearchRuntime</tspan></text>
-<text x="1179" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">多 Session 执行与汇总</tspan></text>
-<path d="M1179 704v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1044" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="1044" y="732" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="1179" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">控制边界</tspan></text>
-<text x="1179" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">暂停请求和显式恢复</tspan></text>
-<path d="M1332 610h23" stroke="#12669d" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
-<rect x="1360" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M1380 184H1640Q1660 184 1660 204V250H1360V204Q1360 184 1380 184Z" fill="#12669d"/>
-<circle cx="1391" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="1391" y="225" text-anchor="middle" font-size="22" fill="#fff">5</text>
-<text x="1420" y="224" fill="#fff" font-size="22" font-weight="700">存储与状态</text>
-<rect x="1375" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="1375" y="276" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="1510" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">SQLAlchemy / SQLite</tspan></text>
-<text x="1510" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">业务关系持久化</tspan></text>
-<path d="M1510 400v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1375" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="1375" y="428" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="1510" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">Run / Session</tspan></text>
-<text x="1510" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">权威执行实体</tspan></text>
-<path d="M1510 552v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1375" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="1375" y="580" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="1510" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">Query / Evidence / Claim</tspan></text>
-<text x="1510" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">研究账本</tspan></text>
-<path d="M1510 704v21" stroke="#12669d" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1375" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="1375" y="732" width="5" height="122" rx="2" fill="#12669d" opacity=".55"/>
-<text x="1510" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">文件及 Trace</tspan></text>
-<text x="1510" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">检查点、事件与资源</tspan></text>
-<rect x="36" y="955" width="1624" height="105" rx="17" fill="#ebf3f8" stroke="#d5e6ef"/>
-<text x="62" y="988" font-size="19" font-weight="600" fill="#12669d">实际实现边界</text>
-<text x="62" y="1025" font-size="19" fill="#2d4b60"><tspan x="62" dy="0">默认是单进程内、单工作线程的后台任务执行；没有使用 Redis / Kafka 组成分布式任务队列。</tspan></text>
-<text x="850" y="1092" text-anchor="middle" font-size="17" fill="#7890a3">依据 TransitScholar master @ d077fb89aded · 源码架构示意，不代表运行性能或科学正确性证明</text></svg>
+<?xml version="1.0" encoding="utf-8" ?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink" baseProfile="full" height="1020px" version="1.1" viewBox="0 0 1600 1020" width="1600px">
+  <defs>
+    <marker id="arrow" markerHeight="12" markerWidth="13" orient="auto" refX="12" refY="6">
+      <path d="M 1 1 L 12 6 L 1 11 z" fill="#2068aa"/>
+    </marker>
+    <marker id="arrowmute" markerHeight="12" markerWidth="13" orient="auto" refX="12" refY="6">
+      <path d="M 1 1 L 12 6 L 1 11 z" fill="#8a9cad"/>
+    </marker>
+  </defs>
+  <g id="shapes">
+    <rect fill="#f6f9fc" height="1020" width="1600" x="0" y="0"/>
+    <rect fill="#2068aa" height="12" width="1600" x="0" y="0"/>
+    <text fill="#2068aa" font-family="Noto Sans CJK SC" font-size="25" font-weight="700" x="70" y="76">01 / 06</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="52" font-weight="700" x="70" y="136">系统架构与服务层</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="23" x="72" y="176">一次用户研究请求：同步创建任务，后台异步运行，前端轮询结果</text>
+    <rect fill="#eaf0f5" height="49" rx="15" width="1500" x="50" y="949"/>
+    <text fill="#2068aa" font-family="Noto Sans CJK SC" font-size="19" font-weight="700" x="70" y="980">实现边界</text>
+    <text fill="#456075" font-family="Noto Sans CJK SC" font-size="19" font-weight="400" x="186" y="980">单进程 ThreadPoolExecutor(max_workers=1)；不是 Redis / Kafka 分布式队列</text>
+    <rect fill="#e6f1fc" height="34" rx="17.0" width="290" x="65" y="207"/>
+    <text fill="#2068aa" font-family="Noto Sans CJK SC" font-size="17" font-weight="700" text-anchor="middle" x="210.0" y="229.78">HTTP 请求与任务创建</text>
+    <rect fill="#e6f1fc" height="34" rx="17.0" width="335" x="1180" y="207"/>
+    <text fill="#2068aa" font-family="Noto Sans CJK SC" font-size="17" font-weight="700" text-anchor="middle" x="1347.5" y="229.78">后台运行与结果回传</text>
+    <rect fill="#e4edf5" height="285" opacity="0.68" rx="21" width="266" x="60" y="263"/>
+    <rect fill="#fff" height="285" rx="21" stroke="#dce7f0" stroke-width="1.8" width="266" x="60" y="258"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="22" font-weight="700" x="82" y="295">React 前端</text>
+    <line stroke="#dce7f0" stroke-width="1.8" x1="82" x2="304" y1="309" y2="309"/>
+    <rect fill="#e4edf5" height="285" opacity="0.68" rx="21" width="285" x="378" y="263"/>
+    <rect fill="#fff" height="285" rx="21" stroke="#dce7f0" stroke-width="1.8" width="285" x="378" y="258"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="22" font-weight="700" x="400" y="295">FastAPI Router</text>
+    <line stroke="#dce7f0" stroke-width="1.8" x1="400" x2="641" y1="309" y2="309"/>
+    <rect fill="#e4edf5" height="285" opacity="0.68" rx="21" width="315" x="715" y="263"/>
+    <rect fill="#fff" height="285" rx="21" stroke="#dce7f0" stroke-width="1.8" width="315" x="715" y="258"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="22" font-weight="700" x="737" y="295">Product Service</text>
+    <line stroke="#dce7f0" stroke-width="1.8" x1="737" x2="1008" y1="309" y2="309"/>
+    <rect fill="#e4edf5" height="285" opacity="0.68" rx="21" width="454" x="1082" y="263"/>
+    <rect fill="#fff" height="285" rx="21" stroke="#dce7f0" stroke-width="1.8" width="454" x="1082" y="258"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="22" font-weight="700" x="1104" y="295">LocalExecutionManager</text>
+    <line stroke="#dce7f0" stroke-width="1.8" x1="1104" x2="1514" y1="309" y2="309"/>
+    <rect fill="#d3dfea" height="80" opacity="0.4" rx="15" width="225" x="80" y="330"/>
+    <rect fill="#ffffff" height="80" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="225" x="80" y="326"/>
+    <rect fill="#2068aa" height="80" rx="3.5" width="7" x="80" y="326"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="192.5" y="359.07000000000005">研究对话</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="192.5" y="387.63000000000005">提交消息</text>
+    <rect fill="#d3dfea" height="95" opacity="0.4" rx="15" width="244" x="398" y="322"/>
+    <rect fill="#ffffff" height="95" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="244" x="398" y="318"/>
+    <rect fill="#2068aa" height="95" rx="3.5" width="7" x="398" y="318"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="520.0" y="358.57000000000005">POST /turns</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="520.0" y="387.13000000000005">参数校验</text>
+    <rect fill="#d3dfea" height="95" opacity="0.4" rx="15" width="275" x="735" y="322"/>
+    <rect fill="#ffffff" height="95" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="275" x="735" y="318"/>
+    <rect fill="#2068aa" height="95" rx="3.5" width="7" x="735" y="318"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="872.5" y="358.57000000000005">prepare_message</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="872.5" y="387.13000000000005">创建 Turn / AgentRun</text>
+    <rect fill="#d3dfea" height="95" opacity="0.4" rx="15" width="410" x="1104" y="322"/>
+    <rect fill="#ffffff" height="95" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="410" x="1104" y="318"/>
+    <rect fill="#2068aa" height="95" rx="3.5" width="7" x="1104" y="318"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1309.0" y="358.57000000000005">reserve → submit_reserved</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1309.0" y="387.13000000000005">预留执行槽 / 派发 Run</text>
+    <rect fill="#d3dfea" height="78" opacity="0.4" rx="15" width="225" x="80" y="435"/>
+    <rect fill="#eefaf7" height="78" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="225" x="80" y="431"/>
+    <rect fill="#42a38f" height="78" rx="3.5" width="7" x="80" y="431"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="192.5" y="463.07000000000005">轮询进度</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="192.5" y="491.63000000000005">Run / Timeline</text>
+    <rect fill="#d3dfea" height="78" opacity="0.4" rx="15" width="244" x="398" y="435"/>
+    <rect fill="#eefaf7" height="78" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="244" x="398" y="431"/>
+    <rect fill="#42a38f" height="78" rx="3.5" width="7" x="398" y="431"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="520.0" y="463.07000000000005">GET 状态接口</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="520.0" y="491.63000000000005">返回执行进度</text>
+    <rect fill="#d3dfea" height="78" opacity="0.4" rx="15" width="275" x="735" y="435"/>
+    <rect fill="#f4f6fc" height="78" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="275" x="735" y="431"/>
+    <rect fill="#6d7da8" height="78" rx="3.5" width="7" x="735" y="431"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="872.5" y="463.07000000000005">业务持久化</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="872.5" y="491.63000000000005">SQL 事务提交</text>
+    <rect fill="#d3dfea" height="78" opacity="0.4" rx="15" width="410" x="1104" y="435"/>
+    <rect fill="#eefaf7" height="78" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="410" x="1104" y="431"/>
+    <rect fill="#42a38f" height="78" rx="3.5" width="7" x="1104" y="431"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1309.0" y="463.07000000000005">HTTP 202 Accepted</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1309.0" y="491.63000000000005">Run ID 立即返回</text>
+    <rect fill="#e4edf5" height="298" opacity="0.68" rx="21" width="780" x="60" y="593"/>
+    <rect fill="#fff" height="298" rx="21" stroke="#dce7f0" stroke-width="1.8" width="780" x="60" y="588"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="22" font-weight="700" x="82" y="625">后台线程 / Agent Runtime</text>
+    <line stroke="#dce7f0" stroke-width="1.8" x1="82" x2="818" y1="639" y2="639"/>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="15" font-weight="400" text-anchor="end" x="815" y="624">同一进程内</text>
+    <rect fill="#d3dfea" height="111" opacity="0.4" rx="15" width="225" x="88" y="675"/>
+    <rect fill="#ffffff" height="111" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="225" x="88" y="671"/>
+    <rect fill="#2068aa" height="111" rx="3.5" width="7" x="88" y="671"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="200.5" y="719.57">Worker 线程</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="200.5" y="748.1300000000001">单并发</text>
+    <rect fill="#d3dfea" height="111" opacity="0.4" rx="15" width="222" x="353" y="675"/>
+    <rect fill="#ffffff" height="111" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="222" x="353" y="671"/>
+    <rect fill="#2068aa" height="111" rx="3.5" width="7" x="353" y="671"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="464.0" y="719.57">RuntimeFactory</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="464.0" y="748.1300000000001">装配运行依赖</text>
+    <rect fill="#d3dfea" height="111" opacity="0.4" rx="15" width="201" x="613" y="675"/>
+    <rect fill="#ffffff" height="111" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="201" x="613" y="671"/>
+    <rect fill="#2068aa" height="111" rx="3.5" width="7" x="613" y="671"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="713.5" y="719.57">RunRuntime</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="713.5" y="748.1300000000001">Session / Role</text>
+    <rect fill="#e4edf5" height="298" opacity="0.68" rx="21" width="656" x="880" y="593"/>
+    <rect fill="#fff" height="298" rx="21" stroke="#dce7f0" stroke-width="1.8" width="656" x="880" y="588"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="22" font-weight="700" x="902" y="625">数据与知识服务</text>
+    <line stroke="#dce7f0" stroke-width="1.8" x1="902" x2="1514" y1="639" y2="639"/>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="15" font-weight="400" text-anchor="end" x="1511" y="624">按职责独立持久化</text>
+    <rect fill="#d3dfea" height="102" opacity="0.4" rx="15" width="277" x="909" y="678"/>
+    <rect fill="#ffffff" height="102" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="277" x="909" y="674"/>
+    <rect fill="#6d7da8" height="102" rx="3.5" width="7" x="909" y="674"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1047.5" y="718.07">SQLAlchemy / SQLite</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1047.5" y="746.6300000000001">Run · Query · Claim</text>
+    <rect fill="#d3dfea" height="102" opacity="0.4" rx="15" width="297" x="1211" y="678"/>
+    <rect fill="#ffffff" height="102" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="297" x="1211" y="674"/>
+    <rect fill="#6d7da8" height="102" rx="3.5" width="7" x="1211" y="674"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1359.5" y="718.07">文件与知识存储</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1359.5" y="746.6300000000001">PDF · Index · Checkpoint</text>
+    <rect fill="#e5f4f0" height="34" rx="17.0" width="660" x="101" y="839"/>
+    <text fill="#217967" font-family="Noto Sans CJK SC" font-size="17" font-weight="700" text-anchor="middle" x="431.0" y="861.78">前端轮询与后台执行解耦；接口返回不等于研究完成</text>
+  </g>
+  <g id="edges">
+    <path d="M 305,358 L 398,358" fill="none" marker-end="url(#arrow)" stroke="#2068aa" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 642,358 L 735,358" fill="none" marker-end="url(#arrow)" stroke="#2068aa" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 1010,358 L 1104,358" fill="none" marker-end="url(#arrow)" stroke="#2068aa" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 305,470 L 398,470" fill="none" marker-end="url(#arrowmute)" stroke="#8a9cad" stroke-dasharray="9 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 1082,389 L 1056,389 L 1056,639 L 198,639 L 198,671" fill="none" marker-end="url(#arrow)" stroke="#2068aa" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 313,729 L 353,729" fill="none" marker-end="url(#arrow)" stroke="#2068aa" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 575,729 L 613,729" fill="none" marker-end="url(#arrow)" stroke="#2068aa" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 814,729 L 909,729" fill="none" marker-end="url(#arrow)" stroke="#2068aa" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 1190,776 L 1190,825 L 1359,825 L 1359,776" fill="none" marker-end="url(#arrowmute)" stroke="#8a9cad" stroke-dasharray="9 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  </g>
+</svg>

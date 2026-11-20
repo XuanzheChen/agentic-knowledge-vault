@@ -1,129 +1,100 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1110" viewBox="0 0 1700 1110" role="img" aria-labelledby="title">
-<title id="title">文献处理与知识构建架构图</title><desc>论文身份到 Canonical 文档与衍生知识资产的结构</desc><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#087f9b"/></marker></defs>
-<rect width="1700" height="1110" fill="#f7fafd"/>
-<style>text{font-family:"Noto Sans SC","Microsoft YaHei","PingFang SC",sans-serif}</style>
-<rect width="1700" height="13" fill="#087f9b"/><text x="850" y="78" text-anchor="middle" font-size="48" font-weight="700" fill="#173956">文献处理与知识构建</text>
-<text x="850" y="130" text-anchor="middle" font-size="23" fill="#49677d">论文身份到 Canonical 文档与衍生知识资产的结构</text>
-<rect x="36" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M56 184H316Q336 184 336 204V250H36V204Q36 184 56 184Z" fill="#087f9b"/>
-<circle cx="67" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="67" y="225" text-anchor="middle" font-size="22" fill="#fff">1</text>
-<text x="96" y="224" fill="#fff" font-size="22" font-weight="700">文献导入</text>
-<rect x="51" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="51" y="276" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="186" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">import_paper</tspan></text>
-<text x="186" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">建立 IngestionJob</tspan></text>
-<path d="M186 400v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="51" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="51" y="428" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="186" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">SHA-256</tspan></text>
-<text x="186" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">精确重复检测</tspan></text>
-<path d="M186 552v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="51" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="51" y="580" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="186" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">元数据 / DOI</tspan></text>
-<text x="186" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">Paper 身份与文件关联</tspan></text>
-<path d="M186 704v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="51" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="51" y="732" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="186" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">Layer 1 Gate</tspan></text>
-<text x="186" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">控制 Layer 2 入口</tspan></text>
-<path d="M339 610h23" stroke="#087f9b" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
-<rect x="367" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M387 184H647Q667 184 667 204V250H367V204Q367 184 387 184Z" fill="#087f9b"/>
-<circle cx="398" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="398" y="225" text-anchor="middle" font-size="22" fill="#fff">2</text>
-<text x="427" y="224" fill="#fff" font-size="22" font-weight="700">解析器选择</text>
-<rect x="382" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="382" y="276" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="517" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">parse_paper</tspan></text>
-<text x="517" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">输入门禁和来源哈希</tspan></text>
-<path d="M517 400v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="382" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="382" y="428" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="517" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">resolve_parsers</tspan></text>
-<text x="517" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">按可用性过滤</tspan></text>
-<path d="M517 552v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="382" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="382" y="580" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="517" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">Docling → MinerU</tspan></text>
-<text x="517" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">高优先级解析器</tspan></text>
-<path d="M517 704v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="382" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="382" y="732" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="517" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">PyMuPDF4LLM / Fitz</tspan></text>
-<text x="517" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">诊断及原生回退</tspan></text>
-<path d="M670 610h23" stroke="#087f9b" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
-<rect x="698" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M718 184H978Q998 184 998 204V250H698V204Q698 184 718 184Z" fill="#087f9b"/>
-<circle cx="729" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="729" y="225" text-anchor="middle" font-size="22" fill="#fff">3</text>
-<text x="758" y="224" fill="#fff" font-size="22" font-weight="700">规范化</text>
-<rect x="713" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="713" y="276" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="848" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">Normalizer</tspan></text>
-<text x="848" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">ParserItem → Canonical Blocks</tspan></text>
-<path d="M848 400v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="713" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="713" y="428" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="848" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">Canonical Sections</tspan></text>
-<text x="848" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">章节、页面和顺序</tspan></text>
-<path d="M848 552v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="713" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="713" y="580" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="848" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">MarkdownRenderer</tspan></text>
-<text x="848" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">文本和来源位置映射</tspan></text>
-<path d="M848 704v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="713" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="713" y="732" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="848" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">ChunkBuilder</tspan></text>
-<text x="848" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">结构感知 Chunk / SourceRefs</tspan></text>
-<path d="M1001 610h23" stroke="#087f9b" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
-<rect x="1029" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M1049 184H1309Q1329 184 1329 204V250H1029V204Q1029 184 1049 184Z" fill="#087f9b"/>
-<circle cx="1060" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="1060" y="225" text-anchor="middle" font-size="22" fill="#fff">4</text>
-<text x="1089" y="224" fill="#fff" font-size="22" font-weight="700">检索衍生</text>
-<rect x="1044" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="1044" y="276" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="1179" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">Manifest</tspan></text>
-<text x="1179" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">解析链与版本指纹</tspan></text>
-<path d="M1179 400v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1044" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="1044" y="428" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="1179" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">build_retrieval</tspan></text>
-<text x="1179" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">生成单篇检索资产</tspan></text>
-<path d="M1179 552v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1044" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="1044" y="580" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="1179" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">BM25 / Dense</tspan></text>
-<text x="1179" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">关键词和向量候选</tspan></text>
-<path d="M1179 704v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1044" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="1044" y="732" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="1179" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">Hybrid Retrieval</tspan></text>
-<text x="1179" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">融合单篇检索命中</tspan></text>
-<path d="M1332 610h23" stroke="#087f9b" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
-<rect x="1360" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
-<path d="M1380 184H1640Q1660 184 1660 204V250H1360V204Q1360 184 1380 184Z" fill="#087f9b"/>
-<circle cx="1391" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="1391" y="225" text-anchor="middle" font-size="22" fill="#fff">5</text>
-<text x="1420" y="224" fill="#fff" font-size="22" font-weight="700">独立知识构建</text>
-<rect x="1375" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="1375" y="276" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="1510" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">Schema Extraction</tspan></text>
-<text x="1510" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">按字段抽取论文信息</tspan></text>
-<path d="M1510 400v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1375" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="1375" y="428" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="1510" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">Evidence Validation</tspan></text>
-<text x="1510" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">来源核对与字段检查</tspan></text>
-<path d="M1510 552v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1375" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
-<rect x="1375" y="580" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="1510" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">SchemaRunStorage</tspan></text>
-<text x="1510" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">结构化抽取结果</tspan></text>
-<path d="M1510 704v21" stroke="#087f9b" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="1375" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
-<rect x="1375" y="732" width="5" height="122" rx="2" fill="#087f9b" opacity=".55"/>
-<text x="1510" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">Workspace Base Wiki</tspan></text>
-<text x="1510" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">根据 Schema / 元数据另行构建</tspan></text>
-<rect x="36" y="955" width="1624" height="105" rx="17" fill="#ebf3f8" stroke="#d5e6ef"/>
-<text x="62" y="988" font-size="19" font-weight="600" fill="#087f9b">实际实现边界</text>
-<text x="62" y="1025" font-size="19" fill="#2d4b60"><tspan x="62" dy="0">Schema Extraction 和 Base Wiki 不会因为一次 parse_paper 就必然自动完成；它们有独立的构建和验证步骤。</tspan></text>
-<text x="850" y="1092" text-anchor="middle" font-size="17" fill="#7890a3">依据 TransitScholar master @ d077fb89aded · 源码架构示意，不代表运行性能或科学正确性证明</text></svg>
+<?xml version="1.0" encoding="utf-8" ?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink" baseProfile="full" height="1020px" version="1.1" viewBox="0 0 1600 1020" width="1600px">
+  <defs>
+    <marker id="arrow" markerHeight="12" markerWidth="13" orient="auto" refX="12" refY="6">
+      <path d="M 1 1 L 12 6 L 1 11 z" fill="#09868a"/>
+    </marker>
+    <marker id="arrowmute" markerHeight="12" markerWidth="13" orient="auto" refX="12" refY="6">
+      <path d="M 1 1 L 12 6 L 1 11 z" fill="#8a9cad"/>
+    </marker>
+  </defs>
+  <g id="shapes">
+    <rect fill="#f6f9fc" height="1020" width="1600" x="0" y="0"/>
+    <rect fill="#09868a" height="12" width="1600" x="0" y="0"/>
+    <text fill="#09868a" font-family="Noto Sans CJK SC" font-size="25" font-weight="700" x="70" y="76">02 / 06</text>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="52" font-weight="700" x="70" y="136">文献处理与知识构建</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="23" x="72" y="176">从 PDF 到有来源定位的检索材料：导入 → 解析 → 分块 → 独立构建</text>
+    <rect fill="#eaf0f5" height="49" rx="15" width="1500" x="50" y="949"/>
+    <text fill="#09868a" font-family="Noto Sans CJK SC" font-size="19" font-weight="700" x="70" y="980">实现边界</text>
+    <text fill="#456075" font-family="Noto Sans CJK SC" font-size="19" font-weight="400" x="186" y="980">Schema Extraction / Base Wiki 具有独立构建步骤，并非 parse_paper 自动完成</text>
+    <rect fill="#e4edf5" height="648" opacity="0.68" rx="21" width="405" x="60" y="229"/>
+    <rect fill="#fff" height="648" rx="21" stroke="#dce7f0" stroke-width="1.8" width="405" x="60" y="224"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="22" font-weight="700" x="82" y="261">Layer 1 · 文献身份与导入</text>
+    <line stroke="#dce7f0" stroke-width="1.8" x1="82" x2="443" y1="275" y2="275"/>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="15" font-weight="400" text-anchor="end" x="440" y="260">身份管理 ≠ 解析文本</text>
+    <rect fill="#d3dfea" height="93" opacity="0.4" rx="15" width="350" x="88" y="313"/>
+    <rect fill="#ffffff" height="93" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="350" x="88" y="309"/>
+    <rect fill="#09868a" height="93" rx="3.5" width="7" x="88" y="309"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="263.0" y="349.22">PDF 导入 / IngestionJob</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="263.0" y="376.22">临时文件 · SHA-256</text>
+    <rect fill="#d3dfea" height="94" opacity="0.4" rx="15" width="350" x="88" y="450"/>
+    <rect fill="#ffffff" height="94" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="350" x="88" y="446"/>
+    <rect fill="#09868a" height="94" rx="3.5" width="7" x="88" y="446"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="263.0" y="486.72">相同文件精确去重</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="263.0" y="513.72">Paper / PaperFile</text>
+    <rect fill="#d3dfea" height="91" opacity="0.4" rx="15" width="350" x="88" y="588"/>
+    <rect fill="#ffffff" height="91" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="350" x="88" y="584"/>
+    <rect fill="#09868a" height="91" rx="3.5" width="7" x="88" y="584"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="263.0" y="623.22">元数据抽取与增强</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="263.0" y="650.22">DOI / arXiv / 标题</text>
+    <rect fill="#d3dfea" height="92" opacity="0.4" rx="15" width="350" x="88" y="722"/>
+    <rect fill="#ffffff" height="92" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="350" x="88" y="718"/>
+    <rect fill="#09868a" height="92" rx="3.5" width="7" x="88" y="718"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="263.0" y="757.72">同论文身份判断</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="263.0" y="784.72">候选合并 · 人工裁决</text>
+    <rect fill="#e4edf5" height="648" opacity="0.68" rx="21" width="1018" x="515" y="229"/>
+    <rect fill="#fff" height="648" rx="21" stroke="#dce7f0" stroke-width="1.8" width="1018" x="515" y="224"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="22" font-weight="700" x="537" y="261">Layer 2 · 内容加工与知识资产</text>
+    <line stroke="#dce7f0" stroke-width="1.8" x1="537" x2="1511" y1="275" y2="275"/>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="15" font-weight="400" text-anchor="end" x="1508" y="260">独立阶段与可追溯版本</text>
+    <rect fill="#d3dfea" height="91" opacity="0.4" rx="15" width="301" x="546" y="308"/>
+    <rect fill="#ffffff" height="91" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="301" x="546" y="304"/>
+    <rect fill="#09868a" height="91" rx="3.5" width="7" x="546" y="304"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="696.5" y="343.22">Parser Registry</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="696.5" y="370.22">MinerU / Docling / Fitz 回退</text>
+    <rect fill="#d3dfea" height="91" opacity="0.4" rx="15" width="286" x="889" y="308"/>
+    <rect fill="#ffffff" height="91" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="286" x="889" y="304"/>
+    <rect fill="#09868a" height="91" rx="3.5" width="7" x="889" y="304"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1032.0" y="343.22">Normalizer</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="1032.0" y="370.22">统一文档结构</text>
+    <rect fill="#d3dfea" height="91" opacity="0.4" rx="15" width="288" x="1214" y="308"/>
+    <rect fill="#ffffff" height="91" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="288" x="1214" y="304"/>
+    <rect fill="#09868a" height="91" rx="3.5" width="7" x="1214" y="304"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1358.0" y="343.22">Canonical Blocks</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="1358.0" y="370.22">章节 · 段落 · 表格 · 页面</text>
+    <rect fill="#d3dfea" height="92" opacity="0.4" rx="15" width="437" x="658" y="500"/>
+    <rect fill="#ffffff" height="92" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="437" x="658" y="496"/>
+    <rect fill="#09868a" height="92" rx="3.5" width="7" x="658" y="496"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="876.5" y="535.72">ChunkBuilder</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="876.5" y="562.72">结构感知分块 + 来源锚点</text>
+    <rect fill="#fff2dd" height="34" rx="17.0" width="927" x="566" y="625"/>
+    <text fill="#9a651b" font-family="Noto Sans CJK SC" font-size="17" font-weight="700" text-anchor="middle" x="1029.5" y="647.78">以下为独立构建 / 提取流程，不表示在一次 parse_paper 内全部自动触发</text>
+    <rect fill="#d3dfea" height="91" opacity="0.4" rx="15" width="298" x="548" y="713"/>
+    <rect fill="#ffffff" height="91" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="298" x="548" y="709"/>
+    <rect fill="#397eac" height="91" rx="3.5" width="7" x="548" y="709"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="697.0" y="748.22">RAG 检索索引</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="697.0" y="775.22">Chunk → Index</text>
+    <rect fill="#d3dfea" height="91" opacity="0.4" rx="15" width="300" x="870" y="713"/>
+    <rect fill="#ffffff" height="91" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="300" x="870" y="709"/>
+    <rect fill="#397eac" height="91" rx="3.5" width="7" x="870" y="709"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1020.0" y="748.22">Schema Extraction</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="1020.0" y="775.22">LLM 抽取 + Evidence 校验</text>
+    <rect fill="#d3dfea" height="91" opacity="0.4" rx="15" width="304" x="1194" y="713"/>
+    <rect fill="#ffffff" height="91" rx="15" stroke="#d6e4ee" stroke-width="1.8" width="304" x="1194" y="709"/>
+    <rect fill="#397eac" height="91" rx="3.5" width="7" x="1194" y="709"/>
+    <text fill="#15283e" font-family="Noto Sans CJK SC" font-size="21" font-weight="700" text-anchor="middle" x="1346.0" y="748.22">Base Wiki</text>
+    <text fill="#567087" font-family="Noto Sans CJK SC" font-size="16" font-weight="400" text-anchor="middle" x="1346.0" y="775.22">Schema → 实体关系与消歧</text>
+  </g>
+  <g id="edges">
+    <path d="M 263,402 L 263,441" fill="none" marker-end="url(#arrow)" stroke="#09868a" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 263,540 L 263,579" fill="none" marker-end="url(#arrow)" stroke="#09868a" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 263,675 L 263,718" fill="none" marker-end="url(#arrowmute)" stroke="#8a9cad" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 438,354 L 546,354" fill="none" marker-end="url(#arrow)" stroke="#09868a" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 847,350 L 889,350" fill="none" marker-end="url(#arrow)" stroke="#09868a" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 1175,350 L 1214,350" fill="none" marker-end="url(#arrow)" stroke="#09868a" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 1358,395 L 1358,457 L 860,457 L 860,496" fill="none" marker-end="url(#arrow)" stroke="#09868a" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 875,588 L 875,668 L 697,668 L 697,709" fill="none" marker-end="url(#arrowmute)" stroke="#8a9cad" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 875,588 L 875,669 L 1020,669 L 1020,709" fill="none" marker-end="url(#arrowmute)" stroke="#8a9cad" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    <path d="M 1170,755 L 1194,755" fill="none" marker-end="url(#arrowmute)" stroke="#8a9cad" stroke-dasharray="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  </g>
+</svg>
