@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1110" viewBox="0 0 1700 1110" role="img" aria-labelledby="title">
+<title id="title">Agent Loop 与角色执行架构图</title><desc>Role 选择、结构化 LLM 输出与受约束 Action 的 Session 循环</desc><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#515fa6"/></marker></defs>
+<rect width="1700" height="1110" fill="#f7fafd"/>
+<style>text{font-family:"Noto Sans SC","Microsoft YaHei","PingFang SC",sans-serif}</style>
+<rect width="1700" height="13" fill="#515fa6"/><text x="850" y="78" text-anchor="middle" font-size="48" font-weight="700" fill="#173956">Agent Loop 与角色执行</text>
+<text x="850" y="130" text-anchor="middle" font-size="23" fill="#49677d">Role 选择、结构化 LLM 输出与受约束 Action 的 Session 循环</text>
+<rect x="36" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
+<path d="M56 184H316Q336 184 336 204V250H36V204Q36 184 56 184Z" fill="#515fa6"/>
+<circle cx="67" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="67" y="225" text-anchor="middle" font-size="22" fill="#fff">1</text>
+<text x="96" y="224" fill="#fff" font-size="22" font-weight="700">主控制循环</text>
+<rect x="51" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="51" y="276" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="186" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">MainResearchRuntime</tspan></text>
+<text x="186" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">维护 next_role_id</tspan></text>
+<path d="M186 400v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="51" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="51" y="428" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="186" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">ResearchCoordinator</tspan></text>
+<text x="186" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">根据观察选择职能</tspan></text>
+<path d="M186 552v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="51" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="51" y="580" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="186" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">QueryPlanning</tspan></text>
+<text x="186" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">查询规划</tspan></text>
+<path d="M186 704v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="51" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="51" y="732" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="186" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">Evidence / Claim</tspan></text>
+<text x="186" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">证据筛选与论点建立</tspan></text>
+<path d="M339 610h23" stroke="#515fa6" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
+<rect x="367" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
+<path d="M387 184H647Q667 184 667 204V250H367V204Q367 184 387 184Z" fill="#515fa6"/>
+<circle cx="398" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="398" y="225" text-anchor="middle" font-size="22" fill="#fff">2</text>
+<text x="427" y="224" fill="#fff" font-size="22" font-weight="700">角色隔离</text>
+<rect x="382" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="382" y="276" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="517" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">RoleDefinition</tspan></text>
+<text x="517" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">固定角色契约</tspan></text>
+<path d="M517 400v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="382" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="382" y="428" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="517" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">ContextPolicy</tspan></text>
+<text x="517" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">允许的 Context 字段</tspan></text>
+<path d="M517 552v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="382" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="382" y="580" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="517" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">RoleContextProjector</tspan></text>
+<text x="517" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">裁剪序列化工作集</tspan></text>
+<path d="M517 704v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="382" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="382" y="732" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="517" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">RoleRuntimeProfile</tspan></text>
+<text x="517" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">步骤与调用预算</tspan></text>
+<path d="M670 610h23" stroke="#515fa6" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
+<rect x="698" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
+<path d="M718 184H978Q998 184 998 204V250H698V204Q698 184 718 184Z" fill="#515fa6"/>
+<circle cx="729" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="729" y="225" text-anchor="middle" font-size="22" fill="#fff">3</text>
+<text x="758" y="224" fill="#fff" font-size="22" font-weight="700">结构化决策</text>
+<rect x="713" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="713" y="276" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="848" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">StructuredLLMRolePolicy</tspan></text>
+<text x="848" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">角色 Prompt + RoleContext</tspan></text>
+<path d="M848 400v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="713" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="713" y="428" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="848" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">LLM Client</tspan></text>
+<text x="848" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">generate_structured</tspan></text>
+<path d="M848 552v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="713" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="713" y="580" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="848" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">Pydantic Contract</tspan></text>
+<text x="848" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">校验输出模型</tspan></text>
+<path d="M848 704v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="713" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="713" y="732" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="848" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">有限修复</tspan></text>
+<text x="848" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">格式异常与 Provider 重试</tspan></text>
+<path d="M1001 610h23" stroke="#515fa6" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
+<rect x="1029" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
+<path d="M1049 184H1309Q1329 184 1329 204V250H1029V204Q1029 184 1049 184Z" fill="#515fa6"/>
+<circle cx="1060" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="1060" y="225" text-anchor="middle" font-size="22" fill="#fff">4</text>
+<text x="1089" y="224" fill="#fff" font-size="22" font-weight="700">Action 执行</text>
+<rect x="1044" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="1044" y="276" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="1179" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">BuiltinRoleActionPlanner</tspan></text>
+<text x="1179" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">把输出转换为 Action</tspan></text>
+<path d="M1179 400v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="1044" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="1044" y="428" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="1179" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">ActionValidator</tspan></text>
+<text x="1179" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">检查动作和归属</tspan></text>
+<path d="M1179 552v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="1044" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="1044" y="580" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="1179" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">ActionExecutor</tspan></text>
+<text x="1179" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">检索与 Ledger 操作</tspan></text>
+<path d="M1179 704v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="1044" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="1044" y="732" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="1179" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">RoleRuntime</tspan></text>
+<text x="1179" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">持久化动作进度</tspan></text>
+<path d="M1332 610h23" stroke="#515fa6" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
+<rect x="1360" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
+<path d="M1380 184H1640Q1660 184 1660 204V250H1360V204Q1360 184 1380 184Z" fill="#515fa6"/>
+<circle cx="1391" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="1391" y="225" text-anchor="middle" font-size="22" fill="#fff">5</text>
+<text x="1420" y="224" fill="#fff" font-size="22" font-weight="700">状态回环</text>
+<rect x="1375" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="1375" y="276" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="1510" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">Ledger 持久化</tspan></text>
+<text x="1510" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">Query / Evidence / Claim</tspan></text>
+<path d="M1510 400v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="1375" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="1375" y="428" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="1510" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">重建 RuntimeContext</tspan></text>
+<text x="1510" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">读取新状态</tspan></text>
+<path d="M1510 552v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="1375" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="1375" y="580" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="1510" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">回到 Coordinator</tspan></text>
+<text x="1510" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">选择下一职能或结束</tspan></text>
+<path d="M1510 704v21" stroke="#515fa6" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="1375" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="1375" y="732" width="5" height="122" rx="2" fill="#515fa6" opacity=".55"/>
+<text x="1510" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">FinalSynthesis</tspan></text>
+<text x="1510" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">完成带引用的 Session 回答</tspan></text>
+<rect x="36" y="955" width="1624" height="105" rx="17" fill="#ebf3f8" stroke="#d5e6ef"/>
+<text x="62" y="988" font-size="19" font-weight="600" fill="#515fa6">实际实现边界</text>
+<text x="62" y="1025" font-size="19" fill="#2d4b60"><tspan x="62" dy="0">固定五种 Session Role 不是五个并发独立 Agent。角色职能由 Coordinator 决定，图中各职责并非严格固定顺序。</tspan></text>
+<text x="850" y="1092" text-anchor="middle" font-size="17" fill="#7890a3">依据 TransitScholar master @ d077fb89aded · 源码架构示意，不代表运行性能或科学正确性证明</text></svg>

@@ -1,8 +1,16 @@
 # Agent Loop 与角色执行
 
-[[TransitScholar/TransitScholar|返回上级：TransitScholar]] · [[main|返回知识主干]]
+[返回上级：TransitScholar](../TransitScholar.md) · [返回知识主干](../../main.md)
 
 多角色单 Agent、RoleRuntime、结构化 Prompt、角色切换、Action 校验与工具调用。本子树按实际实现、设计动机与工程边界组织 Q&A；以下问题均是待核对与待撰写的知识叶子，**尚不构成已验证的答案**。
+
+## 架构图
+
+![Agent Loop 与角色执行架构图](../../assets/ts-agent-role-loop.svg)
+
+> 图示边界：固定五种 Session Role 不是五个并发独立 Agent。角色职能由 Coordinator 决定，图中各职责并非严格固定顺序。
+>
+> 代码依据（`d077fb89aded`）：[main_runtime.py](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/runtime/main_runtime.py) · [role_runtime.py](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/runtime/role_runtime.py) · [builtin.py](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/roles/builtin.py) · [roles.py](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/product/roles.py) · [executor.py](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/actions/executor.py)。
 
 ## 问题目录
 

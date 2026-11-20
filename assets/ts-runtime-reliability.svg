@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1110" viewBox="0 0 1700 1110" role="img" aria-labelledby="title">
+<title id="title">运行时状态与可靠性架构图</title><desc>权威状态、持久化检查点、协作式暂停与保守恢复</desc><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#b16d36"/></marker></defs>
+<rect width="1700" height="1110" fill="#f7fafd"/>
+<style>text{font-family:"Noto Sans SC","Microsoft YaHei","PingFang SC",sans-serif}</style>
+<rect width="1700" height="13" fill="#b16d36"/><text x="850" y="78" text-anchor="middle" font-size="48" font-weight="700" fill="#173956">运行时状态与可靠性</text>
+<text x="850" y="130" text-anchor="middle" font-size="23" fill="#49677d">权威状态、持久化检查点、协作式暂停与保守恢复</text>
+<rect x="36" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
+<path d="M56 184H316Q336 184 336 204V250H36V204Q36 184 56 184Z" fill="#b16d36"/>
+<circle cx="67" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="67" y="225" text-anchor="middle" font-size="22" fill="#fff">1</text>
+<text x="96" y="224" fill="#fff" font-size="22" font-weight="700">SQL 权威状态</text>
+<rect x="51" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="51" y="276" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="186" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">AgentRunService</tspan></text>
+<text x="186" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">Run / Session 生命周期</tspan></text>
+<path d="M186 400v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="51" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="51" y="428" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="186" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">ResearchStateService</tspan></text>
+<text x="186" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">Session 状态</tspan></text>
+<path d="M186 552v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="51" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="51" y="580" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="186" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">LedgerService</tspan></text>
+<text x="186" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">Query / Evidence / Claim</tspan></text>
+<path d="M186 704v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="51" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="51" y="732" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="186" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="186" dy="0">AgentTraceService</tspan></text>
+<text x="186" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="186" dy="0">追加事件与轨迹</tspan></text>
+<path d="M339 610h23" stroke="#b16d36" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
+<rect x="367" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
+<path d="M387 184H647Q667 184 667 204V250H367V204Q367 184 387 184Z" fill="#b16d36"/>
+<circle cx="398" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="398" y="225" text-anchor="middle" font-size="22" fill="#fff">2</text>
+<text x="427" y="224" fill="#fff" font-size="22" font-weight="700">文件检查点</text>
+<rect x="382" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="382" y="276" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="517" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">RoleExecutionStore</tspan></text>
+<text x="517" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">RoleWorkingState 快照</tspan></text>
+<path d="M517 400v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="382" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="382" y="428" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="517" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">RunResearchStateStore</tspan></text>
+<text x="517" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">计划和 Session 进度</tspan></text>
+<path d="M517 552v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="382" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="382" y="580" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="517" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">CommitBeforeCheckpoint</tspan></text>
+<text x="517" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">先完成 SQL 提交边界</tspan></text>
+<path d="M517 704v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="382" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="382" y="732" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="517" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="517" dy="0">执行动作索引</tspan></text>
+<text x="517" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="517" dy="0">last_output / next_action_index</tspan></text>
+<path d="M670 610h23" stroke="#b16d36" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
+<rect x="698" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
+<path d="M718 184H978Q998 184 998 204V250H698V204Q698 184 718 184Z" fill="#b16d36"/>
+<circle cx="729" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="729" y="225" text-anchor="middle" font-size="22" fill="#fff">3</text>
+<text x="758" y="224" fill="#fff" font-size="22" font-weight="700">控制与预算</text>
+<rect x="713" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="713" y="276" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="848" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">FileRunControlStore</tspan></text>
+<text x="848" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">pause.request</tspan></text>
+<path d="M848 400v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="713" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="713" y="428" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="848" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">协作式暂停</tspan></text>
+<text x="848" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">在决策/动作边界生效</tspan></text>
+<path d="M848 552v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="713" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="713" y="580" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="848" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">显式 resume</tspan></text>
+<text x="848" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">从 paused 状态恢复</tspan></text>
+<path d="M848 704v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="713" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="713" y="732" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="848" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="848" dy="0">预算保护</tspan></text>
+<text x="848" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="848" dy="0">max_steps / tool_calls 等</tspan></text>
+<path d="M1001 610h23" stroke="#b16d36" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
+<rect x="1029" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
+<path d="M1049 184H1309Q1329 184 1329 204V250H1029V204Q1029 184 1049 184Z" fill="#b16d36"/>
+<circle cx="1060" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="1060" y="225" text-anchor="middle" font-size="22" fill="#fff">4</text>
+<text x="1089" y="224" fill="#fff" font-size="22" font-weight="700">保守恢复</text>
+<rect x="1044" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="1044" y="276" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="1179" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">Provider 未确认</tspan></text>
+<text x="1179" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">可以按预算重新请求</tspan></text>
+<path d="M1179 400v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="1044" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="1044" y="428" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="1179" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">Tool Action 未确认</tspan></text>
+<text x="1179" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">视为未知提交结果</tspan></text>
+<path d="M1179 552v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="1044" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="1044" y="580" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="1179" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">in_flight_action_abandoned</tspan></text>
+<text x="1179" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">终止 Role 不盲目重放</tspan></text>
+<path d="M1179 704v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="1044" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="1044" y="732" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="1179" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1179" dy="0">Run 层恢复</tspan></text>
+<text x="1179" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1179" dy="0">续接当前 Session</tspan></text>
+<path d="M1332 610h23" stroke="#b16d36" stroke-width="3.5" fill="none"  marker-end="url(#ar)"/>
+<rect x="1360" y="184" width="300" height="744" rx="20" fill="#fff" stroke="#d4e2eb" stroke-width="2"/>
+<path d="M1380 184H1640Q1660 184 1660 204V250H1360V204Q1360 184 1380 184Z" fill="#b16d36"/>
+<circle cx="1391" cy="216" r="18" fill="#ffffff" opacity=".2"/><text x="1391" y="225" text-anchor="middle" font-size="22" fill="#fff">5</text>
+<text x="1420" y="224" fill="#fff" font-size="22" font-weight="700">观测与限制</text>
+<rect x="1375" y="276" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="1375" y="276" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="1510" y="310" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">Trace / Timeline</tspan></text>
+<text x="1510" y="352" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">保留执行轨迹</tspan></text>
+<path d="M1510 400v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="1375" y="428" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="1375" y="428" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="1510" y="462" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">中断对账</tspan></text>
+<text x="1510" y="504" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">识别非正常任务结束</tspan></text>
+<path d="M1510 552v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="1375" y="580" width="270" height="122" rx="13" fill="#eef5fa" stroke="#d9e6ef"/>
+<rect x="1375" y="580" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="1510" y="614" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">单工作线程</tspan></text>
+<text x="1510" y="656" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">非分布式 exactly-once</tspan></text>
+<path d="M1510 704v21" stroke="#b16d36" opacity=".45" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="1375" y="732" width="270" height="122" rx="13" fill="#f6fafc" stroke="#d9e6ef"/>
+<rect x="1375" y="732" width="5" height="122" rx="2" fill="#b16d36" opacity=".55"/>
+<text x="1510" y="766" text-anchor="middle" font-size="20" font-weight="700" fill="#1f4861"><tspan x="1510" dy="0">故障测试</tspan></text>
+<text x="1510" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">状态迁移与异常模拟</tspan></text>
+<rect x="36" y="955" width="1624" height="105" rx="17" fill="#ebf3f8" stroke="#d5e6ef"/>
+<text x="62" y="988" font-size="19" font-weight="600" fill="#b16d36">实际实现边界</text>
+<text x="62" y="1025" font-size="19" fill="#2d4b60"><tspan x="62" dy="0">SQL 与文件检查点不是一个天然事务；未知提交结果的工具动作不自动重放；暂停也不等于立即取消正在进行的 Provider 请求。</tspan></text>
+<text x="850" y="1092" text-anchor="middle" font-size="17" fill="#7890a3">依据 TransitScholar master @ d077fb89aded · 源码架构示意，不代表运行性能或科学正确性证明</text></svg>

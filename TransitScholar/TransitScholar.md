@@ -1,12 +1,12 @@
 # TransitScholar
 
-[[main|返回知识主干]]
+[返回知识主干](../main.md)
 
 本 Tree 用于记录 [TransitScholar](https://github.com/XuanzheChen/transit-scholar) 科研 Agent 项目的实际架构、设计动机、代码机制与工程限制。相关通用原理可延伸阅读 [[Agent/Agent|Agent]]、[[Agent/Context/context|Context]]、[[Agent/Context/RAG/RAG|RAG]]、[[Agent/Context/Memory/Memory|Memory]] 和 [[backend/backend|后端开发]]。项目相关事实以**具体提交、实际代码和测试**为依据，避免将设计意图与已验证效果混同。
 
 ## 总体架构图
 
-![[transitscholar-overview.svg]]
+![TransitScholar 总体架构图](../assets/transitscholar-overview.svg)
 
 > 图示用于总体结构导航，描述论文知识层、服务层、Agent Core、上下文与记忆、运行时持久化及证据链之间的关系。它是概要示意，并不表示所有可选组件都已接入默认生产路径。后续写 Q&A 时，需逐项核实该界限。
 
@@ -14,13 +14,13 @@
 
 | 子树 | 内容 |
 | --- | --- |
-| [[TransitScholar/系统架构与服务层/系统架构与服务层|系统架构与服务层]] | 前端、FastAPI、Product Service、后台执行管理和数据持久化的调用边界 |
-| [[TransitScholar/文献处理与知识构建/文献处理与知识构建|文献处理与知识构建]] | 论文身份、PDF 解析、Canonical Blocks、Chunking、Schema 与 Base Wiki 构建 |
-| [[TransitScholar/知识检索与证据链/知识检索与证据链|知识检索与证据链]] | Schema、Wiki、RAG 混合检索以及 Query、Evidence、Claim 和来源约束 |
-| [[TransitScholar/研究规划与会话编排/研究规划与会话编排|研究规划与会话编排]] | RunCoordinator、ResearchPlan、PlanItem、ResearchSession 和研究结果汇总 |
-| [[TransitScholar/Agent Loop 与角色执行/Agent Loop 与角色执行|Agent Loop 与角色执行]] | 多角色单 Agent、RoleRuntime、结构化 Prompt、角色切换、Action 校验与工具调用 |
-| [[TransitScholar/上下文与记忆/上下文与记忆|上下文与记忆]] | Context Snapshot、RoleContext Projection、Working Memory、Episodic Memory、Agentic Wiki |
-| [[TransitScholar/运行时状态与可靠性/运行时状态与可靠性|运行时状态与可靠性]] | Research State、Trace、Checkpoint、执行预算、暂停恢复、重试和测试 |
+| [系统架构与服务层](系统架构与服务层/系统架构与服务层.md) | 前端、FastAPI、Product Service、后台执行管理和数据持久化的调用边界 |
+| [文献处理与知识构建](文献处理与知识构建/文献处理与知识构建.md) | 论文身份、PDF 解析、Canonical Blocks、Chunking、Schema 与 Base Wiki 构建 |
+| [知识检索与证据链](知识检索与证据链/知识检索与证据链.md) | Schema、Wiki、RAG 混合检索以及 Query、Evidence、Claim 和来源约束 |
+| [研究规划与会话编排](研究规划与会话编排/研究规划与会话编排.md) | RunCoordinator、ResearchPlan、PlanItem、ResearchSession 和研究结果汇总 |
+| [Agent Loop 与角色执行](Agent%20Loop%20与角色执行/Agent%20Loop%20与角色执行.md) | 多角色单 Agent、RoleRuntime、结构化 Prompt、角色切换、Action 校验与工具调用 |
+| [上下文与记忆](上下文与记忆/上下文与记忆.md) | Context Snapshot、RoleContext Projection、Working Memory、Episodic Memory、Agentic Wiki |
+| [运行时状态与可靠性](运行时状态与可靠性/运行时状态与可靠性.md) | Research State、Trace、Checkpoint、执行预算、暂停恢复、重试和测试 |
 
 ## 问题目录
 
