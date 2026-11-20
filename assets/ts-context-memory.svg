@@ -125,5 +125,5 @@
 <text x="1510" y="808" text-anchor="middle" font-size="16" fill="#566e7e"><tspan x="1510" dy="0">检测来源变化与失效</tspan></text>
 <rect x="36" y="955" width="1624" height="105" rx="17" fill="#ebf3f8" stroke="#d5e6ef"/>
 <text x="62" y="988" font-size="19" font-weight="600" fill="#805cb3">实际实现边界</text>
-<text x="62" y="1025" font-size="19" fill="#2d4b60"><tspan x="62" dy="0">这些列是关联模块而非强制线性流程；默认 RunCoordinator 接入情景记忆，QueryPlanning 虽支持其投影但默认 Session Runtime 未注入检索器。</tspan></text>
+<text x="62" y="1025" font-size="19" fill="#2d4b60"><tspan x="62" dy="0">这些列是关联模块而非强制线性流程；默认 RunRuntime 会把情景记忆检索器注入 Session Runtime，QueryPlanning 可使用相关经验。</tspan></text>
 <text x="850" y="1092" text-anchor="middle" font-size="17" fill="#7890a3">依据 TransitScholar master @ d077fb89aded · 源码架构示意，不代表运行性能或科学正确性证明</text></svg>
