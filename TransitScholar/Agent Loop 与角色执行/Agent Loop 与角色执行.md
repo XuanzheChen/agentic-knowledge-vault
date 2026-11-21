@@ -41,15 +41,15 @@
 
 ## 如果给FinalSynthesis开放写的权限，应该如何保证写权限的隔离？不同工作区之间，如何保证写的权限不被滥用？
 
-**目前最终综合阶段主要负责生成带引用的回答，并没有任意修改研究数据的权限。以下是扩展方案，不是已有功能。**
-
 如果允许它写入，应只开放明确的操作，例如“保存最终摘要”，而不是直接读写数据库或文件。执行前由后端核对当前角色、用户所属工作区、任务归属和允许修改的对象；**工作区身份必须从可信的任务记录获得，不能只相信模型传入的编号**。
 
 写入时还要验证引用来源、使用事务和版本检查防止覆盖，并记录操作日志。通过跨工作区越权测试验证：即使模型要求修改其他工作区的数据，也必须在执行前被拒绝。
 
-## ResearchCoordinator 如何决定下一轮 Role，MainResearchRuntime 如何推进循环？
+## ResearchCoordinator 如何决定下一轮 Role？
 
-`MainResearchRuntime` 从 `next_role_id=research_coordinator` 开始，先构建状态快照，再投影当前 Role 的 Context，调用 RoleRuntime 取得结构化输出。若 Coordinator 返回合法的 `next_role_id`，就切换到对应角色；专家 Role 完成后通常回到 Coordinator。`FinalSynthesis` 完成则汇出 Session 结果；超过预算或连续失败会终止。角色执行次序由当前研究状态决定，并非写死的流水线。 参见：[角色选择与推进](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/runtime/main_runtime.py#L273)、[完成与回环](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/runtime/main_runtime.py#L405)。
+协调role会读取一个结构化的其他role列表，由对role的简短说明，role拥有的工具等信息组成。这是 决策下一个role的部分信息基础。同时，runtime会收集session handoff，query，evidence，claim，role handoff，根据研究问题构建成完整context，然后
+
+帮我完善这一段！！！
 
 ## StructuredLLMRolePolicy 如何构造 Prompt 并处理模型结构化输出？
 
