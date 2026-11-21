@@ -37,7 +37,7 @@
 
 ## 五个内置 Role 的职责、输入和输出契约分别是什么？
 
-五种角色分别是：① ResearchCoordinator 观察进度并选择下一职能；② QueryPlanning 提议并检索 Query；③ EvidenceReasoning 从检索结果中挑选值得采纳的 Evidence ID；④ ClaimReasoning 基于已采纳证据提出 Claim 及关联；⑤ FinalSynthesis 形成含引用的 Session 回答。各角色的 `input_contract` / `output_contract` 是不同的 Pydantic 类型，所需 Context 和允许动作也独立配置。 参见：[Role 契约](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/roles/builtin.py#L72)、[输入输出模型](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer3/agent/models.py#L42)。
+五种角色分别是：① ResearchCoordinator 观察进度并选择下一职能；② QueryPlanning 提议并检索 Query；③ EvidenceReasoning 从检索结果中挑选值得采纳的 Evidence ID；④ ClaimReasoning 基于已采纳证据提出 Claim 及关联；⑤ FinalSynthesis 形成含引用的 Session 回答。各角色的 `input_contract` / `output_contract` 是不同的 Pydantic 类型，所需 Context 和允许动作也独立配置。
 
 ## 如果给FinalSynthesis开放写的权限，应该如何保证写权限的隔离？不同工作区之间，如何保证写的权限不被滥用？
 
@@ -50,8 +50,6 @@
 **协调角色根据当前研究进展，判断下一步该查资料、筛选证据、形成论点，还是汇总回答。** 每轮决策前，系统从已保存的研究会话中取得当前问题、历史查询、刚检索到的材料、已采纳证据、论点和前序会话交接摘要，再按协调职责筛选上下文。模型依据这些信息和提示词中**预先列明的可选角色**，返回结构化的“下一角色”或“结束”决定。
 
 系统检查决定是否合法，才能切换角色；其他角色完成后通常回到协调环节。**因此这不是固定顺序的流水线，也不是协调角色直接执行其他角色的工具。** 运行步数或失败次数达到上限时，循环会终止。
-
-**对原有理解的校正：** 目前没有把“包含每个角色工具权限的动态角色列表”作为独立输入交给协调模型；角色权限由后端管理。前序会话交接会进入上下文，但“Role Handoff”不是这里单独传入的字段。
 
 ## StructuredLLMRolePolicy 如何构造 Prompt 并处理模型结构化输出？
 
