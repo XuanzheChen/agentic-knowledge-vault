@@ -18,7 +18,7 @@
 - [[TransitScholar/Agent Loop 与角色执行/Agent Loop 与角色执行#为什么不使用langgraph？|为什么不使用langgraph？]]
 - [[TransitScholar/Agent Loop 与角色执行/Agent Loop 与角色执行#五个内置 Role 的职责、输入和输出契约分别是什么？|五个内置 Role 的职责、输入和输出契约分别是什么？]]
 - [[TransitScholar/Agent Loop 与角色执行/Agent Loop 与角色执行#如果给FinalSynthesis开放写的权限，应该如何保证写权限的隔离？不同工作区之间，如何保证写的权限不被滥用？|如果给FinalSynthesis开放写的权限，应该如何保证写权限的隔离？不同工作区之间，如何保证写的权限不被滥用？]]
-- [[TransitScholar/Agent Loop 与角色执行/Agent Loop 与角色执行#ResearchCoordinator 如何决定下一轮 Role，MainResearchRuntime 如何推进循环？|ResearchCoordinator 如何决定下一轮 Role，MainResearchRuntime 如何推进循环？]]
+- [[TransitScholar/Agent Loop 与角色执行/Agent Loop 与角色执行#ResearchCoordinator 如何决定下一轮 Role？|ResearchCoordinator 如何决定下一轮 Role？]]
 - [[TransitScholar/Agent Loop 与角色执行/Agent Loop 与角色执行#StructuredLLMRolePolicy 如何构造 Prompt 并处理模型结构化输出？|StructuredLLMRolePolicy 如何构造 Prompt 并处理模型结构化输出？]]
 - [[TransitScholar/Agent Loop 与角色执行/Agent Loop 与角色执行#模型调用工具时如何验证角色权限和资源归属？|模型调用工具时如何验证角色权限和资源归属？]]
 - [[TransitScholar/Agent Loop 与角色执行/Agent Loop 与角色执行#LLM 输出异常、工具异常与预算耗尽分别怎样终止或重试？|LLM 输出异常、工具异常与预算耗尽分别怎样终止或重试？]]
@@ -47,9 +47,11 @@
 
 ## ResearchCoordinator 如何决定下一轮 Role？
 
-协调role会读取一个结构化的其他role列表，由对role的简短说明，role拥有的工具等信息组成。这是 决策下一个role的部分信息基础。同时，runtime会收集session handoff，query，evidence，claim，role handoff，根据研究问题构建成完整context，然后
+**协调角色根据当前研究进展，判断下一步该查资料、筛选证据、形成论点，还是汇总回答。** 每轮决策前，系统从已保存的研究会话中取得当前问题、历史查询、刚检索到的材料、已采纳证据、论点和前序会话交接摘要，再按协调职责筛选上下文。模型依据这些信息和提示词中**预先列明的可选角色**，返回结构化的“下一角色”或“结束”决定。
 
-帮我完善这一段！！！
+系统检查决定是否合法，才能切换角色；其他角色完成后通常回到协调环节。**因此这不是固定顺序的流水线，也不是协调角色直接执行其他角色的工具。** 运行步数或失败次数达到上限时，循环会终止。
+
+**对原有理解的校正：** 目前没有把“包含每个角色工具权限的动态角色列表”作为独立输入交给协调模型；角色权限由后端管理。前序会话交接会进入上下文，但“Role Handoff”不是这里单独传入的字段。
 
 ## StructuredLLMRolePolicy 如何构造 Prompt 并处理模型结构化输出？
 
