@@ -12,16 +12,16 @@
 
 ## 子树
 
-| 子树 | 内容 |
-| --- | --- |
-| [系统架构与服务层](系统架构与服务层/系统架构与服务层.md) | 前端、FastAPI、Product Service、后台执行管理和数据持久化的调用边界 |
-| [文献处理与知识构建](文献处理与知识构建/文献处理与知识构建.md) | 论文身份、PDF 解析、Canonical Blocks、Chunking、Schema 与 Base Wiki 构建 |
-| [知识检索与证据链](知识检索与证据链/知识检索与证据链.md) | Schema、Wiki、RAG 混合检索以及 Query、Evidence、Claim 和来源约束 |
-| [工具](工具/工具.md) | Agent 可用的检索工具、结构化 Action、角色权限和默认装配边界 |
-| [研究规划与会话编排](研究规划与会话编排/研究规划与会话编排.md) | RunCoordinator、ResearchPlan、PlanItem、ResearchSession 和研究结果汇总 |
-| [Agent Loop 与角色执行](Agent%20Loop%20与角色执行/Agent%20Loop%20与角色执行.md) | 多角色单 Agent、RoleRuntime、结构化 Prompt、角色切换、Action 校验与工具调用 |
-| [上下文与记忆](上下文与记忆/上下文与记忆.md) | Context Snapshot、RoleContext Projection、Working Memory、Episodic Memory、Agentic Wiki |
-| [运行时状态与可靠性](运行时状态与可靠性/运行时状态与可靠性.md) | Research State、Trace、Checkpoint、执行预算、暂停恢复、重试和测试 |
+| 子树                                                               | 内容                                                                                  |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| [系统架构与服务层](系统架构与服务层/系统架构与服务层.md)                                 | 前端、FastAPI、Product Service、后台执行管理和数据持久化的调用边界                                        |
+| [文献处理与知识构建](文献处理与知识构建/文献处理与知识构建.md)                              | 论文身份、PDF 解析、Canonical Blocks、Chunking、Schema 与 Base Wiki 构建                         |
+| [知识检索与证据链](知识检索与证据链/知识检索与证据链.md)                                 | Schema、Wiki、RAG 混合检索以及 Query、Evidence、Claim 和来源约束                                   |
+| [工具](工具/工具.md)                                                   | Agent 可用的检索工具、结构化 Action、角色权限和默认装配边界                                                |
+| [研究规划与会话编排](研究规划与会话编排/研究规划与会话编排.md)                              | RunCoordinator、ResearchPlan、PlanItem、ResearchSession 和研究结果汇总                        |
+| [Agent Loop 与角色执行](Agent%20Loop%20与角色执行/Agent%20Loop%20与角色执行.md) | 多角色单 Agent、RoleRuntime、结构化 Prompt、角色切换、Action 校验与工具调用                               |
+| [上下文与记忆](上下文与记忆/上下文与记忆.md)                                       | Context Snapshot、RoleContext Projection、Working Memory、Episodic Memory、Agentic Wiki |
+| [运行时状态与可靠性](运行时状态与可靠性/运行时状态与可靠性.md)                              | Research State、Trace、Checkpoint、执行预算、暂停恢复、重试和测试                                     |
 
 ## 问题目录
 
@@ -33,6 +33,8 @@
 - [[TransitScholar/TransitScholar#你会如何调试这个agent core？|你会如何调试这个agent core？]]
 - [[TransitScholar/TransitScholar#你会如何对整个项目进行端到端的前后端联调？|你会如何对整个项目进行端到端的前后端联调？]]
 - [[TransitScholar/TransitScholar#TransitScholar是如何使用数据库的？|TransitScholar是如何使用数据库的？]]
+- [[TransitScholar/TransitScholar#TransitScholar 如何存储 Claim 与 Evidence，并保证事务和数据库结构的一致性？|TransitScholar 如何存储 Claim 与 Evidence，并保证事务和数据库结构的一致性？]]
+- [[TransitScholar/TransitScholar#TransitScholar 如何评估 RAG 检索效果、Agent 研究质量和端到端表现？|TransitScholar 如何评估 RAG 检索效果、Agent 研究质量和端到端表现？]]
 
 ---
 
@@ -96,3 +98,36 @@
 
 **需要注意：** 数据库事务不能同时回滚普通文件写入。项目通过安排提交顺序、原子文件替换和恢复检查降低风险，但尚未实现 SQL 与本地文件的跨存储原子事务。
 
+## TransitScholar 如何存储 Claim 与 Evidence，并保证事务和数据库结构的一致性？
+
+**1. 数据模型**
+
+Claim 和 Evidence 是**多对多关系**，通过独立的关联表连接，而不是在 Claim 中直接保存 Evidence ID 列表。
+
+Claim 保存论点内容、状态及所属 Session；Evidence 保存证据原文、来源及所属 Session。关联表通过两个外键指向 Claim 和 Evidence，同时记录证据是支持还是反驳该论点。
+
+关联表还设置了唯一约束Unique(claim_id,evidence_id)，防止同一对 Claim 和 Evidence 重复建立关系。业务层也会校验它们是否属于同一个 Session。
+
+**2. 事务管理**
+
+SQLAlchemy 通过 Session 管理数据库事务。`flush` 将修改发送到数据库，`commit` 真正提交数据库事务，失败时可以通过 `rollback` 回滚未提交的修改。
+
+要实现严格的原子性，需要把创建 Claim 和建立全部关联放进**同一个事务**，全部成功才提交，任何一步失败就整体回滚。
+
+**3. SQLAlchemy 与 Alembic**
+
+使用 **SQLAlchemy** 是为了通过 Python 对象操作数据库，并统一管理查询、关系和事务，减少直接编写 SQL 的工作量。
+
+使用 **Alembic** 是为了管理数据库结构的版本变化。修改数据库的表需要编写新的Alembic迁移脚本，定义如何增加字段，以及已有数据如何处理。再用迁移脚本将数据库升级到最新版本。最后验证旧数据仍然可用，新字段可以正常读写。
+
+**需要注意：** SQLAlchemy 模型发生变化，不代表已有数据库的表结构会自动更新，仍然需要执行迁移。
+
+# **TransitScholar 如何评估 RAG 检索效果、Agent 研究质量和端到端表现？**
+
+**RAG检索效果**主要关注三个指标：Recall@K，MRR@K，nDCG@K。
+关注的是有多少正确chunk进入了top k，靠前的第几条证据是对的，正确结果的排序位置合不合理。
+
+**研究质量**分成 **Evidence 准确性和 Claim 可信度** 两部分。证据实际上关注准确率和召回率，有多少证据是对的，有多少有用的证据被找到。论点则关注支持率，与生成质量，关注有多少证据真正支持论点，有多少论点恰到好处，不会言过其实，也不会遗漏信息。
+通过规则校验和 LLM-as-a-Judge 辅助评价。对于关键结论，则人工复核。
+
+**端到端效果与稳定性**则应该考虑，相同问题相同配置，重复执行5遍，看看论文完成率，耗时，token消耗量，缓存命中率，生产的证据和论点的质量，结论的一致性，还有工具调用稳定性，系统运行稳定性等。同样是能量化的量化指标，不能量化的先用 LLM-as-a-Judge或者人来review。
