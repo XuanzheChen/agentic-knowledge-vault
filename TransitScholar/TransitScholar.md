@@ -83,8 +83,7 @@
 3. **逐层核对结果：** 对照页面、接口返回和数据库，检查任务状态、Query、Evidence、Claim 是否一致；重点确认引用能定位到对应论文，而不是只看界面显示“成功”。
 4. **检查异常：** 测试后端不可用、任务繁忙、模型调用失败、暂停恢复和浏览器断连，确认前端有明确提示，任务不会被错误地重复执行。
 
-**验证方式：** 先跑现有的接口自动化测试和前端流程检查，再至少做一次接入真实模型、真实论文的人工完整联调。模拟测试通过不能代替真实研究链路验证。项目已有覆盖真实 PDF、前端页面、HTTP、后台 Agent 和引用跳转的端到端 Smoke 测试入口，但仍需实际运行才能确认当前环境是否通过。参考：[端到端测试](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/tests/ui/test_product_e2e_smoke.py)、[正式验收入口](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/scripts/run_ac016_acceptance.py)。
-
+**验证方式：** 先跑现有的接口自动化测试和前端流程检查，再至少做一次接入真实模型、真实论文的人工完整联调。模拟测试通过不能代替真实研究链路验证。项目已有覆盖真实 PDF、前端页面、HTTP、后台 Agent 和引用跳转的端到端 Smoke 测试入口，但仍需实际运行才能确认当前环境是否通过。
 
 
 ## TransitScholar是如何使用数据库的？
@@ -112,7 +111,7 @@ Claim 保存论点内容、状态及所属 Session；Evidence 保存证据原文
 
 SQLAlchemy 通过 Session 管理数据库事务。`flush` 将修改发送到数据库，`commit` 真正提交数据库事务，失败时可以通过 `rollback` 回滚未提交的修改。
 
-**当前实现中，创建 Claim 和关联 Evidence 是独立动作，运行时可能在动作之间提交。** 所以关联失败时，可能保留尚未关联完整证据的 Claim。要实现严格的原子性，需要把创建 Claim 和建立全部关联放进**同一个事务**，全部成功才提交，任何一步失败就整体回滚。参考：[动作生成](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/product/roles.py#L149)、[提交边界](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/product/runtime.py#L265)。
+要实现严格的原子性，需要把创建 Claim 和建立全部关联放进**同一个事务**，全部成功才提交，任何一步失败就整体回滚。
 
 **3. SQLAlchemy 与 Alembic**
 
@@ -120,16 +119,13 @@ SQLAlchemy 通过 Session 管理数据库事务。`flush` 将修改发送到数�
 
 使用 **Alembic** 是为了管理数据库结构的版本变化。修改数据库的表需要编写新的Alembic迁移脚本，定义如何增加字段，以及已有数据如何处理。再用迁移脚本将数据库升级到最新版本。最后验证旧数据仍然可用，新字段可以正常读写。
 
-**需要注意：** SQLAlchemy 模型发生变化，不代表已有数据库的表结构会自动更新，仍然需要执行迁移。
-
 ## TransitScholar 如何评估 RAG 检索效果、Agent 研究质量和端到端表现？
 
 **RAG检索效果**主要关注三个指标：Recall@K，MRR@K，nDCG@K。
-关注的是有多少正确chunk进入了top k，靠前的第几条证据是对的，正确结果的排序位置合不合理。要比较每一步是否有效，应在同一份人工标注数据上依次对比单独 BM25、向量检索、RRF 融合和重排后的结果，同时看耗时与成本。项目已有前四种检索方案的评测脚本与 Recall@5/10、MRR@10、nDCG@10 指标实现，但这不等于真实论文上已经证明了性能提升。参考：[评测脚本](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer2/eval/run.py)、[指标实现](https://github.com/XuanzheChen/transit-scholar/blob/d077fb89aded267bc7dc1e5fe33ec6b1e6504c49/src/transit_scholar/layer2/eval/metrics.py)。
+关注的是有多少正确chunk进入了top k，靠前的第几条证据是对的，正确结果的排序位置合不合理。要比较每一步是否有效，应在同一份人工标注数据上依次对比单独 BM25、向量检索、RRF 融合和重排后的结果，同时看耗时与成本。
 
 **研究质量**分成 **Evidence 准确性和 Claim 可信度** 两部分。证据实际上关注准确率和召回率，有多少证据是对的，有多少有用的证据被找到。论点则关注支持率，与生成质量，关注有多少证据真正支持论点，有多少论点恰到好处，不会言过其实，也不会遗漏信息。
 通过规则校验和 LLM-as-a-Judge 辅助评价。对于关键结论，则人工复核。
 
 **端到端效果与稳定性**则应该考虑，相同问题相同配置，重复执行5遍，看看任务完成率，耗时，token消耗量，缓存命中率，生成的证据和论点的质量，结论的一致性，还有工具调用稳定性，系统运行稳定性等。同样是能量化的量化指标，不能量化的先用 LLM-as-a-Judge或者人来review。
 
-**实际进展：** 已有检索对比脚本、自动化测试和真实 PDF／真实模型的端到端验收入口；但尚未核实有覆盖 26 篇论文的 Evidence/Claim 人工评测基准，或同一研究问题重复 5 次的正式量化报告。上述研究质量与重复运行指标属于拟开展的评测方案，不能说成已经实测通过。
