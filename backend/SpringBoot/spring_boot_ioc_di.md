@@ -1,4 +1,4 @@
-> 导航：[[main|返回知识主干]] / [[backend|返回 backend]] / [[Spring Boot|返回 Spring Boot]]
+> 导航：[[main|返回知识主干]] / [[backend|返回 backend]] / [[SpringBoot]]
 
 # Spring Boot 入门：MVC、Bean、IoC / DI 与构造器注入
 
