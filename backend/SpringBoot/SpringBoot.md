@@ -6,11 +6,6 @@ Spring Boot 应用结构、依赖注入、配置与 Web 开发。
 
 # Spring Boot 入门：MVC、Bean、IoC / DI 与构造器注入
 
-- **归档路径**：`backend / Spring Boot`
-- **所属项目**：ReserveFlow（企业级活动预约与订单履约系统）— Week 1 Day 4
-- **日期**：2026-11-25
-- **参考来源**：[ReserveFlow 12 周学习计划与 Week 1 Day 4 原对话](https://chatgpt.com/share/6b06790b-1e10-83ea-94b0-0a74604bbcc4)
-
 ## 一、核心概念映射（Python / 工程视角）
 
 | Spring 概念 | 本质定义 | 工程直觉类比 |
@@ -71,7 +66,3 @@ Spring Boot 应用结构、依赖注入、配置与 Web 开发。
 4. **`EventService` 由谁创建**：由 Spring IoC 容器（`ApplicationContext`）在启动时通过反射创建并托管，再通过 DI 注入给 `EventController`（避免笼统表述为“注入到 JVM 创建”）。
 5. **Controller 与 Service 为什么要分层**：职责清晰（Controller 管 HTTP 协议与路由，Service 管业务逻辑与编排）、隔离数据层变化（Day 5 换 MyBatis + MySQL 时 Controller 无需改动）、便于多 Controller 复用、利于独立单元测试及后续在 Service 层统一加事务控制（`@Transactional`）。
 
-## 七、待推进与后续注意事项
-
-- **Day 5 衔接**：将 `EventService` 中的内存 `List` 替换为 `EventMapper` + MyBatis + MySQL 查询，跑通完整链路 `Controller → Service → Mapper → MySQL`。
-- **版本兼容待核对**：当前工程实测使用了 `Spring Boot 4.2.0`（而非原计划的 `3.5.x`），Day 5 引入 MyBatis Starter 时需先核对适配 Spring Boot 4 的依赖版本，避免启动兼容性报错。
